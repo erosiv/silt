@@ -1,0 +1,30 @@
+[build-system]
+requires = ["scikit-build-core >=0.4.3"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "my_bindings"
+version = "2025.0.0"
+description = "Python Binding Generation Example"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = ["example", "template", "erosiv"]
+# dependencies = []
+
+authors = [
+  {name = "Nicholas McDonald", email = "nick@erosiv.studio"},
+]
+maintainers = [
+  {name = "Nicholas McDonald", email = "nick@erosiv.studio"},
+]
+
+[project.urls]
+Homepage = "https://erosiv.studio"
+Documentation = "https://readthedocs.org"
+Repository = "https://github.com/erosiv/template-cmake-cuda-py.git"
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+build-dir = "build/{wheel_tag}"
+wheel.py-api = "cp312"
