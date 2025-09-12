@@ -1,14 +1,14 @@
-#ifndef SOILLIB_OP_COMMON_CU
-#define SOILLIB_OP_COMMON_CU
+#ifndef SILT_OP_COMMON_CU
+#define SILT_OP_COMMON_CU
 #define HAS_CUDA
 
-#include <soillib/op/common.hpp>
-#include <soillib/op/gather.hpp>
-#include <soillib/core/error.hpp>
-#include <soillib/core/operation.hpp>
+#include <silt/op/common.hpp>
+#include <silt/op/gather.hpp>
+#include <silt/core/error.hpp>
+#include <silt/core/operation.hpp>
 #include <iostream>
 
-namespace soil {
+namespace silt {
 
 //
 // Unary Operations
@@ -21,9 +21,9 @@ void set(tensor_t<T> lhs, const T rhs) {
   });
 }
 
-template void soil::set<int>   (soil::tensor_t<int> lhs,     const int rhs);
-template void soil::set<float> (soil::tensor_t<float> lhs,   const float rhs);
-template void soil::set<double>(soil::tensor_t<double> lhs,  const double rhs);
+template void silt::set<int>   (silt::tensor_t<int> lhs,     const int rhs);
+template void silt::set<float> (silt::tensor_t<float> lhs,   const float rhs);
+template void silt::set<double>(silt::tensor_t<double> lhs,  const double rhs);
 
 template<typename T>
 void add(tensor_t<T> lhs, const T rhs) {
@@ -32,9 +32,9 @@ void add(tensor_t<T> lhs, const T rhs) {
   });
 }
 
-template void soil::add<int>   (soil::tensor_t<int> buffer,    const int val);
-template void soil::add<float> (soil::tensor_t<float> buffer,  const float val);
-template void soil::add<double>(soil::tensor_t<double> buffer, const double val);
+template void silt::add<int>   (silt::tensor_t<int> buffer,    const int val);
+template void silt::add<float> (silt::tensor_t<float> buffer,  const float val);
+template void silt::add<double>(silt::tensor_t<double> buffer, const double val);
 
 template<typename T>
 void multiply(tensor_t<T> lhs, const T rhs) {
@@ -43,20 +43,20 @@ void multiply(tensor_t<T> lhs, const T rhs) {
   });
 }
 
-template void soil::multiply<int>   (soil::tensor_t<int> buffer,    const int val);
-template void soil::multiply<float> (soil::tensor_t<float> buffer,  const float val);
-template void soil::multiply<double>(soil::tensor_t<double> buffer, const double val);
+template void silt::multiply<int>   (silt::tensor_t<int> buffer,    const int val);
+template void silt::multiply<float> (silt::tensor_t<float> buffer,  const float val);
+template void silt::multiply<double>(silt::tensor_t<double> buffer, const double val);
 
 template<typename T>
-void clamp(soil::tensor_t<T> lhs, const T min, const T max) {
+void clamp(silt::tensor_t<T> lhs, const T min, const T max) {
   op::uniop_inplace(lhs, [min, max] GPU_ENABLE (const T a){
     return glm::clamp(a, min, max);
   });
 }
 
-template void soil::clamp<int>   (soil::tensor_t<int> buffer,    const int min, const int max);
-template void soil::clamp<float> (soil::tensor_t<float> buffer,  const float min, const float max);
-template void soil::clamp<double>(soil::tensor_t<double> buffer, const double min, const double max);
+template void silt::clamp<int>   (silt::tensor_t<int> buffer,    const int min, const int max);
+template void silt::clamp<float> (silt::tensor_t<float> buffer,  const float min, const float max);
+template void silt::clamp<double>(silt::tensor_t<double> buffer, const double min, const double max);
 
 //
 // Binary Operations
@@ -69,9 +69,9 @@ void set(tensor_t<T> lhs, const tensor_t<T> rhs) {
   });
 }
 
-template void soil::set<int>   (soil::tensor_t<int> lhs,     const soil::tensor_t<int> rhs);
-template void soil::set<float> (soil::tensor_t<float> lhs,   const soil::tensor_t<float> rhs);
-template void soil::set<double>(soil::tensor_t<double> lhs,  const soil::tensor_t<double> rhs);
+template void silt::set<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
+template void silt::set<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
+template void silt::set<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
 
 template<typename T>
 void add(tensor_t<T> lhs, const tensor_t<T> rhs) {
@@ -80,9 +80,9 @@ void add(tensor_t<T> lhs, const tensor_t<T> rhs) {
   });
 }
 
-template void soil::add<int>   (soil::tensor_t<int> lhs,     const soil::tensor_t<int> rhs);
-template void soil::add<float> (soil::tensor_t<float> lhs,   const soil::tensor_t<float> rhs);
-template void soil::add<double>(soil::tensor_t<double> lhs,  const soil::tensor_t<double> rhs);
+template void silt::add<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
+template void silt::add<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
+template void silt::add<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
 
 template<typename T>
 void multiply(tensor_t<T> lhs, const tensor_t<T> rhs) {
@@ -91,9 +91,9 @@ void multiply(tensor_t<T> lhs, const tensor_t<T> rhs) {
   });
 }
 
-template void soil::multiply<int>   (soil::tensor_t<int> lhs,     const soil::tensor_t<int> rhs);
-template void soil::multiply<float> (soil::tensor_t<float> lhs,   const soil::tensor_t<float> rhs);
-template void soil::multiply<double>(soil::tensor_t<double> lhs,  const soil::tensor_t<double> rhs);
+template void silt::multiply<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
+template void silt::multiply<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
+template void silt::multiply<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
 
 template<typename T>
 void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w) {
@@ -102,14 +102,14 @@ void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w) {
   });
 }
 
-template void soil::mix<float> (soil::tensor_t<float> buffer,   const soil::tensor_t<float> rhs, const float w);
+template void silt::mix<float> (silt::tensor_t<float> buffer,   const silt::tensor_t<float> rhs, const float w);
 
 //
 // Setting Kernels
 //
 
 template<typename T>
-__global__ void _set(soil::tensor_t<T> lhs, const T val, size_t start, size_t stop, size_t step){
+__global__ void _set(silt::tensor_t<T> lhs, const T val, size_t start, size_t stop, size_t step){
   const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
   const unsigned int i = start + n*step;
   if(i >= stop) return;
@@ -117,16 +117,16 @@ __global__ void _set(soil::tensor_t<T> lhs, const T val, size_t start, size_t st
 }
 
 template<typename T>
-void set_impl(soil::tensor_t<T> lhs, const T val, size_t start, size_t stop, size_t step){
+void set_impl(silt::tensor_t<T> lhs, const T val, size_t start, size_t stop, size_t step){
   int thread = 1024;
   int elem = (stop - start + step - 1)/step;
   int block = (elem + thread - 1)/thread;
   _set<<<block, thread>>>(lhs, val, start, stop, step);
 }
 
-template void set_impl<int>   (soil::tensor_t<int> buffer,    const int val, size_t start, size_t stop, size_t step);
-template void set_impl<float> (soil::tensor_t<float> buffer,  const float val, size_t start, size_t stop, size_t step);
-template void set_impl<double>(soil::tensor_t<double> buffer, const double val, size_t start, size_t stop, size_t step);
+template void set_impl<int>   (silt::tensor_t<int> buffer,    const int val, size_t start, size_t stop, size_t step);
+template void set_impl<float> (silt::tensor_t<float> buffer,  const float val, size_t start, size_t stop, size_t step);
+template void set_impl<double>(silt::tensor_t<double> buffer, const double val, size_t start, size_t stop, size_t step);
 
 //
 // Other Stuff
@@ -148,7 +148,7 @@ void seed(tensor_t<curandState>& buf, const size_t seed, const size_t offset){
 //
 
 template<typename T>
-__global__ void __resize(soil::tensor_t<T> lhs, const soil::tensor_t<T> rhs){
+__global__ void __resize(silt::tensor_t<T> lhs, const silt::tensor_t<T> rhs){
 
   const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= lhs.elem()){
@@ -156,12 +156,12 @@ __global__ void __resize(soil::tensor_t<T> lhs, const soil::tensor_t<T> rhs){
   }
 
   // Normalize Coordinates in Target Frame
-  const shape out = soil::shape(lhs.shape()[1], lhs.shape()[0]);
+  const shape out = silt::shape(lhs.shape()[1], lhs.shape()[0]);
   const ivec2 ipos = out.unflatten(n);
   const vec2 fpos = vec2(ipos)/vec2(out[0]-1, out[1]-1);
   
   // Unnormalize in Source Frame
-  const shape in = soil::shape(rhs.shape()[1], rhs.shape()[0]);
+  const shape in = silt::shape(rhs.shape()[1], rhs.shape()[0]);
   const vec2 npos = fpos * vec2(in[0]-1, in[1]-1);
   const int i00 = in.flatten(npos + vec2(0, 0));
   const int i01 = in.flatten(npos + vec2(0, 1));
@@ -187,19 +187,19 @@ __global__ void __resize(soil::tensor_t<T> lhs, const soil::tensor_t<T> rhs){
 template<typename T>
 tensor_t<T> resize(const tensor_t<T> rhs, const shape shape){
 
-  if(rhs.host() != soil::host_t::GPU){
-    throw soil::error::mismatch_host(soil::host_t::GPU, rhs.host());
+  if(rhs.host() != silt::host_t::GPU){
+    throw silt::error::mismatch_host(silt::host_t::GPU, rhs.host());
   }
 
-  auto lhs = soil::tensor_t<T>(shape, soil::host_t::GPU);
+  auto lhs = silt::tensor_t<T>(shape, silt::host_t::GPU);
   __resize<<<block(lhs.elem(), 1024), 1024>>>(lhs, rhs);
   return lhs;
 
 }
 
-template soil::tensor_t<int>    soil::resize<int>   (const soil::tensor_t<int> lhs,     const shape shape);
-template soil::tensor_t<float>  soil::resize<float> (const soil::tensor_t<float> lhs,   const shape shape);
-template soil::tensor_t<double> soil::resize<double>(const soil::tensor_t<double> lhs,  const shape shape);
+template silt::tensor_t<int>    silt::resize<int>   (const silt::tensor_t<int> lhs,     const shape shape);
+template silt::tensor_t<float>  silt::resize<float> (const silt::tensor_t<float> lhs,   const shape shape);
+template silt::tensor_t<double> silt::resize<double>(const silt::tensor_t<double> lhs,  const shape shape);
 
 //
 // Tensor Re-Sampling Procedure
@@ -236,7 +236,7 @@ __device__ bool __isnanv(vec3 val){
 
 
 template<typename T>
-__device__ lerp_t<T> __gather(const soil::const_view_t<T>& view, const soil::shape shape, const vec2 pos) {
+__device__ lerp_t<T> __gather(const silt::const_view_t<T>& view, const silt::shape shape, const vec2 pos) {
 
   const ivec2 p00 = ivec2(pos) + ivec2(0, 0);
   const ivec2 p01 = ivec2(pos) + ivec2(0, 1);
@@ -279,8 +279,8 @@ void __resample_impl(
   const vec2 pdiff          //!< World-Space Positional Difference
 ){
 
-  const soil::shape shape_t = soil::shape(target.shape()[1], target.shape()[0]);
-  const soil::shape shape_s = soil::shape(source.shape()[1], source.shape()[0]);
+  const silt::shape shape_t = silt::shape(target.shape()[1], target.shape()[0]);
+  const silt::shape shape_s = silt::shape(source.shape()[1], source.shape()[0]);
 
   const const_view_t source_v = source.template view<S>();
   view_t target_v = target.template view<S>();
@@ -320,7 +320,7 @@ void resample(
 
   // Validate Identical Shape
   if(target.shape()[2] != source.shape()[2]){
-    throw soil::error::mismatch_size(target.shape()[2], source.shape()[2]);
+    throw silt::error::mismatch_size(target.shape()[2], source.shape()[2]);
   }
 
   // Note: These two scenarios should involve generic vector types instead.
@@ -335,10 +335,10 @@ void resample(
 
 }
 
-template void soil::resample<int>   (soil::tensor_t<int> lhs,     const soil::tensor_t<int> rhs,     const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
-template void soil::resample<float> (soil::tensor_t<float> lhs,   const soil::tensor_t<float> rhs,   const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
-template void soil::resample<double>(soil::tensor_t<double> lhs,  const soil::tensor_t<double> rhs,  const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
+template void silt::resample<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs,     const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
+template void silt::resample<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs,   const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
+template void silt::resample<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs,  const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
 
-} // end of namespace soil
+} // end of namespace silt
 
 #endif

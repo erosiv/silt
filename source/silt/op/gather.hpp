@@ -1,13 +1,13 @@
-#ifndef SOILLIB_OP_GATHER
-#define SOILLIB_OP_GATHER
+#ifndef SILT_OP_GATHER
+#define SILT_OP_GATHER
 
-#include <soillib/core/shape.hpp>
-#include <soillib/core/tensor.hpp>
-#include <soillib/core/types.hpp>
+#include <silt/core/shape.hpp>
+#include <silt/core/tensor.hpp>
+#include <silt/core/types.hpp>
 
 #include <math_constants.h>
 
-namespace soil {
+namespace silt {
 
 template<std::floating_point T>
 struct lerp5_t {
@@ -22,9 +22,9 @@ struct lerp5_t {
   //  that performs a sum over multiple values somewhere. For now,
   //  we will just implement two separate functions.
 
-  GPU_ENABLE void gather(const soil::tensor_t<T> &tensor, glm::ivec2 p) {
+  GPU_ENABLE void gather(const silt::tensor_t<T> &tensor, glm::ivec2 p) {
 
-    const soil::shape shape = tensor.shape();
+    const silt::shape shape = tensor.shape();
 
     for (int i = 0; i < 5; ++i) {
       const glm::ivec2 pos_x = p + glm::ivec2(-2 + i, 0);
@@ -44,7 +44,7 @@ struct lerp5_t {
   }
 
   lerp5_t(){}
-  lerp5_t(const soil::tensor_t<T> &tensor, glm::ivec2 p){
+  lerp5_t(const silt::tensor_t<T> &tensor, glm::ivec2 p){
     this->gather(tensor, p);
   }
 
@@ -177,7 +177,7 @@ private:
 
 /*
 template<typename T>
-GPU_ENABLE lerp_t<T> gather(const soil::`fer_t<T> &buf, const shape shape, vec2 pos) {
+GPU_ENABLE lerp_t<T> gather(const silt::`fer_t<T> &buf, const shape shape, vec2 pos) {
 
 ivec2 p00 = ivec2(pos) + ivec2(0, 0);
 ivec2 p01 = ivec2(pos) + ivec2(0, 1);
@@ -204,6 +204,6 @@ return lerp_t<T>{v00, v01, v10, v11, w};
 }
 */
 
-} // end of namespace soil
+} // end of namespace silt
 
 #endif

@@ -1,4 +1,4 @@
-import soillib as soil
+import silt
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from zipfile import ZipFile

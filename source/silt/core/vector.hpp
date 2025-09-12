@@ -1,5 +1,5 @@
-#ifndef SOILLIB_VECTOR
-#define SOILLIB_VECTOR
+#ifndef SILT_VECTOR
+#define SILT_VECTOR
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -10,7 +10,7 @@
 //  this is causing some portability issues and might be replaced.
 //  
 
-namespace soil {
+namespace silt {
 
 // Vector Type Aliases (Convenience)
 
@@ -52,6 +52,6 @@ using vec2 = vec<2>;
 using vec3 = vec<3>;
 using vec4 = vec<4>;
 
-} // end of namespace soil
+} // end of namespace silt
 
 #endif

@@ -1,13 +1,13 @@
-#ifndef SOILLIB_TYPES
-#define SOILLIB_TYPES
+#ifndef SILT_TYPES
+#define SILT_TYPES
 
-#include <soillib/soillib.hpp>
-#include <soillib/core/vector.hpp>
+#include <silt/silt.hpp>
+#include <silt/core/vector.hpp>
 
 #include <format>
 #include <typeinfo>
 
-namespace soil {
+namespace silt {
  
 //
 // Hosts
@@ -34,11 +34,11 @@ struct hostdesc<GPU> {
 };
 
 template<typename F, typename... Args>
-auto select(const soil::host_t host, F lambda, Args &&...args) {
+auto select(const silt::host_t host, F lambda, Args &&...args) {
   switch (host) {
-  case soil::CPU:
+  case silt::CPU:
     return lambda.template operator()<CPU>(std::forward<Args>(args)...);
-  case soil::GPU:
+  case silt::GPU:
     return lambda.template operator()<GPU>(std::forward<Args>(args)...);
   default:
     throw std::invalid_argument("host not supported");
@@ -117,7 +117,7 @@ namespace {
 
 struct typedbase {
   virtual ~typedbase() {};
-  constexpr virtual soil::dtype type() noexcept {
+  constexpr virtual silt::dtype type() noexcept {
     return {};
   }
 };
@@ -158,7 +158,7 @@ concept matches_lambda = requires(F lambda, Args &&...args) {
 //! this effectively instantiates every required template of the
 //! desired lambda expression, and executes the runtime selection.
 template<typename F, typename... Args>
-auto select(const soil::dtype type, F lambda, Args &&...args) {
+auto select(const silt::dtype type, F lambda, Args &&...args) {
 
   // Note: Separating out the expressions below doesn't work,
   //  because otherwise the type of select_call would be deduced
@@ -174,30 +174,30 @@ auto select(const soil::dtype type, F lambda, Args &&...args) {
   //   if constexpr(matches_lambda<T, F, Args...>){
   //     return lambda.template operator()<T>(std::forward<Args>(args)...);
   //   } else {
-  //     throw soil::type_op_error<T, F>(lambda);
+  //     throw silt::type_op_error<T, F>(lambda);
   //   }
   // }
 
   switch (type) {
-  case soil::INT:
+  case silt::INT:
     if constexpr (matches_lambda<int, F, Args...>) {
       return lambda.template operator()<int>(std::forward<Args>(args)...);
     } else {
-      throw soil::type_op_error<int, F>(lambda);
+      throw silt::type_op_error<int, F>(lambda);
     }
     break;
-  case soil::FLOAT32:
+  case silt::FLOAT32:
     if constexpr (matches_lambda<float, F, Args...>) {
       return lambda.template operator()<float>(std::forward<Args>(args)...);
     } else {
-      throw soil::type_op_error<float, F>(lambda);
+      throw silt::type_op_error<float, F>(lambda);
     }
     break;
-  case soil::FLOAT64:
+  case silt::FLOAT64:
     if constexpr (matches_lambda<double, F, Args...>) {
       return lambda.template operator()<double>(std::forward<Args>(args)...);
     } else {
-      throw soil::type_op_error<double, F>(lambda);
+      throw silt::type_op_error<double, F>(lambda);
     }
     break;
   default:
@@ -205,6 +205,6 @@ auto select(const soil::dtype type, F lambda, Args &&...args) {
   }
 }
 
-} // namespace soil
+} // namespace silt
 
 #endif

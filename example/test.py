@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
-import my_bindings
+import silt
 
 def main():
-  my_bindings.test()
-  pass
+
+  print(silt)
+  s = silt.shape(8, 8)
+  t = silt.tensor(silt.float32, s)
+  print(s)
 
 if __name__ == "__main__":
   main()

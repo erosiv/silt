@@ -1,13 +1,13 @@
-#ifndef SOILLIB_TENSOR
-#define SOILLIB_TENSOR
+#ifndef SILT_TENSOR
+#define SILT_TENSOR
 
-#include <soillib/soillib.hpp>
-#include <soillib/core/error.hpp>
-#include <soillib/core/shape.hpp>
-#include <soillib/core/view.hpp>
+#include <silt/silt.hpp>
+#include <silt/core/error.hpp>
+#include <silt/core/shape.hpp>
+#include <silt/core/view.hpp>
 #include <cuda_runtime.h>
 
-namespace soil {
+namespace silt {
 
 //! tensor_t<T> is a strict-typed, owning raw-data extent.
 //!
@@ -109,8 +109,8 @@ struct tensor_t: typedbase {
   GPU_ENABLE inline T *data()             { return this->_data; }               //!< Raw Data Pointer (Mutable)
   
   //! Type Enumerator Retrieval
-  constexpr soil::dtype type() noexcept {
-    return soil::typedesc<T>::type;
+  constexpr silt::dtype type() noexcept {
+    return silt::typedesc<T>::type;
   }
 
   //! Const Subscript Operator (Flat)
@@ -148,10 +148,10 @@ struct tensor_t: typedbase {
 private:
 
   //! Device-Aware Allocation and De-Allocation
-  void allocate(const soil::shape shape, const host_t host = CPU);
+  void allocate(const silt::shape shape, const host_t host = CPU);
   void deallocate();
 
-  soil::shape _shape;   //!< Shape of Data
+  silt::shape _shape;   //!< Shape of Data
   host_t _host = CPU;   //!< Currently Active Device
   T *_data = NULL;      //!< Raw Data Pointer (Device Agnostic)
 };
@@ -161,7 +161,7 @@ private:
 //
 
 template<typename T>
-void soil::tensor_t<T>::allocate(const soil::shape shape, const host_t host) {
+void silt::tensor_t<T>::allocate(const silt::shape shape, const host_t host) {
 
   if (shape.elem == 0)
     throw std::invalid_argument("size must be greater than 0");
@@ -181,7 +181,7 @@ void soil::tensor_t<T>::allocate(const soil::shape shape, const host_t host) {
 }
 
 template<typename T>
-void soil::tensor_t<T>::deallocate() {
+void silt::tensor_t<T>::deallocate() {
 
   if (this->_refs == NULL)
     return;
@@ -213,7 +213,7 @@ void soil::tensor_t<T>::deallocate() {
 }
 
 template<typename T>
-void soil::tensor_t<T>::to_gpu() {
+void silt::tensor_t<T>::to_gpu() {
 
   if (this->_host == GPU)
     return;
@@ -236,7 +236,7 @@ void soil::tensor_t<T>::to_gpu() {
 }
 
 template<typename T>
-void soil::tensor_t<T>::to_cpu() {
+void silt::tensor_t<T>::to_cpu() {
 
   if (this->_host == CPU)
     return;
@@ -267,42 +267,42 @@ void soil::tensor_t<T>::to_cpu() {
 struct EXPORT_SHARED tensor {
 
   tensor() = default;
-  tensor(const soil::dtype type, const soil::shape shape): impl{make(type, shape)} {}
-  tensor(const soil::dtype type, const soil::shape shape, const host_t host): impl{make(type, shape, host)} {}
+  tensor(const silt::dtype type, const silt::shape shape): impl{make(type, shape)} {}
+  tensor(const silt::dtype type, const silt::shape shape, const host_t host): impl{make(type, shape, host)} {}
 
   //! Polymorphic Tensor Copy Constructor
-  tensor(const soil::tensor& rhs){
+  tensor(const silt::tensor& rhs){
     this->impl = rhs.clone();
   }
 
   //! Polymorphic Tensor Move Constructor
-  tensor(soil::tensor&& rhs){
+  tensor(silt::tensor&& rhs){
     this->impl = rhs.clone();
   }
 
   //! Strict-Typed Tensor Copy Constructor
   template<typename T>
-  tensor(const soil::tensor_t<T> &ten) {
-    this->impl = new soil::tensor_t<T>(ten);
+  tensor(const silt::tensor_t<T> &ten) {
+    this->impl = new silt::tensor_t<T>(ten);
   }
 
   //! Strict-Typed Tensor Move Constructor
   template<typename T>
-  tensor(soil::tensor_t<T> &&ten) {
-    this->impl = new soil::tensor_t<T>(ten);
+  tensor(silt::tensor_t<T> &&ten) {
+    this->impl = new silt::tensor_t<T>(ten);
   }
 
   ~tensor() { this->clear(); }
 
   //! Copy Assignment Operator
-  tensor& operator=(const soil::tensor& rhs) {
+  tensor& operator=(const silt::tensor& rhs) {
     this->clear();
     this->impl = rhs.clone();
     return *this;
   }
 
   //! Move Assignment Operator
-  tensor& operator=(soil::tensor &&rhs) {
+  tensor& operator=(silt::tensor &&rhs) {
     this->clear();
     this->impl = rhs.clone();
     return *this;
@@ -324,17 +324,17 @@ struct EXPORT_SHARED tensor {
   // Data Inspection Operations (Type-Deducing)
   //
 
-  inline soil::dtype type() const noexcept {
+  inline silt::dtype type() const noexcept {
     return this->impl->type();
   }
 
-  soil::shape shape() const {
+  silt::shape shape() const {
     return select(this->type(), [self = this]<typename S>() {
       return self->as<S>().shape();
     });
   }
 
-  soil::host_t host() const {
+  silt::host_t host() const {
     return select(this->type(), [self = this]<typename S>() {
       return self->as<S>().host();
     });
@@ -367,9 +367,9 @@ private:
   }
 
   //! Make a new Strict-Typed Tensor 
-  static typedbase* make(const soil::dtype type, const soil::shape shape, const host_t host = CPU) {
+  static typedbase* make(const silt::dtype type, const silt::shape shape, const host_t host = CPU) {
     return select(type, [shape, host]<typename S>() -> typedbase* {
-      return new soil::tensor_t<S>(shape, host);
+      return new silt::tensor_t<S>(shape, host);
     });
   }
 
@@ -378,7 +378,7 @@ private:
     if(this->impl == NULL) 
       return NULL;
     return select(this->type(), [self = this]<typename S>() -> typedbase* {
-      return new soil::tensor_t<S>(self->as<S>());
+      return new silt::tensor_t<S>(self->as<S>());
     });
   }
 

@@ -1,13 +1,13 @@
-#ifndef SOILLIB_ERROR
-#define SOILLIB_ERROR
+#ifndef SILT_ERROR
+#define SILT_ERROR
 
-#include <soillib/soillib.hpp>
-#include <soillib/core/types.hpp>
+#include <silt/silt.hpp>
+#include <silt/core/types.hpp>
 #include <sstream>
 
 // Custom Soillib Exceptions
 
-namespace soil {
+namespace silt {
 namespace error {
 
 #ifdef HAS_CUDA
@@ -56,9 +56,9 @@ struct mismatch_type: std::exception {
   mismatch_type(dtype want, dtype have) {
     std::stringstream ss;
     ss << "mismatch type. want (";
-    ss << soil::select(want, []<typename S>() { return typedesc<S>::name; });
+    ss << silt::select(want, []<typename S>() { return typedesc<S>::name; });
     ss << "), have (";
-    ss << soil::select(have, []<typename S>() { return typedesc<S>::name; });
+    ss << silt::select(have, []<typename S>() { return typedesc<S>::name; });
     ss << ")";
     this->msg = ss.str();
   }
@@ -74,9 +74,9 @@ struct mismatch_host: std::exception {
   mismatch_host(host_t want, host_t have) {
     std::stringstream ss;
     ss << "mismatched host. want <";
-    ss << soil::select(want, []<host_t S>() { return hostdesc<S>::name; });
+    ss << silt::select(want, []<host_t S>() { return hostdesc<S>::name; });
     ss << ">, have <";
-    ss << soil::select(have, []<host_t S>() { return hostdesc<S>::name; });
+    ss << silt::select(have, []<host_t S>() { return hostdesc<S>::name; });
     ss << ">";
     this->msg = ss.str();
   }
@@ -92,9 +92,9 @@ struct unsupported_host: std::exception {
   unsupported_host(host_t want, host_t have) {
     std::stringstream ss;
     ss << "operation not supported for host. want <";
-    ss << soil::select(want, []<host_t S>() { return hostdesc<S>::name; });
+    ss << silt::select(want, []<host_t S>() { return hostdesc<S>::name; });
     ss << ">, have <";
-    ss << soil::select(have, []<host_t S>() { return hostdesc<S>::name; });
+    ss << silt::select(have, []<host_t S>() { return hostdesc<S>::name; });
     ss << ">";
     this->msg = ss.str();
   }
@@ -122,6 +122,6 @@ private:
 };
 
 } // end of namespace error
-} // end of namespace soil
+} // end of namespace silt
 
 #endif

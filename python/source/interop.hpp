@@ -3,7 +3,7 @@
 //
 
 template<typename T, size_t D>
-nb::object __make_numpy(T* data, const soil::shape shape, nb::capsule owner) {
+nb::object __make_numpy(T* data, const silt::shape shape, nb::capsule owner) {
 
   size_t _shape[D]{0};
   for(size_t d = 0; d < D; ++d)
@@ -20,19 +20,19 @@ nb::object __make_numpy(T* data, const soil::shape shape, nb::capsule owner) {
 }
 
 template<typename T>
-nb::object __make_numpy(const soil::tensor_t<T>& source){
+nb::object __make_numpy(const silt::tensor_t<T>& source){
 
-  const soil::shape shape = source.shape();
-  soil::tensor_t<T>* target  = new soil::tensor_t<T>(shape, source.host()); 
+  const silt::shape shape = source.shape();
+  silt::tensor_t<T>* target  = new silt::tensor_t<T>(shape, source.host()); 
   nb::capsule owner(target, [](void *p) noexcept {
-    delete (soil::tensor_t<T>*)p;
+    delete (silt::tensor_t<T>*)p;
   });
-  soil::set(*target, source);
+  silt::set(*target, source);
 
   // note: if the object comes in as a python object, we can tie the lifetime
   //  of the original object to the existence of the numpy object if the
   //  memory is shared and not copied. Note that here, we are copying!!!
-  // owner = nb::find(soil::tensor source) // <- use find operator on
+  // owner = nb::find(silt::tensor source) // <- use find operator on
   //  object with original python pointer.
 
   switch(shape.dim){
@@ -46,7 +46,7 @@ nb::object __make_numpy(const soil::tensor_t<T>& source){
 }
 
 template<typename T>
-soil::tensor __tensor_from_numpy(const nb::ndarray<nb::numpy>& array){
+silt::tensor __tensor_from_numpy(const nb::ndarray<nb::numpy>& array){
 
   const size_t size = array.size();
   const T* data = (T*)array.data();
@@ -56,14 +56,14 @@ soil::tensor __tensor_from_numpy(const nb::ndarray<nb::numpy>& array){
   const int d1 = (ndim >= 2) ? array.shape(1) : 1;
   const int d2 = (ndim >= 3) ? array.shape(2) : 1;
   const int d3 = (ndim >= 4) ? array.shape(3) : 1;
-  auto shape = soil::shape(d0, d1, d2, d3);
+  auto shape = silt::shape(d0, d1, d2, d3);
   shape.dim = ndim;
 
-  auto tensor_t = soil::tensor_t<T>(shape, soil::host_t::CPU);
+  auto tensor_t = silt::tensor_t<T>(shape, silt::host_t::CPU);
   for(size_t i = 0; i < size; ++i)
     tensor_t[i] = data[i];
 
-  return std::move(soil::tensor(tensor_t));
+  return std::move(silt::tensor(tensor_t));
 
 }
 
@@ -72,7 +72,7 @@ soil::tensor __tensor_from_numpy(const nb::ndarray<nb::numpy>& array){
 //
 
 template<typename T, size_t D>
-nb::object __make_torch(T* data, const soil::shape shape, nb::capsule owner) {
+nb::object __make_torch(T* data, const silt::shape shape, nb::capsule owner) {
 
   size_t _shape[D]{0};
   for(size_t d = 0; d < D; ++d)
@@ -92,14 +92,14 @@ nb::object __make_torch(T* data, const soil::shape shape, nb::capsule owner) {
 }
 
 template<typename T>
-nb::object __make_torch(const soil::tensor_t<T>& source){
+nb::object __make_torch(const silt::tensor_t<T>& source){
 
-  const soil::shape shape = source.shape();
-  soil::tensor_t<T>* target  = new soil::tensor_t<T>(shape, source.host()); 
+  const silt::shape shape = source.shape();
+  silt::tensor_t<T>* target  = new silt::tensor_t<T>(shape, source.host()); 
   nb::capsule owner(target, [](void *p) noexcept {
-    delete (soil::tensor_t<T>*)p;
+    delete (silt::tensor_t<T>*)p;
   });
-  soil::set(*target, source);
+  silt::set(*target, source);
 
   switch(shape.dim){
     case 1: return __make_torch<T, 1>(target->data(), shape, owner);
@@ -112,7 +112,7 @@ nb::object __make_torch(const soil::tensor_t<T>& source){
 }
 
 template<typename T>
-soil::tensor __tensor_from_torch(const nb::ndarray<nb::pytorch>& array){
+silt::tensor __tensor_from_torch(const nb::ndarray<nb::pytorch>& array){
 
   const size_t size = array.size();
   T* data = (T*)array.data();
@@ -122,12 +122,12 @@ soil::tensor __tensor_from_torch(const nb::ndarray<nb::pytorch>& array){
   const int d1 = (ndim >= 2) ? array.shape(1) : 1;
   const int d2 = (ndim >= 3) ? array.shape(2) : 1;
   const int d3 = (ndim >= 4) ? array.shape(3) : 1;
-  auto shape = soil::shape(d0, d1, d2, d3);
+  auto shape = silt::shape(d0, d1, d2, d3);
   shape.dim = ndim;
 
   // Copy Data into New Tensor
-  auto target_t = soil::tensor_t<T>(shape, soil::host_t::GPU);
-  soil::set(target_t, soil::tensor_t<T>(data, shape, soil::host_t::GPU));
-  return std::move(soil::tensor(target_t));
+  auto target_t = silt::tensor_t<T>(shape, silt::host_t::GPU);
+  silt::set(target_t, silt::tensor_t<T>(data, shape, silt::host_t::GPU));
+  return std::move(silt::tensor(target_t));
 
 }

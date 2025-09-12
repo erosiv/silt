@@ -1,10 +1,10 @@
-#ifndef SOILLIB_SHAPE
-#define SOILLIB_SHAPE
+#ifndef SILT_SHAPE
+#define SILT_SHAPE
 
-#include <soillib/soillib.hpp>
-#include <soillib/core/types.hpp>
+#include <silt/silt.hpp>
+#include <silt/core/types.hpp>
 
-namespace soil {
+namespace silt {
 
 //! shape is a D-dimensional compact extent, with indexing
 //! procedures for lookup into linearized tensors and views.
@@ -62,21 +62,21 @@ struct shape {
 
   // note: this should not necessarily be done like this...
 
-  GPU_ENABLE bool oob(const soil::ivec2 pos) const {
+  GPU_ENABLE bool oob(const silt::ivec2 pos) const {
     for (size_t d = 0; d < 2; ++d)
       if (pos[d] < 0 || pos[d] >= this->ext[d])
         return true;
     return false;
   }
 
-  GPU_ENABLE bool oob(const soil::ivec3 pos) const {
+  GPU_ENABLE bool oob(const silt::ivec3 pos) const {
     for (size_t d = 0; d < 3; ++d)
       if (pos[d] < 0 || pos[d] >= this->ext[d])
         return true;
     return false;
   }
   
-  GPU_ENABLE int flatten(const soil::ivec2 pos) const {
+  GPU_ENABLE int flatten(const silt::ivec2 pos) const {
     int index{0};
     for (size_t d = 0; d < 2; ++d) {
       index *= this->ext[d];
@@ -85,7 +85,7 @@ struct shape {
     return index;
   }
 
-  GPU_ENABLE int flatten(const soil::ivec3 pos) const {
+  GPU_ENABLE int flatten(const silt::ivec3 pos) const {
     int index{0};
     for (size_t d = 0; d < 3; ++d) {
       index *= this->ext[d];

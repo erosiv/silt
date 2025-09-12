@@ -1,11 +1,11 @@
-#ifndef SOILLIB_OP_COMMON
-#define SOILLIB_OP_COMMON
+#ifndef SILT_OP_COMMON
+#define SILT_OP_COMMON
 
 #include <limits>
-#include <soillib/core/tensor.hpp>
-#include <soillib/core/operation.hpp>
+#include <silt/core/tensor.hpp>
+#include <silt/core/operation.hpp>
 
-namespace soil {
+namespace silt {
 
 //
 // Common Operation Declarations
@@ -54,7 +54,7 @@ void resample(
 //! \todo get rid of this...
 
 template<typename To, typename From>
-void copy(soil::tensor_t<To> &out, const soil::tensor_t<From> &in, vec2 gmin, vec2 gmax, vec2 gscale, vec2 wmin, vec2 wmax, vec2 wscale, float pscale) {
+void copy(silt::tensor_t<To> &out, const silt::tensor_t<From> &in, vec2 gmin, vec2 gmax, vec2 gscale, vec2 wmin, vec2 wmax, vec2 wscale, float pscale) {
 
   const ivec2 pmin = ivec2(pscale * (gmin - wmin) / wscale);
   const ivec2 pmax = ivec2(pscale * (gmax - wmin) / wscale);
@@ -84,11 +84,11 @@ void copy(soil::tensor_t<To> &out, const soil::tensor_t<From> &in, vec2 gmin, ve
 //
 
 template<typename To, typename From>
-soil::tensor_t<To> cast(const soil::tensor_t<From> &tensor) {
-  if (tensor.host() != soil::host_t::CPU)
-    throw soil::error::mismatch_host(soil::host_t::CPU, tensor.host());
+silt::tensor_t<To> cast(const silt::tensor_t<From> &tensor) {
+  if (tensor.host() != silt::host_t::CPU)
+    throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
-  tensor_t<To> tensor_to(tensor.shape(), soil::host_t::CPU);
+  tensor_t<To> tensor_to(tensor.shape(), silt::host_t::CPU);
   for(int i = 0; i < tensor.elem(); ++i){
     tensor_to[i] = (To)tensor[i];
   }
@@ -100,17 +100,17 @@ soil::tensor_t<To> cast(const soil::tensor_t<From> &tensor) {
 //
 
 template<typename T>
-void set_impl(soil::tensor_t<T> tensor, const T val, size_t start, size_t stop, size_t step);
+void set_impl(silt::tensor_t<T> tensor, const T val, size_t start, size_t stop, size_t step);
 
 template<typename T>
-void set(soil::tensor_t<T> tensor, const T val, size_t start, size_t stop, size_t step) {
+void set(silt::tensor_t<T> tensor, const T val, size_t start, size_t stop, size_t step) {
 
-  if (tensor.host() == soil::host_t::CPU) {
+  if (tensor.host() == silt::host_t::CPU) {
     for (int i = start; i < stop; i += step)
       tensor[i] = val;
   }
 
-  else if (tensor.host() == soil::host_t::GPU) {
+  else if (tensor.host() == silt::host_t::GPU) {
     set_impl(tensor, val, start, stop, step);
   }
 }
@@ -120,10 +120,10 @@ void set(soil::tensor_t<T> tensor, const T val, size_t start, size_t stop, size_
 //
 
 template<typename T>
-T min(const soil::tensor_t<T> &tensor) {
+T min(const silt::tensor_t<T> &tensor) {
 
-  if (tensor.host() != soil::host_t::CPU)
-    throw soil::error::mismatch_host(soil::host_t::CPU, tensor.host());
+  if (tensor.host() != silt::host_t::CPU)
+    throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
   T val = std::numeric_limits<T>::max();
   for(int i = 0; i < tensor.elem(); ++i){
@@ -136,10 +136,10 @@ T min(const soil::tensor_t<T> &tensor) {
 }
 
 template<typename T>
-T max(const soil::tensor_t<T> &tensor) {
+T max(const silt::tensor_t<T> &tensor) {
 
-  if (tensor.host() != soil::host_t::CPU)
-    throw soil::error::mismatch_host(soil::host_t::CPU, tensor.host());
+  if (tensor.host() != silt::host_t::CPU)
+    throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
   T val = std::numeric_limits<T>::min();
   for(int i = 0; i < tensor.elem(); ++i){
@@ -152,6 +152,6 @@ T max(const soil::tensor_t<T> &tensor) {
 }
 
 
-} // end of namespace soil
+} // end of namespace silt
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef SOILLIB_PYTHON_LAYER
-#define SOILLIB_PYTHON_LAYER
+#ifndef SILT_PYTHON_LAYER
+#define SILT_PYTHON_LAYER
 
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;
@@ -9,12 +9,10 @@ namespace nb = nanobind;
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/function.h>
 
-#include <soillib/core/types.hpp>
-
-#include <soillib/core/operation.hpp>
-#include <soillib/op/common.hpp>
-#include <soillib/op/noise.hpp>
-#include <soillib/op/normal.hpp>
+#include <silt/core/types.hpp>
+#include <silt/core/operation.hpp>
+#include <silt/op/common.hpp>
+#include <silt/op/normal.hpp>
 
 #include <iostream>
 
@@ -26,21 +24,21 @@ void bind_op(nb::module_& module) {
 // Generic Buffer Reductions
 //
 
-module.def("min", [](const soil::tensor& tensor){
-  return soil::select(tensor.type(), [&tensor]<std::floating_point S>() -> nb::object {
-    return nb::cast(soil::min(tensor.as<S>()));
+module.def("min", [](const silt::tensor& tensor){
+  return silt::select(tensor.type(), [&tensor]<std::floating_point S>() -> nb::object {
+    return nb::cast(silt::min(tensor.as<S>()));
   });
 });
 
-module.def("max", [](const soil::tensor& tensor){
-  return soil::select(tensor.type(), [&tensor]<std::floating_point S>() -> nb::object {
-    return nb::cast(soil::max(tensor.as<S>()));
+module.def("max", [](const silt::tensor& tensor){
+  return silt::select(tensor.type(), [&tensor]<std::floating_point S>() -> nb::object {
+    return nb::cast(silt::max(tensor.as<S>()));
   });
 });
 
-module.def("clamp", [](soil::tensor& tensor, const float min, const float max){
-  soil::select(tensor.type(), [&tensor, min, max]<std::same_as<float> S>() -> void {
-    soil::clamp(tensor.as<S>(), min, max);
+module.def("clamp", [](silt::tensor& tensor, const float min, const float max){
+  silt::select(tensor.type(), [&tensor, min, max]<std::same_as<float> S>() -> void {
+    silt::clamp(tensor.as<S>(), min, max);
   });
 });
 
@@ -48,144 +46,126 @@ module.def("clamp", [](soil::tensor& tensor, const float min, const float max){
 // Generic Buffer Functions
 //
 
-module.def("cast", [](const soil::tensor& tensor, const soil::dtype type){
+module.def("cast", [](const silt::tensor& tensor, const silt::dtype type){
   if(tensor.type() == type){
     return nb::cast(tensor);
   }
-  return soil::select(type, [&tensor]<std::floating_point To>() -> nb::object {
-    return soil::select(tensor.type(), [&tensor]<std::floating_point From>() -> nb::object {
-      soil::tensor tensor = soil::cast<To, From>(tensor.as<From>());
+  return silt::select(type, [&tensor]<std::floating_point To>() -> nb::object {
+    return silt::select(tensor.type(), [&tensor]<std::floating_point From>() -> nb::object {
+      silt::tensor tensor = silt::cast<To, From>(tensor.as<From>());
       return nb::cast(tensor);
     });
   });
 });
 
-module.def("copy", [](soil::tensor& lhs, const soil::tensor& rhs, soil::vec2 gmin, soil::vec2 gmax, soil::vec2 gscale, soil::vec2 wmin, soil::vec2 wmax, soil::vec2 wscale, float pscale){
+module.def("copy", [](silt::tensor& lhs, const silt::tensor& rhs, silt::vec2 gmin, silt::vec2 gmax, silt::vec2 gscale, silt::vec2 wmin, silt::vec2 wmax, silt::vec2 wscale, float pscale){
 
   // Note: This supports copy between different buffer types.
   // The interior template selection just requires that the source
   // buffer's type can be converted to the target buffer's type.
 
-  soil::select(lhs.type(), [&]<typename To>(){
-    soil::select(rhs.type(), [&]<std::convertible_to<To> From>(){
-      soil::copy<To, From>(lhs.as<To>(), rhs.as<From>(), gmin, gmax, gscale, wmin, wmax, wscale, pscale);
+  silt::select(lhs.type(), [&]<typename To>(){
+    silt::select(rhs.type(), [&]<std::convertible_to<To> From>(){
+      silt::copy<To, From>(lhs.as<To>(), rhs.as<From>(), gmin, gmax, gscale, wmin, wmax, wscale, pscale);
     });
   });
 });
 
-module.def("resize", [](const soil::tensor& rhs, const soil::shape shape){
-  return soil::select(rhs.type(), [&rhs, shape]<typename S>() -> soil::tensor {
-    return soil::tensor(soil::resize<S>(rhs.as<S>(), shape));
+module.def("resize", [](const silt::tensor& rhs, const silt::shape shape){
+  return silt::select(rhs.type(), [&rhs, shape]<typename S>() -> silt::tensor {
+    return silt::tensor(silt::resize<S>(rhs.as<S>(), shape));
   });
 });
 
-module.def("resample", [](soil::tensor& target, const soil::tensor& source, const soil::vec3 t_scale, const soil::vec3 s_scale, const soil::vec2 pdiff){
-  soil::select(target.type(), [&]<typename S>() {
-    soil::resample<S>(target.as<S>(), source.as<S>(), t_scale, s_scale, pdiff);
+module.def("resample", [](silt::tensor& target, const silt::tensor& source, const silt::vec3 t_scale, const silt::vec3 s_scale, const silt::vec2 pdiff){
+  silt::select(target.type(), [&]<typename S>() {
+    silt::resample<S>(target.as<S>(), source.as<S>(), t_scale, s_scale, pdiff);
   });
 });
 
-module.def("set", [](soil::tensor& lhs, const soil::tensor& rhs){
+module.def("set", [](silt::tensor& lhs, const silt::tensor& rhs){
 
   if(lhs.type() != rhs.type())
-    throw soil::error::mismatch_type(lhs.type(), rhs.type());
+    throw silt::error::mismatch_type(lhs.type(), rhs.type());
   
   if (lhs.elem() != rhs.elem())
-    throw soil::error::mismatch_size(lhs.elem(), rhs.elem());
+    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
 
   if (lhs.host() != rhs.host())
-    throw soil::error::mismatch_host(lhs.host(), rhs.host());
+    throw silt::error::mismatch_host(lhs.host(), rhs.host());
   
-  soil::select(lhs.type(), [&lhs, &rhs]<typename S>(){
-    soil::set<S>(lhs.as<S>(), rhs.as<S>());
+  silt::select(lhs.type(), [&lhs, &rhs]<typename S>(){
+    silt::set<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
-module.def("set", [](soil::tensor& tensor, const nb::object value){
-  soil::select(tensor.type(), [&tensor, &value]<typename S>(){
+module.def("set", [](silt::tensor& tensor, const nb::object value){
+  silt::select(tensor.type(), [&tensor, &value]<typename S>(){
     auto tensor_t = tensor.as<S>();
     auto value_t = nb::cast<S>(value);
-    soil::set<S>(tensor_t, value_t);
+    silt::set<S>(tensor_t, value_t);
   });
 });
 
-module.def("add", [](soil::tensor& lhs, const soil::tensor& rhs){
+module.def("add", [](silt::tensor& lhs, const silt::tensor& rhs){
 
   if(lhs.type() != rhs.type())
-    throw soil::error::mismatch_type(lhs.type(), rhs.type());
+    throw silt::error::mismatch_type(lhs.type(), rhs.type());
 
   if (lhs.elem() != rhs.elem())
-    throw soil::error::mismatch_size(lhs.elem(), rhs.elem());
+    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
 
   if (lhs.host() != rhs.host())
-    throw soil::error::mismatch_host(lhs.host(), rhs.host());
+    throw silt::error::mismatch_host(lhs.host(), rhs.host());
 
-  soil::select(lhs.type(), [&lhs, &rhs]<typename S>(){
-    soil::add<S>(lhs.as<S>(), rhs.as<S>());
+  silt::select(lhs.type(), [&lhs, &rhs]<typename S>(){
+    silt::add<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
-module.def("add", [](soil::tensor& buffer, const nb::object value){
-  soil::select(buffer.type(), [&buffer, &value]<typename S>(){
+module.def("add", [](silt::tensor& buffer, const nb::object value){
+  silt::select(buffer.type(), [&buffer, &value]<typename S>(){
     auto buffer_t = buffer.as<S>();
     auto value_t = nb::cast<S>(value);
-    soil::add<S>(buffer_t, value_t);
+    silt::add<S>(buffer_t, value_t);
   });
 });
 
-module.def("multiply", [](soil::tensor& lhs, const soil::tensor& rhs){
+module.def("multiply", [](silt::tensor& lhs, const silt::tensor& rhs){
   
   if(lhs.type() != rhs.type())
-    throw soil::error::mismatch_type(lhs.type(), rhs.type());
+    throw silt::error::mismatch_type(lhs.type(), rhs.type());
 
   if (lhs.elem() != rhs.elem())
-    throw soil::error::mismatch_size(lhs.elem(), rhs.elem());
+    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
 
   if (lhs.host() != rhs.host())
-    throw soil::error::mismatch_host(lhs.host(), rhs.host());
+    throw silt::error::mismatch_host(lhs.host(), rhs.host());
 
-  soil::select(lhs.type(), [&lhs, &rhs]<typename S>(){
-    soil::multiply<S>(lhs.as<S>(), rhs.as<S>());
+  silt::select(lhs.type(), [&lhs, &rhs]<typename S>(){
+    silt::multiply<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
-module.def("multiply", [](soil::tensor& buffer, const nb::object value){
-  soil::select(buffer.type(), [&buffer, &value]<typename S>(){
+module.def("multiply", [](silt::tensor& buffer, const nb::object value){
+  silt::select(buffer.type(), [&buffer, &value]<typename S>(){
     auto buffer_t = buffer.as<S>();
     auto value_t = nb::cast<S>(value);
-    soil::multiply<S>(buffer_t, value_t);
+    silt::multiply<S>(buffer_t, value_t);
   });
-});
-
-//
-// Noise Sampler Type
-//
-
-auto noise_t = nb::class_<soil::noise_param_t>(module, "noise_t");
-noise_t.def(nb::init<>());
-noise_t.def_rw("frequency", &soil::noise_param_t::frequency);
-noise_t.def_rw("octaves", &soil::noise_param_t::octaves);
-noise_t.def_rw("gain", &soil::noise_param_t::gain);
-noise_t.def_rw("lacunarity", &soil::noise_param_t::lacunarity);
-noise_t.def_rw("seed", &soil::noise_param_t::seed);
-noise_t.def_rw("ext", &soil::noise_param_t::ext);
-
-module.def("noise", [](const soil::shape shape, const soil::noise_param_t param){
-  // note: seed is considered state. how can this be reflected here?
-  return soil::noise(shape, param);
 });
 
 //
 // Normal Map ?
 //
 
-module.def("normal", [](const soil::tensor& tensor, const soil::vec3 scale){
+module.def("normal", [](const silt::tensor& tensor, const silt::vec3 scale){
 
-  if (tensor.host() != soil::CPU)
-    throw soil::error::mismatch_host(soil::CPU, tensor.host());
+  if (tensor.host() != silt::CPU)
+    throw silt::error::mismatch_host(silt::CPU, tensor.host());
 
-  return soil::select(tensor.type(), [&]<std::floating_point T>(){
-    return soil::op::normal(tensor.as<T>(), scale);
+  return silt::select(tensor.type(), [&]<std::floating_point T>(){
+    return silt::op::normal(tensor.as<T>(), scale);
   });
 
 });

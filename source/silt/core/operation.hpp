@@ -1,11 +1,11 @@
-#ifndef SOILLIB_OPERATION
-#define SOILLIB_OPERATION
+#ifndef SILT_OPERATION
+#define SILT_OPERATION
 
-#include <soillib/core/tensor.hpp>
-#include <soillib/core/error.hpp>
+#include <silt/core/tensor.hpp>
+#include <silt/core/error.hpp>
 #include <curand_kernel.h>
 
-namespace soil {
+namespace silt {
 
 namespace {
 
@@ -49,13 +49,13 @@ __global__ void __binop_inplace(tensor_t<T> lhs, const tensor_t<T> rhs, F func) 
 template<typename T, typename F>
 void uniop_inplace(tensor_t<T> lhs, F func) {
 
-  if(lhs.host() == soil::host_t::CPU){
+  if(lhs.host() == silt::host_t::CPU){
     for(size_t i = 0; i < lhs.elem(); ++i){
       lhs[i] = func(lhs[i]);
     }
   }
 
-  else if(lhs.host() == soil::host_t::GPU){
+  else if(lhs.host() == silt::host_t::GPU){
     __uniop_inplace<<<block(lhs.elem(), 512), 512>>>(lhs, func);
   }
 
@@ -64,13 +64,13 @@ void uniop_inplace(tensor_t<T> lhs, F func) {
 template<typename T, typename F>
 void binop_inplace(tensor_t<T> lhs, const tensor_t<T> rhs, F func) {
 
-  if(lhs.host() == soil::host_t::CPU){
+  if(lhs.host() == silt::host_t::CPU){
     for(size_t i = 0; i < lhs.elem(); ++i){
       lhs[i] = func(lhs[i], rhs[i]);
     }
   }
 
-  else if(lhs.host() == soil::host_t::GPU){
+  else if(lhs.host() == silt::host_t::GPU){
     __binop_inplace<<<block(lhs.elem(), 512), 512>>>(lhs, rhs, func);
   }
 

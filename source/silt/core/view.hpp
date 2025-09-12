@@ -1,9 +1,9 @@
-#ifndef SOILLIB_VIEW
-#define SOILLIB_VIEW
+#ifndef SILT_VIEW
+#define SILT_VIEW
 
-#include <soillib/soillib.hpp>
+#include <silt/silt.hpp>
 
-namespace soil {
+namespace silt {
 
 //! view_t is a strict-typed, lightweight data-view for vectorized memory reads.
 //!

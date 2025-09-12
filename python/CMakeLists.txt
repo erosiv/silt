@@ -19,9 +19,7 @@ nanobind_add_module(${MODULE_NAME}
   source/_module.cpp
   source/shape.cpp
   source/tensor.cpp
-  source/io.cpp
   source/op.cpp
-  source/model.cpp
   source/util.cpp
   NB_SHARED
 )
@@ -34,7 +32,7 @@ target_compile_definitions(${MODULE_NAME} PRIVATE
 
 find_package(glm CONFIG REQUIRED)
 target_link_libraries(${MODULE_NAME} PRIVATE glm::glm)
-target_link_libraries(${MODULE_NAME} PRIVATE silt)
+target_link_libraries(${MODULE_NAME} PRIVATE silt_lib)
 
 #
 # Installation
@@ -44,5 +42,5 @@ target_link_libraries(${MODULE_NAME} PRIVATE silt)
 install(TARGETS ${MODULE_NAME} LIBRARY DESTINATION ${MODULE_NAME})
 
 # Install Runtime Dependencies into Wheel File
-install(TARGETS nanobind RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/silt)
-install(TARGETS silt RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/silt)
+install(TARGETS nanobind RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME})
+install(TARGETS silt_lib RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME})

@@ -1,5 +1,5 @@
-#ifndef SOILLIB_PYTHON_GLM
-#define SOILLIB_PYTHON_GLM
+#ifndef SILT_PYTHON_GLM
+#define SILT_PYTHON_GLM
 
 //! GLM Vector and Matrix Type Casters
 //!
