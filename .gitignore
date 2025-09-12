@@ -1,4 +1,56 @@
-build
-Debug
-Release
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
 *.exe
+*.out
+*.app
+
+.idea/**
+.DS_Store
+
+**/main
+**/*.tiff
+**/*.zip
+
+build
+_todo.md
+**/imgui.ini
+.vscode
+
+# Wheel Distributables
+**/*.whl
+python/wheel
+__pycache__
+source/build
+
+# Mesh Formats
+**/*.ply
+**/*.npy
+
+# !example/data/dem_1024.tiff

@@ -3,13 +3,13 @@ requires = ["scikit-build-core >=0.4.3"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "my_bindings"
-version = "2025.0.0"
-description = "Python Binding Generation Example"
+name = "silt"
+version = "1.0.0"
+description = "Super Lightweight Tensors"
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
-keywords = ["example", "template", "erosiv"]
+keywords = ["silt", "tensor", "cuda", "gpu", "erosiv"]
 # dependencies = []
 
 authors = [
@@ -22,7 +22,7 @@ maintainers = [
 [project.urls]
 Homepage = "https://erosiv.studio"
 Documentation = "https://readthedocs.org"
-Repository = "https://github.com/erosiv/template-cmake-cuda-py.git"
+Repository = "https://github.com/erosiv/silt.git"
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"

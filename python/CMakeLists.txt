@@ -8,31 +8,41 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 #
-# Load Dependencies
+# Define the Module and Bindings
 #
 
 find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
 add_subdirectory(${CMAKE_SOURCE_DIR}/ext/nanobind nanobind)
 
-#
-# Define the Module and Bindings
-#
-
-set(MODULE_NAME my_bindings)
-
+set(MODULE_NAME silt)
 nanobind_add_module(${MODULE_NAME}
-  source/module.cpp 
-  source/component.cpp
+  source/_module.cpp
+  source/shape.cpp
+  source/tensor.cpp
+  source/io.cpp
+  source/op.cpp
+  source/model.cpp
+  source/util.cpp
   NB_SHARED
 )
-
 target_compile_definitions(${MODULE_NAME} PRIVATE
   MODULE_NAME=${MODULE_NAME})
 
-# Internal Target Dependencies
-target_link_libraries(${MODULE_NAME} PRIVATE my_cuda_lib)  # Internal Dependency
+#
+# Dependencies
+#
+
+find_package(glm CONFIG REQUIRED)
+target_link_libraries(${MODULE_NAME} PRIVATE glm::glm)
+target_link_libraries(${MODULE_NAME} PRIVATE silt)
+
+#
+# Installation
+#
 
 # Install Directive for Scikit
 install(TARGETS ${MODULE_NAME} LIBRARY DESTINATION ${MODULE_NAME})
-install(TARGETS nanobind RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/my_bindings)
-install(TARGETS my_cuda_lib RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/my_bindings)
+
+# Install Runtime Dependencies into Wheel File
+install(TARGETS nanobind RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/silt)
+install(TARGETS silt RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/silt)
