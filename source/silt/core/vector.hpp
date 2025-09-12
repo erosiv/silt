@@ -5,8 +5,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 //
-// soillib vector type definitions / aliases
-//  soillib uses glm as its small vector type implementation.
+// silt vector type definitions / aliases
+//  silt uses glm as its small vector type implementation.
 //  this is causing some portability issues and might be replaced.
 //  
 

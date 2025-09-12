@@ -1,5 +1,5 @@
 #
-# soillib C++ Library Target
+# silt C++ Library Target
 #
 
 set(TARGET_NAME silt_lib)
