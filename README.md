@@ -1,10 +1,36 @@
 # silt
 
-Silt is an isolated lightweight tensor library for easy inclusion in projects that use CUDA with Python bindings.
+`silt` is an isolated lightweight tensor library for easy inclusion in projects that use CUDA with Python bindings.
 
-Note that this library doesn't implement complicated operations or features like autodifferentiation to provide a clean interface.
+The goal is to be super lightweight with minimal compile times and easy inclusion into CMake projects via git submodules.
 
-The goal is to be super lightweight with minimal compile times and easy inclusion into CMake projects.
+Note that this library doesn't implement complicated operations or features like autodifferentiation to provide a clean interface and minimal implementation.
+
+## Features
+
+- `silt` supports both CPU and GPU tensors based on CUDA.
+- `silt` is interoperable with python numpy and pytorch tensors.
+- `silt` provides a basic set of common immediate-evaluation tensor operations.
+- `silt` supports 1-4 dimensional tensors, intended for physics simulations.
+- `silt` is fully statically compiled in C++/CUDA while polymorphic in the python interface
+
+### Install Python Module
+
+*coming soon to PyPI.org*
+
+### Build Python Module
+
+Install `silt` using `pip`:
+
+```bash
+pip install .
+```
+
+No build-isolation progressive build (development):
+
+```bash
+pip install --no-build-isolation -ve .
+```
 
 ### Adding as a C++ Dependency
 
@@ -22,23 +48,21 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/ext/silt silt)
 target_link_libraries(${TARGET_NAME} PUBLIC silt_lib)
 ```
 
-### Install Python Bindings
+Note that when you use `silt` as a dependency in a separate project's python bindings, it is interoperable with other libraries that use `silt`.
 
-Install `silt` using `pip`:
+## Why another tensor library?
 
-```bash
-pip install .
-```
+`silt` was spun out of the tensor component of `soillib`, as more projects became dependent on it.
 
-No build-isolation progressive build (development):
+These projects have the same underlying goal: A polymorphic python interface for fast iteration and modular composition, with fully static C++ kernels for high performance. I found myself copy-pasting the same boilerplate over and over, so I decided to spin it out.
 
-```bash
-pip install --no-build-isolation -ve .
-```
+These projects also all share a similar build structure with similar goals: A CMake pipeline to build a C++/CUDA shared library, and python bindings with nanobind. With that in mind, this is designed to be included as a drop-in git submodule that *just works*.
 
-Note that when you use `silt` as a dependency in a separate projects python bindings, it is interoperable with other libraries that use the dependency.
+I find that other projects are often unnecessarily large for monolithic kernel development, when all I really need is a small interface to convert data from various places on the python side, and provide a simple templated interface in C++.
 
-### ToDo List
+Besides, sometimes it's just fun to roll your own. I would rather spend more time designing and building a small library like this than fighting build errors on somebody else's code.
+
+## ToDo List
 
 Find a way to further reduce the requirement for explicit template instantiations if possible.
 
