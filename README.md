@@ -2,6 +2,8 @@
 
 simple immediate lightweight tensors
 
+[Link to Full Documentation](https://erosiv.studio/docs/silt)
+
 ## What is silt?
 
 silt is an isolated lightweight tensor library for easy inclusion in projects that use CUDA with Python bindings. silt is designed for passing around tensor data between various libraries and into kernels on the GPU for physics simulation.
