@@ -2,9 +2,7 @@
 
 `silt` is an isolated lightweight tensor library for easy inclusion in projects that use CUDA with Python bindings.
 
-The goal is to be super lightweight with minimal compile times and easy inclusion into CMake projects via git submodules.
-
-Note that this library doesn't implement complicated operations or features like autodifferentiation to provide a clean interface and minimal implementation.
+`silt` is primarily a light-weight wrapper for passing tensor data around between various libraries, and into kernels on the GPU.
 
 ## Features
 
@@ -13,6 +11,10 @@ Note that this library doesn't implement complicated operations or features like
 - `silt` provides a basic set of common immediate-evaluation tensor operations.
 - `silt` supports 1-4 dimensional tensors, intended for physics simulations.
 - `silt` is fully statically compiled in C++/CUDA while polymorphic in the python interface
+
+The goal is to be super lightweight with minimal compile times and easy inclusion into CMake projects via git submodules.
+
+Note that this library doesn't implement complicated operations or features like autodifferentiation to provide a clean interface and minimal implementation.
 
 ### Install Python Module
 
