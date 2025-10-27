@@ -13,6 +13,7 @@ Contents
 
 .. toctree::
    usage
+   design
    api_cpp
    api_python
 
