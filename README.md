@@ -63,6 +63,12 @@ No build-isolation progressive build (development):
 pip install --no-build-isolation -ve .
 ```
 
+Build a distributable `.whl` file:
+
+```bash
+pip wheel .
+```
+
 ### Adding as a C++ Dependency
 
 Add silt as a submodule dependency to your repository:
@@ -80,6 +86,14 @@ target_link_libraries(${TARGET_NAME} PUBLIC silt_lib)
 ```
 
 Note that when you use `silt` as a dependency in a separate project's python bindings, it is interoperable with other libraries that use `silt`.
+
+### Build Documentation
+
+The documentation is build with sphinx:
+
+```bash
+sphinx-build doc build/html
+```
 
 ## Why another tensor library?
 
