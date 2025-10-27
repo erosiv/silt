@@ -1,8 +1,16 @@
 # silt
 
-`silt` is an isolated lightweight tensor library for easy inclusion in projects that use CUDA with Python bindings.
+simple immediate lightweight tensors
 
-`silt` is primarily a light-weight wrapper for passing tensor data around between various libraries, and into kernels on the GPU for simulating physics.
+## What is silt?
+
+silt is an isolated lightweight tensor library for easy inclusion in projects that use CUDA with Python bindings. silt is designed for passing around tensor data between various libraries and into kernels on the GPU for physics simulation.
+
+silt is designed to be trivially includable as a git submodule in projects that use a build-system based on ``CMake`` and CUDA (``nvcc``) with python bindings. This enables the designing of **non-monolithic tensor accelerated libraries**.
+
+In essence, silt represents a specific, minimal compilation setup or a kind of `minimal boilerplate glue` that improves build times while keeping interoperability without code duplication.
+
+silt is just over 2000 lines of code (with python bindings), making it extremely legible. In other words, you don't have to use silt, but if you also like to roll your own, then you can at least easily understand its structure and fork it.
 
 ## Features
 
@@ -22,30 +30,36 @@ Note that this library doesn't implement complicated operations or features like
 
 *coming soon to PyPI.org*
 
-### Python API
+### Typical Use-Case
 
-`silt` has two primary types: `shape` and `tensor`. Shape can have between 1 and 4 dimensions, while the tensor type supports multiple strict data-types and can live on the CPU or the GPU:
+A common use case is to write a small library containing a templated kernel operation:
 
-```python
-s = silt.shape(512, 512)                    # 2D Tensor Shape
-t = silt.tensor(s, silt.float32, silt.gpu)  # Strict-Typed GPU Tensor
-silt.set(t, 0.0)                            # Set Data to Zeros
+```c++
+#include <silt/silt.hpp>
+#include <silt/core/tensor.hpp>
+
+template<typename T>
+__global__ __kernel(tensor_t<T> tensor);
+
+template<typename T>
+void my_tensor_operation(silt::tensor_t<T>& tensor) {
+  __kernel<<<block, thread>>>(tensor);
+}
 ```
 
-`silt` supports no-copy data wrapping to and from pytorch or numpy, as well as a simple data uploading downloading interface:
+Exposed through bindings with ``nanobind``, your library (and all other libraries built with silt) can now operate on silt tensors.
 
 ```python
-t_numpy = silt.tensor.from_numpy(np.full((512, 512), 0.0, dtype=np.float32))                          # CPU Tensor
-t_torch = silt.tensor.from_torch(torch.full((512, 512), 0.0, dtype=torch.flota32, device=torch.cuda)) # GPU Tensor
+import silt, mylib, otherlib
 
-t_numpy = t_numpy.gpu() # Move data to GPU
-t_torch = t_torch.cpu() # Move data to CPU
+shape = silt.shape(1024, 1024)
+tensor = silt.tensor(shape, silt.float32, silt.gpu)
 
-t_numpy = t_numpy.torch() # Convert to pytorch
-t_torch = t_torch.numpy() # Convert to numpy
+mylib.my_tensor_operation(tensor)
+otherlib.their_tensor_operation(tensor)
 ```
 
-In essence, that is all `silt` does. The rest is providing the polymorphic conversion interface for strict-typed C++.
+Finally, silt takes care of details around memory allocation and deallocation, move and copy semantics, as well as conversion between polymorphic python types and strict-typed C++. silt allows you to no-copy convert tensors on the CPU and GPU to popular libraries like ``numpy`` and ``pytorch``.
 
 ## Build from Scratch
 

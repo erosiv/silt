@@ -13,9 +13,9 @@ Contents
 
 .. toctree::
    usage
-   design
    api_cpp
    api_python
+   design
 
 What is silt?
 -------------
