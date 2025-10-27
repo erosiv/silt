@@ -12,7 +12,7 @@ Contents
 --------
 
 .. toctree::
-   installation
+   usage
    api_cpp
    api_python
 
