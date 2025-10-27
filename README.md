@@ -2,7 +2,7 @@
 
 `silt` is an isolated lightweight tensor library for easy inclusion in projects that use CUDA with Python bindings.
 
-`silt` is primarily a light-weight wrapper for passing tensor data around between various libraries, and into kernels on the GPU.
+`silt` is primarily a light-weight wrapper for passing tensor data around between various libraries, and into kernels on the GPU for simulating physics.
 
 ## Features
 
@@ -16,9 +16,38 @@ The goal is to be super lightweight with minimal compile times and easy inclusio
 
 Note that this library doesn't implement complicated operations or features like autodifferentiation to provide a clean interface and minimal implementation.
 
+## Usage
+
 ### Install Python Module
 
 *coming soon to PyPI.org*
+
+### Python API
+
+`silt` has two primary types: `shape` and `tensor`. Shape can have between 1 and 4 dimensions, while the tensor type supports multiple strict data-types and can live on the CPU or the GPU:
+
+```python
+s = silt.shape(512, 512)                    # 2D Tensor Shape
+t = silt.tensor(s, silt.float32, silt.gpu)  # Strict-Typed GPU Tensor
+silt.set(t, 0.0)                            # Set Data to Zeros
+```
+
+`silt` supports no-copy data wrapping to and from pytorch or numpy, as well as a simple data uploading downloading interface:
+
+```python
+t_numpy = silt.tensor.from_numpy(np.full((512, 512), 0.0, dtype=np.float32))                          # CPU Tensor
+t_torch = silt.tensor.from_torch(torch.full((512, 512), 0.0, dtype=torch.flota32, device=torch.cuda)) # GPU Tensor
+
+t_numpy = t_numpy.gpu() # Move data to GPU
+t_torch = t_torch.cpu() # Move data to CPU
+
+t_numpy = t_numpy.torch() # Convert to pytorch
+t_torch = t_torch.numpy() # Convert to numpy
+```
+
+In essence, that is all `silt` does. The rest is providing the polymorphic conversion interface for strict-typed C++.
+
+## Build from Scratch
 
 ### Build Python Module
 
