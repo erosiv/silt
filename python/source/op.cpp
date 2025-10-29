@@ -64,21 +64,21 @@ module.def("copy", [](silt::tensor& lhs, const silt::tensor& rhs, silt::vec2 gmi
   // The interior template selection just requires that the source
   // buffer's type can be converted to the target buffer's type.
 
-  silt::select(lhs.type(), [&]<typename To>(){
-    silt::select(rhs.type(), [&]<std::convertible_to<To> From>(){
+  silt::select(lhs.type(), [&]<silt::primitive To>(){
+    silt::select(rhs.type(), [&]<silt::primitive From>(){
       silt::copy<To, From>(lhs.as<To>(), rhs.as<From>(), gmin, gmax, gscale, wmin, wmax, wscale, pscale);
     });
   });
 });
 
 module.def("resize", [](const silt::tensor& rhs, const silt::shape shape){
-  return silt::select(rhs.type(), [&rhs, shape]<typename S>() -> silt::tensor {
+  return silt::select(rhs.type(), [&rhs, shape]<silt::primitive S>() -> silt::tensor {
     return silt::tensor(silt::resize<S>(rhs.as<S>(), shape));
   });
 });
 
 module.def("resample", [](silt::tensor& target, const silt::tensor& source, const silt::vec3 t_scale, const silt::vec3 s_scale, const silt::vec2 pdiff){
-  silt::select(target.type(), [&]<typename S>() {
+  silt::select(target.type(), [&]<silt::primitive S>() {
     silt::resample<S>(target.as<S>(), source.as<S>(), t_scale, s_scale, pdiff);
   });
 });
@@ -94,13 +94,13 @@ module.def("set", [](silt::tensor& lhs, const silt::tensor& rhs){
   if (lhs.host() != rhs.host())
     throw silt::error::mismatch_host(lhs.host(), rhs.host());
   
-  silt::select(lhs.type(), [&lhs, &rhs]<typename S>(){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::set<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
 module.def("set", [](silt::tensor& tensor, const nb::object value){
-  silt::select(tensor.type(), [&tensor, &value]<typename S>(){
+  silt::select(tensor.type(), [&tensor, &value]<silt::primitive S>(){
     auto tensor_t = tensor.as<S>();
     auto value_t = nb::cast<S>(value);
     silt::set<S>(tensor_t, value_t);
@@ -118,13 +118,13 @@ module.def("add", [](silt::tensor& lhs, const silt::tensor& rhs){
   if (lhs.host() != rhs.host())
     throw silt::error::mismatch_host(lhs.host(), rhs.host());
 
-  silt::select(lhs.type(), [&lhs, &rhs]<typename S>(){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::add<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
 module.def("add", [](silt::tensor& buffer, const nb::object value){
-  silt::select(buffer.type(), [&buffer, &value]<typename S>(){
+  silt::select(buffer.type(), [&buffer, &value]<silt::primitive S>(){
     auto buffer_t = buffer.as<S>();
     auto value_t = nb::cast<S>(value);
     silt::add<S>(buffer_t, value_t);
@@ -142,13 +142,13 @@ module.def("multiply", [](silt::tensor& lhs, const silt::tensor& rhs){
   if (lhs.host() != rhs.host())
     throw silt::error::mismatch_host(lhs.host(), rhs.host());
 
-  silt::select(lhs.type(), [&lhs, &rhs]<typename S>(){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::multiply<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
 module.def("multiply", [](silt::tensor& buffer, const nb::object value){
-  silt::select(buffer.type(), [&buffer, &value]<typename S>(){
+  silt::select(buffer.type(), [&buffer, &value]<silt::primitive S>(){
     auto buffer_t = buffer.as<S>();
     auto value_t = nb::cast<S>(value);
     silt::multiply<S>(buffer_t, value_t);
@@ -168,6 +168,30 @@ module.def("normal", [](const silt::tensor& tensor, const silt::vec3 scale){
     return silt::op::normal(tensor.as<T>(), scale);
   });
 
+});
+
+//
+// RNG Operations
+//
+
+module.def("seed", [](silt::tensor& tensor, const size_t seed, const size_t offset){
+  return silt::seed(tensor.as<silt::rng>(), seed, offset);
+});
+
+module.def("sample_uniform", [](silt::tensor& tensor){
+  return silt::tensor(silt::sample_uniform(tensor.as<silt::rng>()));
+});
+
+module.def("sample_uniform", [](silt::tensor& tensor, const float min, const float max){
+  return silt::tensor(silt::sample_uniform(tensor.as<silt::rng>(), min, max));
+});
+
+module.def("sample_normal", [](silt::tensor& tensor){
+  return silt::tensor(silt::sample_normal(tensor.as<silt::rng>()));
+});
+
+module.def("sample_normal", [](silt::tensor& tensor, const float mean, const float std){
+  return silt::tensor(silt::sample_normal(tensor.as<silt::rng>(), mean, std));
 });
 
 }

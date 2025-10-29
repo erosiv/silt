@@ -129,18 +129,58 @@ template void set_impl<float> (silt::tensor_t<float> buffer,  const float val, s
 template void set_impl<double>(silt::tensor_t<double> buffer, const double val, size_t start, size_t stop, size_t step);
 
 //
-// Other Stuff
+// RNG Kernels
 //
 
-__global__ void __seed(tensor_t<curandState> buf, const size_t seed, const size_t offset) {
+__global__ void __seed(tensor_t<rng> buf, const size_t seed, const size_t offset) {
   const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= buf.elem()) return;
   curand_init(seed, n, offset, &buf[n]);
 }
 
-void seed(tensor_t<curandState>& buf, const size_t seed, const size_t offset){
+void seed(tensor_t<rng>& buf, const size_t seed, const size_t offset){
   __seed<<<block(buf.elem(), 512), 512>>>(buf, seed, offset);
   cudaDeviceSynchronize();
+}
+
+// Uniform Sampling
+
+__global__ void __sample_uniform(tensor_t<rng> buf, tensor_t<float> sample, const float min, const float max) {
+  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  if(n >= buf.elem()) return;
+  sample[n] = min + curand_uniform(&buf[n])*(max - min);
+}
+
+tensor_t<float> sample_uniform(tensor_t<rng>& buf) {
+  auto sample = tensor_t<float>(buf.shape(), silt::GPU);
+  __sample_uniform<<<block(buf.elem(), 512), 512>>>(buf, sample, 0.0f, 1.0f);
+  return sample;
+}
+
+tensor_t<float> sample_uniform(tensor_t<rng>& buf, const float min, const float max) {
+  auto sample = tensor_t<float>(buf.shape(), silt::GPU);
+  __sample_uniform<<<block(buf.elem(), 512), 512>>>(buf, sample, min, max);
+  return sample;
+}
+
+// Normal Distribution Sampling
+
+__global__ void __sample_normal(tensor_t<rng> buf, tensor_t<float> sample, const float mean, const float std) {
+  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  if(n >= buf.elem()) return;
+  sample[n] = mean + std * curand_normal(&buf[n]);
+}
+
+tensor_t<float> sample_normal(tensor_t<rng>& buf) {
+  auto sample = tensor_t<float>(buf.shape(), silt::GPU);
+  __sample_normal<<<block(buf.elem(), 512), 512>>>(buf, sample, 0.0f, 1.0f);
+  return sample;
+}
+
+tensor_t<float> sample_normal(tensor_t<rng>& buf, const float mean, const float std) {
+  auto sample = tensor_t<float>(buf.shape(), silt::GPU);
+  __sample_normal<<<block(buf.elem(), 512), 512>>>(buf, sample, mean, std);
+  return sample;
 }
 
 //

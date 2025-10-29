@@ -28,9 +28,10 @@ void bind_util(nb::module_& module){
 //
 
 nb::enum_<silt::dtype>(module, "dtype")
-  .value("int", silt::dtype::INT)
+  .value("int", silt::dtype::INT32)
   .value("float32", silt::dtype::FLOAT32)
   .value("float64", silt::dtype::FLOAT64)
+  .value("rng", silt::dtype::RNG)
   .export_values();
 
 //

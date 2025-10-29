@@ -37,6 +37,8 @@ shape.def("__repr__", [](const silt::shape& shape){
       return std::format("silt.shape({}, {}, {})", shape[0], shape[1], shape[2]).c_str(); 
     case 4:
       return std::format("silt.shape({}, {}, {}, {})", shape[0], shape[1], shape[2], shape[3]).c_str(); 
+    default:
+      return "silt.shape()";  
   }
 });
 

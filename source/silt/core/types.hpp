@@ -3,6 +3,7 @@
 
 #include <silt/silt.hpp>
 #include <silt/core/vector.hpp>
+#include <curand_kernel.h>
 
 #include <format>
 #include <typeinfo>
@@ -52,13 +53,24 @@ auto select(const silt::host_t host, F lambda, Args &&...args) {
 //! Type Descriptor Enumerator
 enum dtype {
   NONE,
-  INT,
   INT32,
-  INT64,
-  FLOAT,
   FLOAT32,
-  FLOAT64
+  FLOAT64,
+  RNG
 };
+
+typedef curandState rng;
+
+template<typename... Types>
+struct dtype_list {};
+
+template<typename T, typename List>
+concept match_list = []<typename... Types>(dtype_list<Types...>) {
+   return (std::is_same_v<Types, T> || ...);
+}(List());
+
+template<typename T>
+concept primitive = match_list<T, dtype_list<int, float, double>>;
 
 //! typedesc is a generic compile-time type descriptor,
 //! which provides common properties like string names,
@@ -74,7 +86,7 @@ struct typedesc {
 template<>
 struct typedesc<int> {
   static constexpr const char* name = "int";
-  static constexpr dtype type = INT;
+  static constexpr dtype type = INT32;
   typedef int value_t;
 };
 
@@ -90,6 +102,13 @@ struct typedesc<double> {
   static constexpr const char* name = "double";
   static constexpr dtype type = FLOAT64;
   typedef double value_t;
+};
+
+template<>
+struct typedesc<rng> {
+  static constexpr const char* name = "rng";
+  static constexpr dtype type = RNG;
+  typedef rng value_t;
 };
 
 // Enum-Based Runtime Polymorphic Visitor Pattern:
@@ -179,7 +198,7 @@ auto select(const silt::dtype type, F lambda, Args &&...args) {
   // }
 
   switch (type) {
-  case silt::INT:
+  case silt::INT32:
     if constexpr (matches_lambda<int, F, Args...>) {
       return lambda.template operator()<int>(std::forward<Args>(args)...);
     } else {
@@ -198,6 +217,15 @@ auto select(const silt::dtype type, F lambda, Args &&...args) {
       return lambda.template operator()<double>(std::forward<Args>(args)...);
     } else {
       throw silt::type_op_error<double, F>(lambda);
+    }
+    break;
+//  Note: The rng type is not included as polymorphically selectable, because
+//    it is a special data-type where you must check that it is of type rng.
+  case silt::RNG:
+    if constexpr (matches_lambda<rng, F, Args...>) {
+      return lambda.template operator()<rng>(std::forward<Args>(args)...);
+    } else {
+      throw silt::type_op_error<rng, F>(lambda);
     }
     break;
   default:

@@ -35,8 +35,6 @@ void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w);
 template<typename T>
 void clamp(tensor_t<T> lhs, const T min, const T max);
 
-void seed(tensor_t<curandState>& buf, const size_t seed, const size_t offset);
-
 template<typename T>
 tensor_t<T> resize(const tensor_t<T> rhs, const shape shape);
 
@@ -48,6 +46,22 @@ void resample(
   const vec3 s_scale,       //!< Source World-Space Scale (incl. z)
   const vec2 posdiff        //!< World-Space Positional Difference
 );
+
+//
+// RNG Functions
+//
+
+//! Seed a Random Number Generator Tensor
+void seed(tensor_t<rng>& buf, const size_t seed, const size_t offset);
+
+//! Generate Uniform Samples from a Random Number Generator Tensor
+tensor_t<float> sample_uniform(tensor_t<rng>& buf);
+tensor_t<float> sample_uniform(tensor_t<rng>& buf, const float min, const float max);
+
+//! Generate Normal Distributed Samples from a Random Number Generator Tensor
+tensor_t<float> sample_normal(tensor_t<rng>& buf);
+tensor_t<float> sample_normal(tensor_t<rng>& buf, const float mean, const float std);
+
 
 //
 // Legacy Functions
