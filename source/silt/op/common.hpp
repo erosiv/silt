@@ -21,6 +21,12 @@ template<typename T>
 void multiply(tensor_t<T> lhs, const T value);
 
 template<typename T>
+void divide(tensor_t<T> lhs, const T value);
+
+template<typename T>
+tensor_t<T> clone(const tensor_t<T> rhs);
+
+template<typename T>
 void set(tensor_t<T> lhs, const tensor_t<T> rhs);
 
 template<typename T>
@@ -28,6 +34,9 @@ void add(tensor_t<T> lhs, const tensor_t<T> rhs);
 
 template<typename T>
 void multiply(tensor_t<T> lhs, const tensor_t<T> rhs);
+
+template<typename T>
+void divide(tensor_t<T> lhs, const tensor_t<T> rhs);
 
 template<typename T>
 void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w);

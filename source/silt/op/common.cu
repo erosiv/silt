@@ -48,6 +48,17 @@ template void silt::multiply<float> (silt::tensor_t<float> buffer,  const float 
 template void silt::multiply<double>(silt::tensor_t<double> buffer, const double val);
 
 template<typename T>
+void divide(tensor_t<T> lhs, const T rhs) {
+  op::uniop_inplace(lhs, [rhs] GPU_ENABLE (const T a){
+    return a / rhs;
+  });
+}
+
+template void silt::divide<int>   (silt::tensor_t<int> buffer,    const int val);
+template void silt::divide<float> (silt::tensor_t<float> buffer,  const float val);
+template void silt::divide<double>(silt::tensor_t<double> buffer, const double val);
+
+template<typename T>
 void clamp(silt::tensor_t<T> lhs, const T min, const T max) {
   op::uniop_inplace(lhs, [min, max] GPU_ENABLE (const T a){
     return glm::clamp(a, min, max);
@@ -74,6 +85,19 @@ template void silt::set<float> (silt::tensor_t<float> lhs,   const silt::tensor_
 template void silt::set<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
 
 template<typename T>
+tensor_t<T> clone(const tensor_t<T> rhs) {
+  tensor_t<T> lhs(rhs.shape(), silt::GPU);
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE (const T a, const T b){
+    return b;
+  });
+  return lhs;
+}
+
+template tensor_t<int>    silt::clone<int>   (const silt::tensor_t<int> rhs);
+template tensor_t<float>  silt::clone<float> (const silt::tensor_t<float> rhs);
+template tensor_t<double> silt::clone<double>(const silt::tensor_t<double> rhs);
+
+template<typename T>
 void add(tensor_t<T> lhs, const tensor_t<T> rhs) {
   op::binop_inplace(lhs, rhs, [] GPU_ENABLE (const T a, const T b){
     return a + b;
@@ -94,6 +118,18 @@ void multiply(tensor_t<T> lhs, const tensor_t<T> rhs) {
 template void silt::multiply<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
 template void silt::multiply<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
 template void silt::multiply<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
+
+template<typename T>
+void divide(tensor_t<T> lhs, const tensor_t<T> rhs) {
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE (const T a, const T b){
+    return a / b;
+  });
+}
+
+template void silt::divide<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
+template void silt::divide<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
+template void silt::divide<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
+
 
 template<typename T>
 void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w) {

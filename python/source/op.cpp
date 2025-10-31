@@ -107,6 +107,13 @@ module.def("set", [](silt::tensor& tensor, const nb::object value){
   });
 });
 
+module.def("clone", [](silt::tensor& tensor){
+  return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> silt::tensor {
+    auto tensor_t = tensor.as<S>();
+    return silt::clone<S>(tensor_t);
+  });
+});
+
 module.def("add", [](silt::tensor& lhs, const silt::tensor& rhs){
 
   if(lhs.type() != rhs.type())
@@ -152,6 +159,30 @@ module.def("multiply", [](silt::tensor& buffer, const nb::object value){
     auto buffer_t = buffer.as<S>();
     auto value_t = nb::cast<S>(value);
     silt::multiply<S>(buffer_t, value_t);
+  });
+});
+
+module.def("divide", [](silt::tensor& lhs, const silt::tensor& rhs){
+  
+  if(lhs.type() != rhs.type())
+    throw silt::error::mismatch_type(lhs.type(), rhs.type());
+
+  if (lhs.elem() != rhs.elem())
+    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+
+  if (lhs.host() != rhs.host())
+    throw silt::error::mismatch_host(lhs.host(), rhs.host());
+
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::divide<S>(lhs.as<S>(), rhs.as<S>());
+  });
+});
+
+module.def("divide", [](silt::tensor& buffer, const nb::object value){
+  silt::select(buffer.type(), [&buffer, &value]<silt::primitive S>(){
+    auto buffer_t = buffer.as<S>();
+    auto value_t = nb::cast<S>(value);
+    silt::divide<S>(buffer_t, value_t);
   });
 });
 
