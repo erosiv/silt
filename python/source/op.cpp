@@ -88,10 +88,10 @@ module.def("set", [](silt::tensor& lhs, const silt::tensor& rhs){
   if(lhs.type() != rhs.type())
     throw silt::error::mismatch_type(lhs.type(), rhs.type());
   
-  if (lhs.elem() != rhs.elem())
+  if(lhs.elem() != rhs.elem())
     throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
 
-  if (lhs.host() != rhs.host())
+  if(lhs.host() != rhs.host())
     throw silt::error::mismatch_host(lhs.host(), rhs.host());
   
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
@@ -107,6 +107,23 @@ module.def("set", [](silt::tensor& tensor, const nb::object value){
   });
 });
 
+module.def("mix", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) {
+
+  if(lhs.type() != rhs.type())
+    throw silt::error::mismatch_type(lhs.type(), rhs.type());
+
+  if(lhs.elem() != rhs.elem())
+    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+
+  if(lhs.host() != rhs.host())
+    throw silt::error::mismatch_host(lhs.host(), rhs.host());
+
+  silt::select(lhs.type(), [&lhs, &rhs, w]<silt::primitive S>(){
+    silt::mix<S>(lhs.as<S>(), rhs.as<S>(), w);
+  });
+
+});
+
 module.def("clone", [](silt::tensor& tensor){
   return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> silt::tensor {
     auto tensor_t = tensor.as<S>();
@@ -119,10 +136,10 @@ module.def("add", [](silt::tensor& lhs, const silt::tensor& rhs){
   if(lhs.type() != rhs.type())
     throw silt::error::mismatch_type(lhs.type(), rhs.type());
 
-  if (lhs.elem() != rhs.elem())
+  if(lhs.elem() != rhs.elem())
     throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
 
-  if (lhs.host() != rhs.host())
+  if(lhs.host() != rhs.host())
     throw silt::error::mismatch_host(lhs.host(), rhs.host());
 
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
@@ -143,10 +160,10 @@ module.def("multiply", [](silt::tensor& lhs, const silt::tensor& rhs){
   if(lhs.type() != rhs.type())
     throw silt::error::mismatch_type(lhs.type(), rhs.type());
 
-  if (lhs.elem() != rhs.elem())
+  if(lhs.elem() != rhs.elem())
     throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
 
-  if (lhs.host() != rhs.host())
+  if(lhs.host() != rhs.host())
     throw silt::error::mismatch_host(lhs.host(), rhs.host());
 
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
@@ -167,10 +184,10 @@ module.def("divide", [](silt::tensor& lhs, const silt::tensor& rhs){
   if(lhs.type() != rhs.type())
     throw silt::error::mismatch_type(lhs.type(), rhs.type());
 
-  if (lhs.elem() != rhs.elem())
+  if(lhs.elem() != rhs.elem())
     throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
 
-  if (lhs.host() != rhs.host())
+  if(lhs.host() != rhs.host())
     throw silt::error::mismatch_host(lhs.host(), rhs.host());
 
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){

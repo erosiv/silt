@@ -138,7 +138,9 @@ void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w) {
   });
 }
 
+template void silt::mix<int>   (silt::tensor_t<int> buffer,     const silt::tensor_t<int> rhs, const float w);
 template void silt::mix<float> (silt::tensor_t<float> buffer,   const silt::tensor_t<float> rhs, const float w);
+template void silt::mix<double>(silt::tensor_t<double> buffer,  const silt::tensor_t<double> rhs, const float w);
 
 //
 // Setting Kernels
