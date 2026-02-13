@@ -33,10 +33,14 @@
 
 // Exported Symbols from the Shared DLL Macro
 
-#if defined(SHARED_BUILD)
-#  define EXPORT_SHARED __declspec(dllexport)
+#if defined(_WIN32)
+#  if defined(SHARED_BUILD)
+#    define EXPORT_SHARED __declspec(dllexport)
+#  else
+#    define EXPORT_SHARED __declspec(dllexport)
+#  endif
 #else
-#  define EXPORT_SHARED __declspec(dllexport)
+#  define EXPORT_SHARED
 #endif
 
 namespace silt {

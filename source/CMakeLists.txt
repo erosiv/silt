@@ -9,6 +9,7 @@ set_target_properties(${TARGET_NAME} PROPERTIES
 )
 target_compile_definitions(${TARGET_NAME} PRIVATE -DSHARED_BUILD)
 target_include_directories(${TARGET_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/silt>
   .
 )

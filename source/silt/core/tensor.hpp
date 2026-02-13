@@ -100,7 +100,7 @@ struct tensor_t: typedbase {
   // Data Inspection
   //
 
-  GPU_ENABLE inline shape shape()   const { return this->_shape; }
+  GPU_ENABLE inline silt::shape shape()   const { return this->_shape; }
   GPU_ENABLE inline size_t elem()   const { return this->_shape.elem; }         //!< Number of Elements
   GPU_ENABLE inline size_t size()   const { return this->elem() * sizeof(T); }  //!< Total Size in Bytes
   GPU_ENABLE inline size_t refs()   const { return *this->_refs; }              //!< Reference Count
