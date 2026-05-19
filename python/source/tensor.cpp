@@ -70,6 +70,8 @@ tensor.def_static("from_numpy", [](const nb::object& object){
     return __tensor_from_numpy<float>(array);
   } else if(array.dtype() == nb::dtype<double>()){
     return __tensor_from_numpy<double>(array);
+  } else if(array.dtype() == nb::dtype<int>()){
+    return __tensor_from_numpy<int>(array);
   } else {
     throw std::runtime_error("type not supported");
   }
