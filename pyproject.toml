@@ -4,8 +4,8 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "silt"
-version = "1.0.2"
-description = "Super Lightweight Tensors"
+version = "1.1.0"
+description = "Simple Immediate Lightweight Tensors"
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"

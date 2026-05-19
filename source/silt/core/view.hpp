@@ -41,26 +41,6 @@ private:
   T* data;  //!< Raw Data Pointer
 };
 
-template<typename T>
-struct const_view_t {
-
-  GPU_ENABLE const_view_t(const T* data, const size_t elem, const host_t host):
-    data(data),
-    elem(elem),
-    host(host){}
-
-  const size_t elem;  //!< Total Number of Elements T
-  const host_t host;  //!< Compute Device Location
-
-  //! Const Subscript Operator
-  GPU_ENABLE T operator[](const size_t index) const noexcept {
-    return this->data[index];
-  }
-
-private:
-  const T* data;  //!< Raw Data Pointer
-};
-
 }
 
 #endif

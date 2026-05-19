@@ -7,9 +7,9 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'silt'
-copyright = '2025, Nicholas McDonald, erosiv Studio'
+copyright = '2026, Nicholas McDonald, erosiv Studio'
 author = 'Nicholas McDonald, erosiv Studio'
-release = '1.0.2'
+release = '1.1.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

@@ -285,7 +285,7 @@ template silt::tensor_t<double> silt::resize<double>(const silt::tensor_t<double
 
 // template<typename T, typename F>
 template<typename T, typename F>
-__global__ void __resample(view_t<T> target, const const_view_t<T> source, F f){
+__global__ void __resample(view_t<T> target, const view_t<const T> source, F f){
   const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
   if(n < target.elem) {
     f(target, source, n);
@@ -293,7 +293,7 @@ __global__ void __resample(view_t<T> target, const const_view_t<T> source, F f){
 }
 
 template<typename T, typename F>
-void resample__(view_t<T> target, const const_view_t<T> source, F func) {
+void resample__(view_t<T> target, const view_t<const T> source, F func) {
   __resample<<<block(target.elem, 512), 512>>>(target, source, func);
 }
 
@@ -314,7 +314,7 @@ __device__ bool __isnanv(vec3 val){
 
 
 template<typename T>
-__device__ lerp_t<T> __gather(const silt::const_view_t<T>& view, const silt::shape shape, const vec2 pos) {
+__device__ lerp_t<T> __gather(const silt::view_t<const T>& view, const silt::shape shape, const vec2 pos) {
 
   const ivec2 p00 = ivec2(pos) + ivec2(0, 0);
   const ivec2 p01 = ivec2(pos) + ivec2(0, 1);
@@ -360,11 +360,11 @@ void __resample_impl(
   const silt::shape shape_t = silt::shape(target.shape()[1], target.shape()[0]);
   const silt::shape shape_s = silt::shape(source.shape()[1], source.shape()[0]);
 
-  const const_view_t source_v = source.template view<S>();
+  const view_t source_v = source.template view<S>();
   view_t target_v = target.template view<S>();
 
   resample__(target_v, source_v,
-    [=] __device__ (view_t<S>& target, const const_view_t<S> source, const unsigned int n){
+    [=] __device__ (view_t<S>& target, const view_t<const S> source, const unsigned int n){
 
       vec2 t_pos = shape_t.unflatten(n);
       t_pos.x = shape_t[0] - t_pos.x;

@@ -133,8 +133,8 @@ struct tensor_t: typedbase {
   };
 
   template<typename S>
-  GPU_ENABLE const_view_t<S> view() const noexcept {
-    return const_view_t<S>(
+  GPU_ENABLE view_t<const S> view() const noexcept {
+    return view_t<const S>(
       reinterpret_cast<const S*>(this->data()),
       this->size() / sizeof(S),
       this->host()
