@@ -21,6 +21,7 @@ nanobind_add_module(${MODULE_NAME}
   source/tensor.cpp
   source/op.cpp
   source/util.cpp
+  source/indexed.cpp
   NB_SHARED
 )
 target_compile_definitions(${MODULE_NAME} PRIVATE

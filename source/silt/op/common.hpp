@@ -3,7 +3,6 @@
 
 #include <limits>
 #include <silt/core/tensor.hpp>
-#include <silt/core/operation.hpp>
 
 namespace silt {
 

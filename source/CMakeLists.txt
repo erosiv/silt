@@ -16,6 +16,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
 
 target_sources(${TARGET_NAME} PUBLIC
   silt/op/common.cu
+  silt/op/indexed.cu
 )
 
 find_package(glm CONFIG REQUIRED)

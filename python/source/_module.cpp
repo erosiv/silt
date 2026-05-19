@@ -12,6 +12,7 @@ namespace nb = nanobind;
 void bind_shape(nb::module_& module);
 void bind_tensor(nb::module_& module);
 void bind_op(nb::module_& module);
+void bind_indexed(nb::module_& module);
 void bind_util(nb::module_& module);
 
 // Module Main Function
@@ -25,6 +26,7 @@ module.doc() = "silt python bindings";
 bind_shape(module);
 bind_tensor(module);
 bind_op(module);
+bind_indexed(module);
 bind_util(module);
 
 }

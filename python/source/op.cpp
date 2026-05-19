@@ -10,7 +10,6 @@ namespace nb = nanobind;
 #include <nanobind/stl/function.h>
 
 #include <silt/core/types.hpp>
-#include <silt/core/operation.hpp>
 #include <silt/op/common.hpp>
 #include <silt/op/normal.hpp>
 

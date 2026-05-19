@@ -22,9 +22,11 @@ namespace op {
 // and are intended to simplify the code structure for common
 // operation types between tensors.
 
-#ifdef HAS_CUDA
-
+//
 // In-Place Operation Kernels
+//
+
+// In-Place Unary Operation
 
 template<typename T, typename F>
 __global__ void __uniop_inplace(tensor_t<T> lhs, F f){
@@ -33,18 +35,6 @@ __global__ void __uniop_inplace(tensor_t<T> lhs, F f){
     lhs[n] = f(lhs[n]);
   }
 }
-
-template<typename T, typename F>
-__global__ void __binop_inplace(tensor_t<T> lhs, const tensor_t<T> rhs, F func) {
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
-  if(n < lhs.elem()){
-    const T a = lhs[n];
-    const T b = rhs[n];
-    lhs[n] = func(a, b);
-  }
-}
-
-// In-Place Operation Host Functions
 
 template<typename T, typename F>
 void uniop_inplace(tensor_t<T> lhs, F func) {
@@ -61,6 +51,49 @@ void uniop_inplace(tensor_t<T> lhs, F func) {
 
 }
 
+// In-Place Indexed Unary Operation
+
+template<typename T, typename F>
+__global__ void __uniop_inplace_indexed(tensor_t<T> lhs, const tensor_t<int> ind, F f){
+  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  if(n < ind.elem()){
+    const int i = ind[n];
+    if(i < lhs.elem()){
+      lhs[i] = f(lhs[i]);
+    }
+  }
+}
+
+template<typename T, typename F>
+void uniop_inplace_indexed(tensor_t<T> lhs, const tensor_t<int> ind, F func) {
+
+  if(lhs.host() == silt::host_t::CPU) {
+    for(size_t n = 0; n < ind.elem(); ++n) {
+      const int i = ind[n];
+      if(i < lhs.elem()) {
+        lhs[i] = func(lhs[i]);
+      }
+    }
+  }
+
+  else if(lhs.host() == silt::host_t::GPU){
+    __uniop_inplace_indexed<<<block(ind.elem(), 512), 512>>>(lhs, ind, func);
+  }
+
+}
+
+// In-Place Binary Operation
+
+template<typename T, typename F>
+__global__ void __binop_inplace(tensor_t<T> lhs, const tensor_t<T> rhs, F func) {
+  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  if(n < lhs.elem()){
+    const T a = lhs[n];
+    const T b = rhs[n];
+    lhs[n] = func(a, b);
+  }
+}
+
 template<typename T, typename F>
 void binop_inplace(tensor_t<T> lhs, const tensor_t<T> rhs, F func) {
 
@@ -75,8 +108,6 @@ void binop_inplace(tensor_t<T> lhs, const tensor_t<T> rhs, F func) {
   }
 
 }
-
-#endif
 
 }
 }
