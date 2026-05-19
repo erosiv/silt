@@ -26,6 +26,10 @@ module.def("indexed_set", [](silt::tensor& lhs, const nb::object value, const si
 
 });
 
+module.def("index_radius", [](const silt::shape& shape, const silt::vec2 center, const float radius){
+  return silt::tensor(silt::index_radius(shape, center, radius));
+});
+
 }
 
 #endif
