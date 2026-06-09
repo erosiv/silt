@@ -7,6 +7,8 @@ namespace nb = nanobind;
 #include <silt/core/shape.hpp>
 #include <format>
 
+#include "glm.hpp"
+
 //! General Util Binding Function
 void bind_shape(nb::module_& module) {
 
@@ -24,6 +26,10 @@ shape.def(nb::init<int, int, int, int>());
 
 shape.def_ro("dim", &silt::shape::dim);
 shape.def_ro("elem", &silt::shape::elem);
+
+shape.def_ro("ext", &silt::shape::ext);
+shape.def_ro("offset", &silt::shape::offset);
+shape.def_ro("stride", &silt::shape::stride);
 
 shape.def("__getitem__", &silt::shape::operator[]);
 

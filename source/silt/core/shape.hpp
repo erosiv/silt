@@ -24,26 +24,36 @@ struct shape {
 
   GPU_ENABLE shape(int d0, int d1, int d2, int d3):
     ext{d0, d1, d2, d3},
+    offset{0, 0, 0, 0},
+    stride{1, 1, 1, 1},
     elem{d0*d1*d2*d3},
     dim{4}{}
 
   GPU_ENABLE shape(int d0, int d1, int d2):
     ext{d0, d1, d2, 1},
+    offset{0, 0, 0, 0},
+    stride{1, 1, 1, 1},
     elem{d0*d1*d2},
     dim{3}{}
 
   GPU_ENABLE shape(int d0, int d1):
     ext{d0, d1, 1, 1},
+    offset{0, 0, 0, 0},
+    stride{1, 1, 1, 1},
     elem{d0*d1},
     dim{2}{}
 
   GPU_ENABLE shape(int d0):
     ext{d0, 1, 1, 1},
+    offset{0, 0, 0, 0},
+    stride{1, 1, 1, 1},
     elem{d0},
     dim{1}{}
 
   GPU_ENABLE shape():
     ext{1, 1, 1, 1},
+    offset{0, 0, 0, 0},
+    stride{1, 1, 1, 1},
     elem{1},
     dim{0}{}
 
@@ -117,9 +127,12 @@ struct shape {
 
   // Data-Members
 
-  vec_t ext;
-  int elem;
-  int dim;
+  int dim;    //!< Total Number of Active Dimensions
+  int elem;   //!< Total Number of Elements
+
+  vec_t ext;    //!< Per-Dimension Extent
+  vec_t offset; //!< Per-Dimension Slice Offset
+  vec_t stride; //!< Per-Dimension Slice Stride
 
 };
 
