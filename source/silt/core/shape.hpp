@@ -3,6 +3,7 @@
 
 #include <silt/silt.hpp>
 #include <silt/core/types.hpp>
+#include <silt/core/error.hpp>
 
 namespace silt {
 
@@ -18,44 +19,55 @@ namespace silt {
 //!
 struct shape {
 
-  // Constructors
-
   using vec_t = glm::vec<4, int>;
 
+  // Constructors
+
   GPU_ENABLE shape(int d0, int d1, int d2, int d3):
-    ext{d0, d1, d2, d3},
-    elem{d0*d1*d2*d3},
-    dim{4}{}
+    _ext{d0, d1, d2, d3} {
+      this->_dim = shape::count_dim(this->ext());
+      this->_elem = shape::count_elem(this->ext());
+    }
 
   GPU_ENABLE shape(int d0, int d1, int d2):
-    ext{d0, d1, d2, 1},
-    elem{d0*d1*d2},
-    dim{3}{}
+    _ext{d0, d1, d2, 1} {
+      this->_dim = shape::count_dim(this->ext());
+      this->_elem = shape::count_elem(this->ext());
+    }
 
   GPU_ENABLE shape(int d0, int d1):
-    ext{d0, d1, 1, 1},
-    elem{d0*d1},
-    dim{2}{}
+    _ext{d0, d1, 1, 1} {
+      this->_dim = shape::count_dim(this->ext());
+      this->_elem = shape::count_elem(this->ext());
+    }
 
   GPU_ENABLE shape(int d0):
-    ext{d0, 1, 1, 1},
-    elem{d0},
-    dim{1}{}
+    _ext{d0, 1, 1, 1} {
+      this->_dim = shape::count_dim(this->ext());
+      this->_elem = shape::count_elem(this->ext());
+    }
 
   GPU_ENABLE shape():
-    ext{1, 1, 1, 1},
-    elem{1},
-    dim{0}{}
+    _ext{1, 1, 1, 1} {
+      this->_dim = shape::count_dim(this->ext());
+      this->_elem = shape::count_elem(this->ext());
+    }
+
+  // Member Lookup
+
+  GPU_ENABLE inline int dim()   const { return this->_dim; }
+  GPU_ENABLE inline int elem()  const { return this->_elem; }
+  GPU_ENABLE inline vec_t ext() const { return this->_ext; }
 
   //! Dimension Subscript Operator
   GPU_ENABLE inline int operator[](const size_t d) const {
-    return this->ext[d];
+    return this->_ext[d];
   }
 
   //! Out-Of-Bounds Check (Compact)
   GPU_ENABLE bool oob(const vec_t pos) const {
-    for (size_t d = 0; d < this->dim; ++d)
-      if (pos[d] < 0 || pos[d] >= this->ext[d])
+    for (size_t d = 0; d < this->_dim; ++d)
+      if (pos[d] < 0 || pos[d] >= this->_ext[d])
         return true;
     return false;
   }
@@ -64,14 +76,14 @@ struct shape {
 
   GPU_ENABLE bool oob(const silt::ivec2 pos) const {
     for (size_t d = 0; d < 2; ++d)
-      if (pos[d] < 0 || pos[d] >= this->ext[d])
+      if (pos[d] < 0 || pos[d] >= this->_ext[d])
         return true;
     return false;
   }
 
   GPU_ENABLE bool oob(const silt::ivec3 pos) const {
     for (size_t d = 0; d < 3; ++d)
-      if (pos[d] < 0 || pos[d] >= this->ext[d])
+      if (pos[d] < 0 || pos[d] >= this->_ext[d])
         return true;
     return false;
   }
@@ -79,7 +91,7 @@ struct shape {
   GPU_ENABLE int flatten(const silt::ivec2 pos) const {
     int index{0};
     for (size_t d = 0; d < 2; ++d) {
-      index *= this->ext[d];
+      index *= this->_ext[d];
       index += pos[d];
     }
     return index;
@@ -88,7 +100,7 @@ struct shape {
   GPU_ENABLE int flatten(const silt::ivec3 pos) const {
     int index{0};
     for (size_t d = 0; d < 3; ++d) {
-      index *= this->ext[d];
+      index *= this->_ext[d];
       index += pos[d];
     }
     return index;
@@ -97,8 +109,8 @@ struct shape {
   //! Flattening Operator
   GPU_ENABLE int flatten(const vec_t pos) const {
     int index{0};
-    for (size_t d = 0; d < this->dim; ++d) {
-      index *= this->ext[d];
+    for (size_t d = 0; d < this->_dim; ++d) {
+      index *= this->_ext[d];
       index += pos[d];
     }
     return index;
@@ -108,18 +120,48 @@ struct shape {
   GPU_ENABLE vec_t unflatten(const int index) const {
     vec_t value{0};
     int scale = 1;
-    for (int d = this->dim - 1; d >= 0; --d) {
-      value[d] = (index / scale) % this->ext[d];
-      scale *= this->ext[d];
+    for (int d = this->_dim - 1; d >= 0; --d) {
+      value[d] = (index / scale) % this->_ext[d];
+      scale *= this->_ext[d];
     }
     return value;
   }
 
-  // Data-Members
+  //
+  // Shape Manipulation
+  //
 
-  int dim;    //!< Total Number of Active Dimensions
-  int elem;   //!< Total Number of Elements
-  vec_t ext;  //!< Per-Dimension Extent
+  void reshape(int d0, int d1 = 1, int d2 = 1, int d3 = 1) {
+
+    const int elem = d0 * d1 * d2 * d3;
+    if(elem != this->elem())
+      throw silt::error::bad_reshape(this->elem(), elem);
+
+    this->_ext = {d0, d1, d2, d3};
+    this->_dim = count_dim(this->_ext);
+
+  }
+
+private:
+
+  static GPU_ENABLE int count_elem(const vec_t ext) {
+    return ext[0] * ext[1] * ext[2] * ext[3];
+  }
+
+  static GPU_ENABLE int count_dim(const vec_t ext) {
+    int d = 0;
+    if(ext[0] > 1) d = 1;
+    if(ext[1] > 1) d = 2;
+    if(ext[2] > 1) d = 3;
+    if(ext[3] > 1) d = 4;
+    return d;
+  }
+
+  // Data Members
+
+  int _dim;    //!< Total Number of Active Dimensions
+  int _elem;   //!< Total Number of Elements
+  vec_t _ext;  //!< Per-Dimension Extent
 
 };
 

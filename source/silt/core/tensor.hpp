@@ -101,7 +101,7 @@ struct tensor_t: typedbase {
   //
 
   GPU_ENABLE inline silt::shape shape()   const { return this->_shape; }
-  GPU_ENABLE inline size_t elem()   const { return this->_shape.elem; }         //!< Number of Elements
+  GPU_ENABLE inline size_t elem()   const { return this->_shape.elem(); }       //!< Number of Elements
   GPU_ENABLE inline size_t size()   const { return this->elem() * sizeof(T); }  //!< Total Size in Bytes
   GPU_ENABLE inline size_t refs()   const { return *this->_refs; }              //!< Reference Count
   GPU_ENABLE inline host_t host()   const { return this->_host; }               //!< Current Device (CPU / GPU)
@@ -141,6 +141,18 @@ struct tensor_t: typedbase {
     );
   };
 
+  // Shape Manipulation
+
+  void reshape (const int d0 = 1, const int d1 = 1, const int d2 = 1, const int d3 = 1) {
+    this->_shape.reshape(d0, d1, d2, d3);
+  }
+
+  void flatten() {
+    this->reshape(this->_shape.elem());
+  }
+
+  // Host Manipulation
+
   void to_cpu(); //!< In-Place Copy Data to the CPU
   void to_gpu(); //!< In-Place Copy Data to the GPU (if available)
 
@@ -163,12 +175,12 @@ private:
 template<typename T>
 void silt::tensor_t<T>::allocate(const silt::shape shape, const host_t host) {
 
-  if (shape.elem == 0)
+  if (shape.elem() == 0)
     throw std::invalid_argument("size must be greater than 0");
   this->_shape = shape;
 
   if (host == CPU) {
-    this->_data = new T[shape.elem];
+    this->_data = new T[shape.elem()];
   } else if (host == GPU) {
     cudaMalloc(&this->_data, this->size());
   } else {
@@ -355,6 +367,22 @@ struct EXPORT_SHARED tensor {
   void *data() {
     return select(this->type(), [self = this]<typename S>() {
       return (void *)self->as<S>().data();
+    });
+  }
+
+  //
+  // Shape Manipulation
+  //
+
+  void reshape (const int d0 = 1, const int d1 = 1, const int d2 = 1, const int d3 = 1) {
+    select(this->type(), [&, self = this]<typename S>() {
+      self->as<S>().reshape(d0, d1, d2, d3);
+    });
+  }
+
+  void flatten() {
+    select(this->type(), [self = this]<typename S>() {
+      self->as<S>().flatten();
     });
   }
 

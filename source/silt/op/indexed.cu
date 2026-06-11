@@ -28,19 +28,19 @@ template void silt::indexed_set<double>(silt::tensor_t<double> lhs,  const doubl
 
 __global__ void __index_radius(silt::tensor_t<int> index, const silt::shape shape, const silt::vec2 center, const float rad) {\
   const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
-  if(n < shape.elem) {
+  if(n < shape.elem()) {
     const silt::vec2 pos = shape.unflatten(n);
     if(glm::length(pos - center) < rad) {
       index[n] = n;
     } else {
-      index[n] = shape.elem;
+      index[n] = shape.elem();
     }
   }
 }
 
 tensor_t<int> index_radius(const silt::shape shape, const silt::vec2 center, const float rad) {
   silt::tensor_t<int> index(shape, silt::host_t::GPU);
-  __index_radius<<<block(shape.elem, 512), 512>>>(index, shape, center, rad);
+  __index_radius<<<block(shape.elem(), 512), 512>>>(index, shape, center, rad);
   return index;
 }
 

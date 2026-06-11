@@ -106,6 +106,24 @@ private:
   std::string msg;
 };
 
+struct bad_reshape: std::exception {
+  bad_reshape(size_t want, size_t have) {
+    std::stringstream ss;
+    ss << "bad reshape (mismatched element count). want(";
+    ss << want;
+    ss << "), have(";
+    ss << have;
+    ss << ")";
+    this->msg = ss.str();
+  }
+  const char *what() const noexcept override {
+    return this->msg.c_str();
+  }
+
+private:
+  std::string msg;
+};
+
 struct unsupported_host: std::exception {
   unsupported_host(host_t want, host_t have) {
     std::stringstream ss;

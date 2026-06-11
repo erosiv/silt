@@ -3,6 +3,7 @@
 
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;
+using namespace nb::literals;
 
 #include <nanobind/ndarray.h>
 #include <silt/core/tensor.hpp>
@@ -46,8 +47,19 @@ tensor.def("gpu", [](silt::tensor& tensor){
 });
 
 //
-// Slicing Logic / Tensor Views
+// Slicing Logic / Tensor Views:
+//  Note that these operations are in-place but return copy of self.
 //
+
+tensor.def("reshape", [](silt::tensor& tensor, int d0, int d1, int d2, int d3) {
+  tensor.reshape(d0, d1, d2, d3);
+  return tensor;
+}, "d0"_a = 1, "d1"_a = 1, "d2"_a = 1, "d3"_a = 1);
+
+tensor.def("flatten", [](silt::tensor& tensor){
+  tensor.flatten();
+  return tensor;
+});
 
 tensor.def("view", [](silt::tensor& tensor) {
   return silt::select(tensor.type(), [&tensor]<typename T>() -> silt::view {

@@ -3,6 +3,7 @@
 
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;
+using namespace nb::literals;
 
 #include <silt/core/view.hpp>
 #include <silt/core/error.hpp>
@@ -25,6 +26,8 @@ view.def_prop_ro("type", &silt::view::type);
 view.def_prop_ro("elem", &silt::view::elem);
 view.def_prop_ro("host", &silt::view::host);
 view.def_prop_ro("slice", &silt::view::slice);
+
+view.def("reshape", &silt::view::reshape, "d0"_a = 1, "d1"_a = 1, "d2"_a = 1, "d3"_a = 1);
 
 //shape.def_ro("ext", &silt::shape::ext);
 //shape.def_ro("offset", &silt::shape::offset);

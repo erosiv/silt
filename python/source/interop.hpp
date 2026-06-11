@@ -35,7 +35,7 @@ nb::object __make_numpy(const silt::tensor_t<T>& source){
   // owner = nb::find(silt::tensor source) // <- use find operator on
   //  object with original python pointer.
 
-  switch(shape.dim){
+  switch(shape.dim()){
     case 1: return __make_numpy<T, 1>(target->data(), shape, owner);
     case 2: return __make_numpy<T, 2>(target->data(), shape, owner);
     case 3: return __make_numpy<T, 3>(target->data(), shape, owner);
@@ -57,7 +57,6 @@ silt::tensor __tensor_from_numpy(const nb::ndarray<nb::numpy>& array){
   const int d2 = (ndim >= 3) ? array.shape(2) : 1;
   const int d3 = (ndim >= 4) ? array.shape(3) : 1;
   auto shape = silt::shape(d0, d1, d2, d3);
-  shape.dim = ndim;
 
   auto tensor_t = silt::tensor_t<T>(shape, silt::host_t::CPU);
   for(size_t i = 0; i < size; ++i)
@@ -101,7 +100,7 @@ nb::object __make_torch(const silt::tensor_t<T>& source){
   });
   silt::set(*target, source);
 
-  switch(shape.dim){
+  switch(shape.dim()){
     case 1: return __make_torch<T, 1>(target->data(), shape, owner);
     case 2: return __make_torch<T, 2>(target->data(), shape, owner);
     case 3: return __make_torch<T, 3>(target->data(), shape, owner);
@@ -123,7 +122,6 @@ silt::tensor __tensor_from_torch(const nb::ndarray<nb::pytorch>& array){
   const int d2 = (ndim >= 3) ? array.shape(2) : 1;
   const int d3 = (ndim >= 4) ? array.shape(3) : 1;
   auto shape = silt::shape(d0, d1, d2, d3);
-  shape.dim = ndim;
 
   // Copy Data into New Tensor
   auto target_t = silt::tensor_t<T>(shape, silt::host_t::GPU);

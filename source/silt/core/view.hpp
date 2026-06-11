@@ -53,6 +53,12 @@ struct view_t: typedbase {
     return this->_data[index];
   }
 
+  // Advanced Shape Manipulation
+
+  void reshape(int d0, int d1, int d2, int d3) {
+    this->_slice.reshape(d0, d1, d2, d3);
+  }
+
 private:
 
   silt::slice _slice; //!< Sliced Shape of Data
@@ -145,6 +151,14 @@ struct EXPORT_SHARED view {
   void *data() {
     return select(this->type(), [self = this]<typename S>() {
       return (void *)self->as<S>().data();
+    });
+  }
+
+  // Shape Manipulation Methods
+
+  void reshape(int d0, int d1, int d2, int d3) {
+    select(this->type(), [&, self = this]<typename S>() {
+      self->as<S>().reshape(d0, d1, d2, d3);
     });
   }
 
