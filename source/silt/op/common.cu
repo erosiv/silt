@@ -287,14 +287,14 @@ template silt::tensor_t<double> silt::resize<double>(const silt::tensor_t<double
 template<typename T, typename F>
 __global__ void __resample(view_t<T> target, const view_t<const T> source, F f){
   const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
-  if(n < target.elem) {
+  if(n < target.elem()) {
     f(target, source, n);
   }
 }
 
 template<typename T, typename F>
 void resample__(view_t<T> target, const view_t<const T> source, F func) {
-  __resample<<<block(target.elem, 512), 512>>>(target, source, func);
+  __resample<<<block(target.elem(), 512), 512>>>(target, source, func);
 }
 
 __device__ bool __isnanv(float val){

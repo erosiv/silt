@@ -18,7 +18,9 @@ set(MODULE_NAME silt)
 nanobind_add_module(${MODULE_NAME}
   source/_module.cpp
   source/shape.cpp
+  source/slice.cpp
   source/tensor.cpp
+  source/view.cpp
   source/op.cpp
   source/util.cpp
   source/indexed.cpp

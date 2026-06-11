@@ -10,7 +10,9 @@
 
 namespace nb = nanobind;
 void bind_shape(nb::module_& module);
+void bind_slice(nb::module_& module);
 void bind_tensor(nb::module_& module);
+void bind_view(nb::module_& module);
 void bind_op(nb::module_& module);
 void bind_indexed(nb::module_& module);
 void bind_util(nb::module_& module);
@@ -24,7 +26,9 @@ nb::set_leak_warnings(false);
 module.doc() = "silt python bindings";
 
 bind_shape(module);
+bind_slice(module);
 bind_tensor(module);
+bind_view(module);
 bind_op(module);
 bind_indexed(module);
 bind_util(module);

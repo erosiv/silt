@@ -46,6 +46,17 @@ tensor.def("gpu", [](silt::tensor& tensor){
 });
 
 //
+// Slicing Logic / Tensor Views
+//
+
+tensor.def("view", [](silt::tensor& tensor) {
+  return silt::select(tensor.type(), [&tensor]<typename T>() -> silt::view {
+    auto tensor_t = tensor.as<T>();
+    return silt::view(tensor_t.view<T>());
+  });
+});
+
+//
 // External Library Interop Interface
 //  Note: Memory is shared, not copied.
 //  The lifetimes of the objects are managed
