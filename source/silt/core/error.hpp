@@ -88,6 +88,24 @@ private:
   std::string msg;
 };
 
+struct out_of_bounds: std::exception {
+  out_of_bounds(size_t index, size_t max) {
+    std::stringstream ss;
+    ss << "index out of bounds. index(";
+    ss << index;
+    ss << "), max(";
+    ss << max;
+    ss << ")";
+    this->msg = ss.str();
+  }
+  const char *what() const noexcept override {
+    return this->msg.c_str();
+  }
+
+private:
+  std::string msg;
+};
+
 struct unsupported_host: std::exception {
   unsupported_host(host_t want, host_t have) {
     std::stringstream ss;

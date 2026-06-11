@@ -141,3 +141,28 @@ Optional: Sparsity
   Tensor Bags as more Complex Composed Maps
   Then, a map type can compose multiple of these together into weird structures including
   sparse structures, etc.
+
+#### Trouble-Shooting:
+
+Make sure that the cuda toolkit version and your driver version match:
+
+Driver Version:
+
+```bash
+nvidia-smi
+```
+
+Toolkit Version:
+
+```bash
+nvcc --version
+```
+
+Failing Builds between Platforms:
+- There are differences between MVSC and G++. In general, G++ is more strict -> if it builds on linux, it likely builds on windows.
+- For Building, the CUDA Toolkit has to be findable. On windows, set the environemnt variables / path.
+  On Linux, you would typically edit ~/.bashrc to set the appropriate paths.
+
+When updating CUDA Toolkit Version:
+- Make sure all these variables are set appropriately.
+- When updating drivers, linux typically has to be restarted. Run `nvidia-smi` to validate installation.
