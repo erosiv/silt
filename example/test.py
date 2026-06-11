@@ -5,45 +5,26 @@ import silt
 def main():
 
   print(silt)
-  s = silt.shape(8, 8)
-  print(s, s.elem)
-
-  t = silt.tensor(silt.float32, s)
 
   print("Tensor Shape:")
-  print(s)
-  print(s.dim)
-  print(s.ext)
+  s = silt.shape(4, 4)
+  print(s, s.elem, s.dim, s.ext)
 
-  print("Tensor Data:")
+  print("Tensor:")
+  t = silt.tensor(silt.float32, s)
   silt.set(t, 0.5)
   print(t.numpy())
-  print(t.reshape(2, 4, 4, 2).numpy())
 
-  print("Sliced Data:")
+  print("Tensor View:")
+  v = t.view().reshape(4, 4)
+  v.index(0, 0, 2, 2)
+  v.index(1, 0, 2, 2)
+  print(v.slice.elem)
 
-  v = t.view()
-  print(v)
-  print(v.slice)
-  v.reshape(8, 8)
-  print(v.slice)
-
-#  u = s[1,4]
-#  print(u)
-#  print(u.dim)
-#  print(u.ext)
-#  print(u.stride)
-#  print(u.offset)
-#  print(u.extlim)
-#
-#  print(u.index(0))
-#  print(u.index(1))
-#  print(u.index(2))
-#  print(u.index(3))
-#  print(u.index(4))
-#  print(u.index(5))
-#  print(u.index(6))
-#  print(u.index(7))
+  print(v.slice.transform(0))
+  print(v.slice.transform(1))
+  print(v.slice.transform(2))
+  print(v.slice.transform(3))
 
 if __name__ == "__main__":
   main()

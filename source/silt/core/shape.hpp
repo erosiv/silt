@@ -142,7 +142,9 @@ struct shape {
 
   }
 
-private:
+  //
+  // Static Helper Functions
+  //
 
   static GPU_ENABLE int count_elem(const vec_t ext) {
     return ext[0] * ext[1] * ext[2] * ext[3];
@@ -156,6 +158,8 @@ private:
     if(ext[3] > 1) d = 4;
     return d;
   }
+
+private:
 
   // Data Members
 

@@ -27,31 +27,20 @@ view.def_prop_ro("elem", &silt::view::elem);
 view.def_prop_ro("host", &silt::view::host);
 view.def_prop_ro("slice", &silt::view::slice);
 
-view.def("reshape", &silt::view::reshape, "d0"_a = 1, "d1"_a = 1, "d2"_a = 1, "d3"_a = 1);
+view.def("reshape", [](silt::view& view, int d0, int d1, int d2, int d3) {
+  view.reshape(d0, d1, d2, d3);
+  return view;
+}, "d0"_a = 1, "d1"_a = 1, "d2"_a = 1, "d3"_a = 1);
 
-//shape.def_ro("ext", &silt::shape::ext);
-//shape.def_ro("offset", &silt::shape::offset);
-//shape.def_ro("stride", &silt::shape::stride);
-//shape.def_ro("extlim", &silt::shape::extlim);
+view.def("index", [](silt::view& view, int dim, int offset, int stride, int extent) {
+  view.index(dim, offset, stride, extent);
+  return view;
+});
 
-// shape.def("__getitem__", &silt::shape::operator[]);
-// 
-// shape.def("index", &silt::shape::index);
-// 
-// shape.def("__repr__", [](const silt::shape& shape){
-//   switch(shape.dim){
-//     case 1:
-//       return std::format("silt.shape({})", shape[0]).c_str(); 
-//     case 2:
-//       return std::format("silt.shape({}, {})", shape[0], shape[1]).c_str(); 
-//     case 3:
-//       return std::format("silt.shape({}, {}, {})", shape[0], shape[1], shape[2]).c_str(); 
-//     case 4:
-//       return std::format("silt.shape({}, {}, {}, {})", shape[0], shape[1], shape[2], shape[3]).c_str(); 
-//     default:
-//       return "silt.shape()";  
-//   }
-// });
+view.def("reset", [](silt::view& view){
+  view.reset();
+  return view;
+});
 
 //
 // Slicing Logic

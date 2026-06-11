@@ -59,6 +59,14 @@ struct view_t: typedbase {
     this->_slice.reshape(d0, d1, d2, d3);
   }
 
+  void index(const int dim, const int offset, const int stride, const int extent) {
+    this->_slice.index(dim, offset, stride, extent);
+  }
+
+  void reset() {
+    this->_slice.reset();
+  }
+
 private:
 
   silt::slice _slice; //!< Sliced Shape of Data
@@ -159,6 +167,18 @@ struct EXPORT_SHARED view {
   void reshape(int d0, int d1, int d2, int d3) {
     select(this->type(), [&, self = this]<typename S>() {
       self->as<S>().reshape(d0, d1, d2, d3);
+    });
+  }
+
+  void index(const int dim, const int offset, const int stride, const int extent) {
+    select(this->type(), [&, self = this]<typename S>() {
+      self->as<S>().index(dim, offset, stride, extent);
+    });
+  }
+
+  void reset() {
+    select(this->type(), [self = this]<typename S>() {
+      self->as<S>().reset();
     });
   }
 

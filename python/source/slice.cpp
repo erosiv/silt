@@ -25,27 +25,31 @@ slice.def(nb::init<int, int>());
 slice.def(nb::init<int, int, int>());
 slice.def(nb::init<int, int, int, int>());
 
-//shape.def_ro("dim", &silt::shape::dim);
-//shape.def_ro("elem", &silt::shape::elem);
-//
-//shape.def_ro("ext", &silt::shape::ext);
-//
-//shape.def("__getitem__", &silt::shape::operator[]);
+slice.def_prop_ro("dim", &silt::slice::dim);
+slice.def_prop_ro("shape", &silt::slice::shape);
+slice.def_prop_ro("maxelem", &silt::slice::maxelem);
+slice.def_prop_ro("elem", &silt::slice::elem);
+slice.def_prop_ro("offset", &silt::slice::offset);
+slice.def_prop_ro("stride", &silt::slice::stride);
+slice.def_prop_ro("extent", &silt::slice::extent);
 
-slice.def("__repr__", [](const silt::slice& slice){
-  switch(slice.dim()){
-    case 1:
-      return std::format("silt.slice({})", slice[0]).c_str(); 
-    case 2:
-      return std::format("silt.slice({}, {})", slice[0], slice[1]).c_str(); 
-    case 3:
-      return std::format("silt.slice({}, {}, {})", slice[0], slice[1], slice[2]).c_str(); 
-    case 4:
-      return std::format("silt.slice({}, {}, {}, {})", slice[0], slice[1], slice[2], slice[3]).c_str(); 
-    default:
-      return "silt.slice()";  
-  }
-});
+slice.def("reset", &silt::slice::reset);
+slice.def("transform", &silt::slice::transform);
+
+// slice.def("__repr__", [](const silt::slice& slice){
+//   switch(slice.dim()){
+//     case 1:
+//       return std::format("silt.slice({})", slice[0]).c_str(); 
+//     case 2:
+//       return std::format("silt.slice({}, {})", slice[0], slice[1]).c_str(); 
+//     case 3:
+//       return std::format("silt.slice({}, {}, {})", slice[0], slice[1], slice[2]).c_str(); 
+//     case 4:
+//       return std::format("silt.slice({}, {}, {}, {})", slice[0], slice[1], slice[2], slice[3]).c_str(); 
+//     default:
+//       return "silt.slice()";  
+//   }
+// });
 
 //
 // Slicing Logic
