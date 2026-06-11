@@ -26,6 +26,17 @@ template void silt::set<float> (silt::tensor_t<float> lhs,   const float rhs);
 template void silt::set<double>(silt::tensor_t<double> lhs,  const double rhs);
 
 template<typename T>
+void set(view_t<T> lhs, const T rhs) {
+  op::uniop_inplace(lhs, [rhs] GPU_ENABLE (const T a){
+    return rhs;
+  });
+}
+
+template void silt::set<int>   (silt::view_t<int> lhs,     const int rhs);
+template void silt::set<float> (silt::view_t<float> lhs,   const float rhs);
+template void silt::set<double>(silt::view_t<double> lhs,  const double rhs);
+
+template<typename T>
 void add(tensor_t<T> lhs, const T rhs) {
   op::uniop_inplace(lhs, [rhs] GPU_ENABLE (const T a){
     return a + rhs;

@@ -18,13 +18,10 @@ def main():
   print("Tensor View:")
   v = t.view().reshape(4, 4)
   v.index(0, 0, 2, 2)
-  v.index(1, 0, 2, 2)
-  print(v.slice.elem)
+  v.index(1, 2, 2, 4)
 
-  print(v.slice.transform(0))
-  print(v.slice.transform(1))
-  print(v.slice.transform(2))
-  print(v.slice.transform(3))
+  silt.set(v, 0)
+  print(t.numpy())
 
 if __name__ == "__main__":
   main()

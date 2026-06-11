@@ -43,14 +43,14 @@ struct view_t: typedbase {
     return silt::typedesc<T>::type;
   }
 
-  //! Const Subscript Operator
+  //! Const Subscript Operator: With Slice Transform!
   GPU_ENABLE T operator[](const size_t index) const noexcept {
-    return this->_data[index];
+    return this->_data[this->_slice.transform(index)];
   }
   
-  //! Non-Const Subscript Operator
+  //! Non-Const Subscript Operator: With Slice Transform!
   GPU_ENABLE T &operator[](const size_t index) noexcept {
-    return this->_data[index];
+    return this->_data[this->_slice.transform(index)];
   }
 
   // Advanced Shape Manipulation

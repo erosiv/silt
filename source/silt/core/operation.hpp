@@ -29,6 +29,29 @@ namespace op {
 // In-Place Unary Operation
 
 template<typename T, typename F>
+__global__ void __uniop_inplace(view_t<T> lhs, F f){
+  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  if(n < lhs.elem()){
+    lhs[n] = f(lhs[n]);
+  }
+}
+
+template<typename T, typename F>
+void uniop_inplace(view_t<T> lhs, F func) {
+
+  if(lhs.host() == silt::host_t::CPU) {
+    for(size_t i = 0; i < lhs.elem(); ++i){
+      lhs[i] = func(lhs[i]);
+    }
+  }
+
+  else if(lhs.host() == silt::host_t::GPU) {
+    __uniop_inplace<<<block(lhs.elem(), 512), 512>>>(lhs, func);
+  }
+
+}
+
+template<typename T, typename F>
 __global__ void __uniop_inplace(tensor_t<T> lhs, F f){
   const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
   if(n < lhs.elem()){
@@ -39,13 +62,13 @@ __global__ void __uniop_inplace(tensor_t<T> lhs, F f){
 template<typename T, typename F>
 void uniop_inplace(tensor_t<T> lhs, F func) {
 
-  if(lhs.host() == silt::host_t::CPU){
+  if(lhs.host() == silt::host_t::CPU) {
     for(size_t i = 0; i < lhs.elem(); ++i){
       lhs[i] = func(lhs[i]);
     }
   }
 
-  else if(lhs.host() == silt::host_t::GPU){
+  else if(lhs.host() == silt::host_t::GPU) {
     __uniop_inplace<<<block(lhs.elem(), 512), 512>>>(lhs, func);
   }
 

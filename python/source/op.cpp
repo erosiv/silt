@@ -106,6 +106,14 @@ module.def("set", [](silt::tensor& tensor, const nb::object value){
   });
 });
 
+module.def("set", [](silt::view& view, const nb::object value){
+  silt::select(view.type(), [&view, &value]<silt::primitive S>(){
+    auto view_t = view.as<S>();
+    auto value_t = nb::cast<S>(value);
+    silt::set<S>(view_t, value_t);
+  });
+});
+
 module.def("mix", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) {
 
   if(lhs.type() != rhs.type())

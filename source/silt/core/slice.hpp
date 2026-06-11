@@ -78,7 +78,7 @@ struct slice {
   void index(const int dim, const int offset, const int stride, const int extent) {
     this->_offset[dim] = offset;
     this->_stride[dim] = stride;
-    this->_extent[dim] = extent;
+    this->_extent[dim] = std::min(extent, (this->_shape.ext()[dim] - offset) / stride);
   }
 
   GPU_ENABLE void reset() {

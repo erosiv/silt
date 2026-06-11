@@ -14,6 +14,9 @@ template<typename T>
 void set(tensor_t<T> lhs, const T value);
 
 template<typename T>
+void set(view_t<T> lhs, const T value);
+
+template<typename T>
 void add(tensor_t<T> lhs, const T value);
 
 template<typename T>
