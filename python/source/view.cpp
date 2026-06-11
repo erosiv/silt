@@ -46,56 +46,52 @@ view.def("reset", [](silt::view& view){
 // Slicing Logic
 //
 
-// shape.def("__getitem__", [](const silt::shape& shape, nb::tuple tuple) -> silt::shape {
-// 
-//   // Validate Number of Dimensions
-//   const size_t size = tuple.size();
-//   if(size != shape.dim) {
-//     throw silt::error::mismatch_size(shape.dim, size);
-//   }
-// 
-//   // Copy Original Shape
-//   silt::shape out = shape;
-// 
-//   // Iterate over Subscript Tuple
-//   for(size_t d = 0; d < size; ++d) {
-// 
-//     nb::handle handle = tuple[d];
-//     Py_ssize_t offset, stride, extlim;
-// 
-//     if (PySlice_Check(handle.ptr())) {
-// 
-//       if (PySlice_Unpack(handle.ptr(), &offset, &extlim, &stride) < 0) {
-//         throw nb::python_error();
-//       }
-// 
-//       if(offset >= shape.ext[d]) {
-//         throw silt::error::out_of_bounds(offset, shape.ext[d]);
-//       }
-// 
-//       extlim = std::min(shape.ext[d] / stride, extlim);
-// 
-//     } else {
-// 
-//       offset = nb::cast<Py_ssize_t>(handle);
-//       if(offset >= shape.ext[d]) {
-//         throw silt::error::out_of_bounds(offset, shape.ext[d]);
-//       }
-// 
-//       stride = shape.ext[d];
-//       extlim = 1;
-// 
-//     }
-// 
-//     out.offset[d] = offset;
-//     out.stride[d] = stride;
-//     out.extlim[d] = extlim;
-// 
-//   }
-//   
-//   return out;
-// 
-// });
+view.def("__getitem__", [](silt::view& view, nb::tuple tuple) -> silt::view {
+
+  // Validate Number of Dimensions
+  const size_t size = tuple.size();
+  const auto shape = view.slice().shape();
+  if(size != view.slice().dim()) {
+    throw silt::error::mismatch_size(shape.dim(), size);
+  }
+
+  // Iterate over Subscript Tuple
+  for(size_t d = 0; d < size; ++d) {
+
+    nb::handle handle = tuple[d];
+    Py_ssize_t offset, stride, extent;
+
+    if (PySlice_Check(handle.ptr())) {
+
+      if (PySlice_Unpack(handle.ptr(), &offset, &extent, &stride) < 0) {
+        throw nb::python_error();
+      }
+
+      if(offset >= shape.ext()[d]) {
+        throw silt::error::out_of_bounds(offset, shape.ext()[d]);
+      }
+
+      extent = std::min((shape.ext()[d] - offset) / stride, extent);
+
+    } else {
+
+      offset = nb::cast<Py_ssize_t>(handle);
+      if(offset >= shape.ext()[d]) {
+        throw silt::error::out_of_bounds(offset, shape.ext()[d]);
+      }
+
+      stride = 1;
+      extent = 1;
+
+    }
+
+    view.index(d, offset, stride, extent);
+
+  }
+  
+  return view;
+
+});
 
 }
 

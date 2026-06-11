@@ -64,7 +64,11 @@ tensor.def("flatten", [](silt::tensor& tensor){
 tensor.def("view", [](silt::tensor& tensor) {
   return silt::select(tensor.type(), [&tensor]<typename T>() -> silt::view {
     auto tensor_t = tensor.as<T>();
-    return silt::view(tensor_t.view<T>());
+    auto view_t = tensor_t.view<T>();
+    auto shape = tensor_t.shape();
+    // by default, the view adopts the tensor's shape
+    view_t.reshape(shape[0], shape[1], shape[2], shape[3]);
+    return silt::view(view_t);
   });
 });
 

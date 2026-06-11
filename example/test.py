@@ -16,9 +16,11 @@ def main():
   print(t.numpy())
 
   print("Tensor View:")
-  v = t.view().reshape(4, 4)
-  v.index(0, 0, 2, 2)
-  v.index(1, 2, 2, 4)
+  v = t.view()[0, :]
+  print(v.slice.offset)
+  print(v.slice.stride)
+  print(v.slice.extent)
+  print(v.elem)
 
   silt.set(v, 0)
   print(t.numpy())
