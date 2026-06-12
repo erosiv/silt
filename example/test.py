@@ -12,18 +12,21 @@ def main():
 
   print("Tensor:")
   t = silt.tensor(silt.float32, s)
+  t.gpu()
   silt.set(t, 0.5)
-  print(t.numpy())
+  print(t.cpu().numpy())
 
   print("Tensor View:")
-  v = t.view()[0, :]
+  t.gpu()
+  v = t[0, :]
+  print(v)
   print(v.slice.offset)
   print(v.slice.stride)
   print(v.slice.extent)
   print(v.elem)
 
   silt.set(v, 0)
-  print(t.numpy())
+  print(t.cpu().numpy())
 
 if __name__ == "__main__":
   main()

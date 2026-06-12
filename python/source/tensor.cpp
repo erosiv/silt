@@ -9,6 +9,39 @@ using namespace nb::literals;
 #include <silt/core/tensor.hpp>
 #include <silt/op/common.hpp>
 #include "interop.hpp"
+#include "util.hpp"
+
+silt::view __slice(silt::tensor& tensor, nb::tuple tuple) {
+  return silt::select(tensor.type(), [&tensor, tuple]<typename T>() -> silt::view {
+
+    // Construct a View from the Tensor:
+    auto tensor_t = tensor.as<T>();
+    auto view_t = tensor_t.view<T>();
+    auto shape = tensor_t.shape();
+    // by default, the view adopts the tensor's shape
+    view_t.reshape(shape[0], shape[1], shape[2], shape[3]);
+
+    // Validate Number of Dimensions
+    const size_t size = tuple.size();
+    if(size != shape.dim()) {
+      throw silt::error::mismatch_size(shape.dim(), size);
+    }
+
+    // Slice the View:
+    for(size_t d = 0; d < size; ++d) {
+
+      nb::handle handle = tuple[d];
+      Py_ssize_t offset, stride, extent;
+      __unpack_slice(handle, offset, stride, extent);
+      extent = std::min((shape.ext()[d] - offset) / stride, extent);
+      view_t.index(d, offset, stride, extent);
+
+    }
+
+    return silt::view(view_t);
+  
+  });
+}
 
 //! General Util Binding Function
 void bind_tensor(nb::module_& module){
@@ -47,8 +80,9 @@ tensor.def("gpu", [](silt::tensor& tensor){
 });
 
 //
-// Slicing Logic / Tensor Views:
+// Tensor Shape Manipulation and Slicing Logic / Tensor Views
 //  Note that these operations are in-place but return copy of self.
+//  We allow for direct subscript, or the explicit "slice" alias.
 //
 
 tensor.def("reshape", [](silt::tensor& tensor, int d0, int d1, int d2, int d3) {
@@ -56,21 +90,13 @@ tensor.def("reshape", [](silt::tensor& tensor, int d0, int d1, int d2, int d3) {
   return tensor;
 }, "d0"_a = 1, "d1"_a = 1, "d2"_a = 1, "d3"_a = 1);
 
-tensor.def("flatten", [](silt::tensor& tensor){
+tensor.def("flatten", [](silt::tensor& tensor) {
   tensor.flatten();
   return tensor;
 });
 
-tensor.def("view", [](silt::tensor& tensor) {
-  return silt::select(tensor.type(), [&tensor]<typename T>() -> silt::view {
-    auto tensor_t = tensor.as<T>();
-    auto view_t = tensor_t.view<T>();
-    auto shape = tensor_t.shape();
-    // by default, the view adopts the tensor's shape
-    view_t.reshape(shape[0], shape[1], shape[2], shape[3]);
-    return silt::view(view_t);
-  });
-});
+tensor.def("__getitem__", __slice);
+tensor.def("slice", __slice);
 
 //
 // External Library Interop Interface
