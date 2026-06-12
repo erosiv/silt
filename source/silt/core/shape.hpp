@@ -12,10 +12,11 @@ namespace silt {
 //!
 //! shape is intended for 2D and 3D applications, with a D of max 4,
 //! for 3D buffers of arbitrary depth.
+//!
+//! Note that we use count_dim and count_elem methods so that higher
+//! nested dimensions can still contribute to the shape.
 //! 
-//! \todo cleanup this type with cleaner constructors
-//! \todo add better flattening / unflattening procedures.
-//! \todo consider whether this type should have slice generators.
+//! \todo simplify flattening / unflattening procedures.
 //!
 struct shape {
 

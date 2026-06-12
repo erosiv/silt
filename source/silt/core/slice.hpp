@@ -8,12 +8,14 @@
 
 namespace silt {
 
-//! slice is a type for index conversions that supports multi-dimensional slicing
+//! slice is a type for index conversions that supports multi-dimensional slicing.
+//!
 //! This type exists primarily so that tensor operations can be executed on subspaces.
 //! This is distinct from a shape because it performs additional computations to transform
 //! coordinates, whereas the regular shape assumes densely packed regular data.
 //!
-//! todo: Consider copy-free transpositions and other ordering implementations.
+//! \todo Consider copy-free transpositions and other ordering implementations.
+//!
 struct slice {
 
   using vec_t = glm::vec<4, int>;
@@ -53,6 +55,7 @@ struct slice {
   GPU_ENABLE inline silt::shape shape() const { return this->_shape; }
   GPU_ENABLE inline int dim()           const { return this->_shape.dim(); }
   GPU_ENABLE inline int maxelem()       const { return this->_shape.elem(); }
+
   GPU_ENABLE inline vec_t offset()      const { return this->_offset; }
   GPU_ENABLE inline vec_t stride()      const { return this->_stride; }
   GPU_ENABLE inline vec_t extent()      const { return this->_extent; }
@@ -75,10 +78,21 @@ struct slice {
   }
 
   //! Slice Index along individual Dimension
-  void index(const int dim, const int offset, const int stride, const int extent) {
+  void index(const int dim, int offset, int stride, int extent) {
+
+    // Offset must be within shape bound
+    const int bound = this->_shape.ext()[dim];
+    if(offset >= bound)
+      throw silt::error::out_of_bounds(offset, bound);
+
+    // Extent is clamped to maximum extent
+    //! todo: Throw an error instead?
+    extent = std::min(extent, (bound - offset) / stride);
+
     this->_offset[dim] = offset;
     this->_stride[dim] = stride;
-    this->_extent[dim] = std::min(extent, (this->_shape.ext()[dim] - offset) / stride);
+    this->_extent[dim] = extent;
+
   }
 
   GPU_ENABLE void reset() {
@@ -92,8 +106,8 @@ struct slice {
   //
 
   GPU_ENABLE int transform(const int index) const {
-    vec_t value = this->stride() * this->_unflatten(index);
-    return this->_shape.flatten(this->offset() + value);
+    vec_t value = this->_unflatten(index);
+    return this->_shape.flatten(this->offset() + this->stride() * value);
   }
 
 private:
