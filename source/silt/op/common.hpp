@@ -10,6 +10,8 @@ namespace silt {
 // Common Operation Declarations
 //
 
+// Unary Operations
+
 template<typename T>
 void set(tensor_t<T> lhs, const T value);
 
@@ -20,13 +22,30 @@ template<typename T>
 void add(tensor_t<T> lhs, const T value);
 
 template<typename T>
+void add(view_t<T> lhs, const T value);
+
+template<typename T>
 void multiply(tensor_t<T> lhs, const T value);
+
+template<typename T>
+void multiply(view_t<T> lhs, const T value);
 
 template<typename T>
 void divide(tensor_t<T> lhs, const T value);
 
 template<typename T>
+void divide(view_t<T> lhs, const T value);
+
+template<typename T>
+void clamp(tensor_t<T> lhs, const T min, const T max);
+
+template<typename T>
+void clamp(view_t<T> lhs, const T min, const T max);
+
+template<typename T>
 tensor_t<T> clone(const tensor_t<T> rhs);
+
+// Binary Operations
 
 template<typename T>
 void set(tensor_t<T> lhs, const tensor_t<T> rhs);
@@ -43,21 +62,6 @@ void divide(tensor_t<T> lhs, const tensor_t<T> rhs);
 template<typename T>
 void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w);
 
-template<typename T>
-void clamp(tensor_t<T> lhs, const T min, const T max);
-
-template<typename T>
-tensor_t<T> resize(const tensor_t<T> rhs, const shape shape);
-
-template<typename T>
-void resample(
-  tensor_t<T> target,       //!< Target Buffer
-  const tensor_t<T> source, //!< Source Buffer
-  const vec3 t_scale,       //!< Target World-Space Scale (incl. z)
-  const vec3 s_scale,       //!< Source World-Space Scale (incl. z)
-  const vec2 posdiff        //!< World-Space Positional Difference
-);
-
 //
 // RNG Functions
 //
@@ -73,6 +77,33 @@ tensor_t<float> sample_uniform(tensor_t<rng>& buf, const float min, const float 
 tensor_t<float> sample_normal(tensor_t<rng>& buf);
 tensor_t<float> sample_normal(tensor_t<rng>& buf, const float mean, const float std);
 
+//
+// Advanced Operations
+//
+
+template<typename T>
+tensor_t<T> resize(const tensor_t<T> rhs, const shape shape);
+
+template<typename T>
+void resample(
+  tensor_t<T> target,       //!< Target Buffer
+  const tensor_t<T> source, //!< Source Buffer
+  const vec3 t_scale,       //!< Target World-Space Scale (incl. z)
+  const vec3 s_scale,       //!< Source World-Space Scale (incl. z)
+  const vec2 posdiff        //!< World-Space Positional Difference
+);
+
+template<typename To, typename From>
+silt::tensor_t<To> cast(const silt::tensor_t<From> &tensor) {
+  if (tensor.host() != silt::host_t::CPU)
+    throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
+
+  tensor_t<To> tensor_to(tensor.shape(), silt::host_t::CPU);
+  for(int i = 0; i < tensor.elem(); ++i){
+    tensor_to[i] = (To)tensor[i];
+  }
+  return tensor_to;
+}
 
 //
 // Legacy Functions
@@ -98,26 +129,6 @@ void copy(silt::tensor_t<To> &out, const silt::tensor_t<From> &in, vec2 gmin, ve
       out[ind_out] = To(From(pscale) * in[ind_in]);
     }
   }
-}
-
-//
-// Other Operations that need cleaning / deprecation...
-//
-
-//
-// Casting
-//
-
-template<typename To, typename From>
-silt::tensor_t<To> cast(const silt::tensor_t<From> &tensor) {
-  if (tensor.host() != silt::host_t::CPU)
-    throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
-
-  tensor_t<To> tensor_to(tensor.shape(), silt::host_t::CPU);
-  for(int i = 0; i < tensor.elem(); ++i){
-    tensor_to[i] = (To)tensor[i];
-  }
-  return tensor_to;
 }
 
 //

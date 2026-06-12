@@ -15,7 +15,9 @@ target_include_directories(${TARGET_NAME} PUBLIC
 )
 
 target_sources(${TARGET_NAME} PUBLIC
-  silt/op/common.cu
+  silt/op/common_unary.cu
+  silt/op/common_binary.cu
+  silt/op/uncommon.cu
   silt/op/indexed.cu
 )
 
