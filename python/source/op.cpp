@@ -17,7 +17,140 @@ namespace nb = nanobind;
 
 #include "glm.hpp"
 
+template<typename T>
+void assert_match(const T& lhs, const T& rhs) {
+  if(lhs.type() != rhs.type())
+    throw silt::error::mismatch_type(lhs.type(), rhs.type());
+  if(lhs.elem() != rhs.elem())
+    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+  if(lhs.host() != rhs.host())
+    throw silt::error::mismatch_host(lhs.host(), rhs.host());
+}
+
 void bind_op(nb::module_& module) {
+
+//
+// Unary Operations
+//
+
+module.def("set", [](silt::tensor& lhs, const nb::object rhs){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::set<S>(lhs.as<S>(), nb::cast<S>(rhs));
+  });
+});
+
+module.def("set", [](silt::view& lhs, const nb::object rhs){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::set<S>(lhs.as<S>(), nb::cast<S>(rhs));
+  });
+});
+
+module.def("add", [](silt::tensor& lhs, const nb::object rhs){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::add<S>(lhs.as<S>(), nb::cast<S>(rhs));
+  });
+});
+
+module.def("add", [](silt::view& lhs, const nb::object rhs){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::add<S>(lhs.as<S>(), nb::cast<S>(rhs));
+  });
+});
+
+module.def("multiply", [](silt::tensor& lhs, const nb::object rhs){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::multiply<S>(lhs.as<S>(), nb::cast<S>(rhs));
+  });
+});
+
+module.def("multiply", [](silt::view& lhs, const nb::object rhs){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::multiply<S>(lhs.as<S>(), nb::cast<S>(rhs));
+  });
+});
+
+module.def("divide", [](silt::tensor& lhs, const nb::object rhs){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::divide<S>(lhs.as<S>(), nb::cast<S>(rhs));
+  });
+});
+
+module.def("divide", [](silt::view& lhs, const nb::object rhs){
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::divide<S>(lhs.as<S>(), nb::cast<S>(rhs));
+  });
+});
+
+module.def("clamp", [](silt::tensor& lhs, const float min, const float max){
+  silt::select(lhs.type(), [&lhs, min, max]<std::same_as<float> S>() -> void {
+    silt::clamp(lhs.as<S>(), min, max);
+  });
+});
+
+module.def("clamp", [](silt::view& lhs, const float min, const float max){
+  silt::select(lhs.type(), [&lhs, min, max]<std::same_as<float> S>() -> void {
+    silt::clamp(lhs.as<S>(), min, max);
+  });
+});
+
+//
+// Binary Operations
+//
+
+module.def("set", [](silt::tensor& lhs, const silt::tensor& rhs){
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::set<S>(lhs.as<S>(), rhs.as<S>());
+  });
+});
+
+module.def("add", [](silt::tensor& lhs, const silt::tensor& rhs){
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::add<S>(lhs.as<S>(), rhs.as<S>());
+  });
+});
+
+module.def("multiply", [](silt::tensor& lhs, const silt::tensor& rhs){
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::multiply<S>(lhs.as<S>(), rhs.as<S>());
+  });
+});
+
+module.def("divide", [](silt::tensor& lhs, const silt::tensor& rhs){
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::divide<S>(lhs.as<S>(), rhs.as<S>());
+  });
+});
+
+module.def("mix", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) {
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs, w]<silt::primitive S>(){
+    silt::mix<S>(lhs.as<S>(), rhs.as<S>(), w);
+  });
+});
+
+// Tensor Only
+
+module.def("clone", [](silt::tensor& lhs){
+  return silt::select(lhs.type(), [&lhs]<silt::primitive S>() -> silt::tensor {
+    return silt::clone<S>(lhs.as<S>());
+  });
+});
+
+module.def("cast", [](const silt::tensor& tensor, const silt::dtype type){
+  if(tensor.type() == type){
+    return nb::cast(tensor);
+  }
+  return silt::select(type, [&tensor]<std::floating_point To>() -> nb::object {
+    return silt::select(tensor.type(), [&tensor]<std::floating_point From>() -> nb::object {
+      silt::tensor tensor = silt::cast<To, From>(tensor.as<From>());
+      return nb::cast(tensor);
+    });
+  });
+});
 
 //
 // Generic Buffer Reductions
@@ -35,27 +168,9 @@ module.def("max", [](const silt::tensor& tensor){
   });
 });
 
-module.def("clamp", [](silt::tensor& tensor, const float min, const float max){
-  silt::select(tensor.type(), [&tensor, min, max]<std::same_as<float> S>() -> void {
-    silt::clamp(tensor.as<S>(), min, max);
-  });
-});
-
 //
 // Generic Buffer Functions
 //
-
-module.def("cast", [](const silt::tensor& tensor, const silt::dtype type){
-  if(tensor.type() == type){
-    return nb::cast(tensor);
-  }
-  return silt::select(type, [&tensor]<std::floating_point To>() -> nb::object {
-    return silt::select(tensor.type(), [&tensor]<std::floating_point From>() -> nb::object {
-      silt::tensor tensor = silt::cast<To, From>(tensor.as<From>());
-      return nb::cast(tensor);
-    });
-  });
-});
 
 module.def("copy", [](silt::tensor& lhs, const silt::tensor& rhs, silt::vec2 gmin, silt::vec2 gmax, silt::vec2 gscale, silt::vec2 wmin, silt::vec2 wmax, silt::vec2 wscale, float pscale){
 
@@ -79,134 +194,6 @@ module.def("resize", [](const silt::tensor& rhs, const silt::shape shape){
 module.def("resample", [](silt::tensor& target, const silt::tensor& source, const silt::vec3 t_scale, const silt::vec3 s_scale, const silt::vec2 pdiff){
   silt::select(target.type(), [&]<silt::primitive S>() {
     silt::resample<S>(target.as<S>(), source.as<S>(), t_scale, s_scale, pdiff);
-  });
-});
-
-module.def("set", [](silt::tensor& lhs, const silt::tensor& rhs){
-
-  if(lhs.type() != rhs.type())
-    throw silt::error::mismatch_type(lhs.type(), rhs.type());
-  
-  if(lhs.elem() != rhs.elem())
-    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
-
-  if(lhs.host() != rhs.host())
-    throw silt::error::mismatch_host(lhs.host(), rhs.host());
-  
-  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
-    silt::set<S>(lhs.as<S>(), rhs.as<S>());
-  });
-});
-
-module.def("set", [](silt::tensor& tensor, const nb::object value){
-  silt::select(tensor.type(), [&tensor, &value]<silt::primitive S>(){
-    auto tensor_t = tensor.as<S>();
-    auto value_t = nb::cast<S>(value);
-    silt::set<S>(tensor_t, value_t);
-  });
-});
-
-module.def("set", [](silt::view& view, const nb::object value){
-  silt::select(view.type(), [&view, &value]<silt::primitive S>(){
-    auto view_t = view.as<S>();
-    auto value_t = nb::cast<S>(value);
-    silt::set<S>(view_t, value_t);
-  });
-});
-
-module.def("mix", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) {
-
-  if(lhs.type() != rhs.type())
-    throw silt::error::mismatch_type(lhs.type(), rhs.type());
-
-  if(lhs.elem() != rhs.elem())
-    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
-
-  if(lhs.host() != rhs.host())
-    throw silt::error::mismatch_host(lhs.host(), rhs.host());
-
-  silt::select(lhs.type(), [&lhs, &rhs, w]<silt::primitive S>(){
-    silt::mix<S>(lhs.as<S>(), rhs.as<S>(), w);
-  });
-
-});
-
-module.def("clone", [](silt::tensor& tensor){
-  return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> silt::tensor {
-    auto tensor_t = tensor.as<S>();
-    return silt::clone<S>(tensor_t);
-  });
-});
-
-module.def("add", [](silt::tensor& lhs, const silt::tensor& rhs){
-
-  if(lhs.type() != rhs.type())
-    throw silt::error::mismatch_type(lhs.type(), rhs.type());
-
-  if(lhs.elem() != rhs.elem())
-    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
-
-  if(lhs.host() != rhs.host())
-    throw silt::error::mismatch_host(lhs.host(), rhs.host());
-
-  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
-    silt::add<S>(lhs.as<S>(), rhs.as<S>());
-  });
-});
-
-module.def("add", [](silt::tensor& buffer, const nb::object value){
-  silt::select(buffer.type(), [&buffer, &value]<silt::primitive S>(){
-    auto buffer_t = buffer.as<S>();
-    auto value_t = nb::cast<S>(value);
-    silt::add<S>(buffer_t, value_t);
-  });
-});
-
-module.def("multiply", [](silt::tensor& lhs, const silt::tensor& rhs){
-  
-  if(lhs.type() != rhs.type())
-    throw silt::error::mismatch_type(lhs.type(), rhs.type());
-
-  if(lhs.elem() != rhs.elem())
-    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
-
-  if(lhs.host() != rhs.host())
-    throw silt::error::mismatch_host(lhs.host(), rhs.host());
-
-  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
-    silt::multiply<S>(lhs.as<S>(), rhs.as<S>());
-  });
-});
-
-module.def("multiply", [](silt::tensor& buffer, const nb::object value){
-  silt::select(buffer.type(), [&buffer, &value]<silt::primitive S>(){
-    auto buffer_t = buffer.as<S>();
-    auto value_t = nb::cast<S>(value);
-    silt::multiply<S>(buffer_t, value_t);
-  });
-});
-
-module.def("divide", [](silt::tensor& lhs, const silt::tensor& rhs){
-  
-  if(lhs.type() != rhs.type())
-    throw silt::error::mismatch_type(lhs.type(), rhs.type());
-
-  if(lhs.elem() != rhs.elem())
-    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
-
-  if(lhs.host() != rhs.host())
-    throw silt::error::mismatch_host(lhs.host(), rhs.host());
-
-  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
-    silt::divide<S>(lhs.as<S>(), rhs.as<S>());
-  });
-});
-
-module.def("divide", [](silt::tensor& buffer, const nb::object value){
-  silt::select(buffer.type(), [&buffer, &value]<silt::primitive S>(){
-    auto buffer_t = buffer.as<S>();
-    auto value_t = nb::cast<S>(value);
-    silt::divide<S>(buffer_t, value_t);
   });
 });
 
