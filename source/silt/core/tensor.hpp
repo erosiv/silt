@@ -19,6 +19,8 @@ namespace silt {
 template<typename T>
 struct tensor_t: typedbase {
 
+  typedef T val_t;
+
   //
   // Construction and Assignment
   //

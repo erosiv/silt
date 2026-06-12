@@ -21,6 +21,8 @@ namespace silt {
 template<typename T>
 struct view_t: typedbase {
 
+  typedef T val_t;
+
   view_t() {
     this->_slice = slice();
     this->_host = CPU;
