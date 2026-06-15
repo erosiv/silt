@@ -30,6 +30,46 @@ void assert_match(const T& lhs, const T& rhs) {
 void bind_op(nb::module_& module) {
 
 //
+// Binary Operations:
+//  Note that for nanobind, specificity wins in the function parameters.
+//
+
+module.def("set", [](silt::tensor& lhs, const silt::tensor& rhs){
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::set<S>(lhs.as<S>(), rhs.as<S>());
+  });
+});
+
+module.def("add", [](silt::tensor& lhs, const silt::tensor& rhs){
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::add<S>(lhs.as<S>(), rhs.as<S>());
+  });
+});
+
+module.def("multiply", [](silt::tensor& lhs, const silt::tensor& rhs){
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::multiply<S>(lhs.as<S>(), rhs.as<S>());
+  });
+});
+
+module.def("divide", [](silt::tensor& lhs, const silt::tensor& rhs){
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
+    silt::divide<S>(lhs.as<S>(), rhs.as<S>());
+  });
+});
+
+module.def("mix", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) {
+  assert_match(lhs, rhs);
+  silt::select(lhs.type(), [&lhs, &rhs, w]<silt::primitive S>(){
+    silt::mix<S>(lhs.as<S>(), rhs.as<S>(), w);
+  });
+});
+
+//
 // Unary Operations
 //
 
@@ -90,45 +130,6 @@ module.def("clamp", [](silt::tensor& lhs, const float min, const float max){
 module.def("clamp", [](silt::view& lhs, const float min, const float max){
   silt::select(lhs.type(), [&lhs, min, max]<std::same_as<float> S>() -> void {
     silt::clamp(lhs.as<S>(), min, max);
-  });
-});
-
-//
-// Binary Operations
-//
-
-module.def("set", [](silt::tensor& lhs, const silt::tensor& rhs){
-  assert_match(lhs, rhs);
-  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
-    silt::set<S>(lhs.as<S>(), rhs.as<S>());
-  });
-});
-
-module.def("add", [](silt::tensor& lhs, const silt::tensor& rhs){
-  assert_match(lhs, rhs);
-  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
-    silt::add<S>(lhs.as<S>(), rhs.as<S>());
-  });
-});
-
-module.def("multiply", [](silt::tensor& lhs, const silt::tensor& rhs){
-  assert_match(lhs, rhs);
-  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
-    silt::multiply<S>(lhs.as<S>(), rhs.as<S>());
-  });
-});
-
-module.def("divide", [](silt::tensor& lhs, const silt::tensor& rhs){
-  assert_match(lhs, rhs);
-  silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
-    silt::divide<S>(lhs.as<S>(), rhs.as<S>());
-  });
-});
-
-module.def("mix", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) {
-  assert_match(lhs, rhs);
-  silt::select(lhs.type(), [&lhs, &rhs, w]<silt::primitive S>(){
-    silt::mix<S>(lhs.as<S>(), rhs.as<S>(), w);
   });
 });
 
