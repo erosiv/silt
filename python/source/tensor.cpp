@@ -16,7 +16,7 @@ silt::view __slice(silt::tensor& tensor, nb::tuple tuple) {
 
     // Construct a View from the Tensor:
     auto tensor_t = tensor.as<T>();
-    auto view_t = tensor_t.view<T>();
+    auto view_t = tensor_t.template view<T>();
     auto shape = tensor_t.shape();
     // by default, the view adopts the tensor's shape
     view_t.reshape(shape[0], shape[1], shape[2], shape[3]);

@@ -23,17 +23,6 @@ inline int block(const int elem, const int thread) {
 
 namespace op {
 
-// Acceptable Operation Type Concept:
-//  This includes tensors and views.
-
-template<typename T>
-concept indexable = requires(T t) {
-  { t.elem() } -> std::convertible_to<std::size_t>;
-  { t.host() } -> std::same_as<silt::host_t>;
-  { t.operator[](unsigned int (0)) };
-  { T::val_t };
-};
-
 // Templated In-Place Unary Operations
 
 template<typename T, typename F>

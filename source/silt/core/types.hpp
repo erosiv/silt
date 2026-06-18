@@ -132,16 +132,12 @@ struct typedesc<rng> {
 //  a variation on the visitor pattern, with better control
 //  and no need to declare the variant template with all types.
 
-namespace {
-
 struct typedbase {
   virtual ~typedbase() {};
   constexpr virtual silt::dtype type() noexcept {
     return {};
   }
 };
-
-} // namespace
 
 template<typename Type, typename F>
 struct type_op_error: std::exception {

@@ -17,6 +17,7 @@
 #pragma nv_diag_suppress 177
 #pragma nv_diag_suppress 445
 #pragma nv_diag_suppress 20011
+#pragma nv_diag_suppress 20012
 #pragma nv_diag_suppress 20013
 #pragma nv_diag_suppress 20015
 #endif
