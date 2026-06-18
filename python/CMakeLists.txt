@@ -33,7 +33,6 @@ target_compile_definitions(${MODULE_NAME} PRIVATE
 # Dependencies
 #
 
-find_package(glm CONFIG REQUIRED)
 target_link_libraries(${MODULE_NAME} PRIVATE glm::glm)
 target_link_libraries(${MODULE_NAME} PRIVATE silt_lib)
 

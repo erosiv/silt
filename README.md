@@ -67,6 +67,12 @@ Finally, silt takes care of details around memory allocation and deallocation, m
 
 ### Build Python Module
 
+Initialize submodules recursively:
+
+```bash
+git submodule update --init --recursive
+```
+
 Install `silt` using `pip`:
 
 ```bash
@@ -83,6 +89,13 @@ Build a distributable `.whl` file:
 
 ```bash
 pip wheel .
+```
+
+Build manually with CMake (won't install python module):
+
+```bash
+cmake -S . -B build
+cmake --build build
 ```
 
 ### Adding as a C++ Dependency
