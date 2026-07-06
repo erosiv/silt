@@ -21,5 +21,5 @@ target_sources(${TARGET_NAME} PUBLIC
   silt/op/indexed.cu
 )
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/ext/glm glm)
+add_subdirectory(../ext/glm glm)
 target_link_libraries(${TARGET_NAME} PRIVATE glm::glm)
