@@ -18,9 +18,9 @@ void indexed_set(tensor_t<T> lhs, const T rhs, const tensor_t<int> ind) {
   });
 }
 
-template void silt::indexed_set<int>   (silt::tensor_t<int> lhs,     const int rhs,     const tensor_t<int> ind);
-template void silt::indexed_set<float> (silt::tensor_t<float> lhs,   const float rhs,   const tensor_t<int> ind);
-template void silt::indexed_set<double>(silt::tensor_t<double> lhs,  const double rhs,  const tensor_t<int> ind);
+template EXPORT_SHARED void silt::indexed_set<int>   (silt::tensor_t<int> lhs,     const int rhs,     const tensor_t<int> ind);
+template EXPORT_SHARED void silt::indexed_set<float> (silt::tensor_t<float> lhs,   const float rhs,   const tensor_t<int> ind);
+template EXPORT_SHARED void silt::indexed_set<double>(silt::tensor_t<double> lhs,  const double rhs,  const tensor_t<int> ind);
 
 //
 // Index Generation Functions

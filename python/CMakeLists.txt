@@ -12,10 +12,14 @@ endif()
 #
 
 find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
-add_subdirectory(${CMAKE_SOURCE_DIR}/ext/nanobind nanobind)
+if(NOT TARGET nanobind::nanobind_static AND NOT TARGET nanobind)
+  add_subdirectory(${CMAKE_SOURCE_DIR}/ext/nanobind nanobind)
+endif()
 
 set(MODULE_NAME silt)
 nanobind_add_module(${MODULE_NAME}
+  NB_SHARED
+  NB_DOMAIN "erosiv"
   source/_module.cpp
   source/shape.cpp
   source/slice.cpp
@@ -26,7 +30,6 @@ nanobind_add_module(${MODULE_NAME}
   source/indexed.cpp
 )
 
-target_compile_definitions(${MODULE_NAME} PRIVATE -DSHARED_BUILD)
 target_compile_definitions(${MODULE_NAME} PRIVATE
   MODULE_NAME=${MODULE_NAME})
 
@@ -35,7 +38,7 @@ target_compile_definitions(${MODULE_NAME} PRIVATE
 #
 
 target_link_libraries(${MODULE_NAME} PRIVATE glm::glm)
-target_link_libraries(${MODULE_NAME} PRIVATE silt_lib)
+target_link_libraries(${MODULE_NAME} PRIVATE silt::silt)
 
 #
 # Installation

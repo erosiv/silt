@@ -19,7 +19,7 @@ void indexed_set(tensor_t<T> lhs, const T rhs, const tensor_t<int> ind);
 //  Here, based on distance from some center.
 //
 
-tensor_t<int> index_radius(const silt::shape shape, const silt::vec2 center, const float rad);
+EXPORT_SHARED tensor_t<int> index_radius(const silt::shape shape, const silt::vec2 center, const float rad);
 
 }
 

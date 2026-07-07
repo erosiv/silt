@@ -23,9 +23,9 @@ void set(tensor_t<T> lhs, const tensor_t<T> rhs) {
   });
 }
 
-template void silt::set<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
-template void silt::set<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
-template void silt::set<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
+template EXPORT_SHARED void silt::set<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
+template EXPORT_SHARED void silt::set<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
+template EXPORT_SHARED void silt::set<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
 
 // Add
 
@@ -36,9 +36,9 @@ void add(tensor_t<T> lhs, const tensor_t<T> rhs) {
   });
 }
 
-template void silt::add<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
-template void silt::add<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
-template void silt::add<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
+template EXPORT_SHARED void silt::add<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
+template EXPORT_SHARED void silt::add<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
+template EXPORT_SHARED void silt::add<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
 
 // Multiply
 
@@ -49,9 +49,9 @@ void multiply(tensor_t<T> lhs, const tensor_t<T> rhs) {
   });
 }
 
-template void silt::multiply<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
-template void silt::multiply<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
-template void silt::multiply<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
+template EXPORT_SHARED void silt::multiply<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
+template EXPORT_SHARED void silt::multiply<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
+template EXPORT_SHARED void silt::multiply<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
 
 // Divide
 
@@ -62,9 +62,9 @@ void divide(tensor_t<T> lhs, const tensor_t<T> rhs) {
   });
 }
 
-template void silt::divide<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
-template void silt::divide<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
-template void silt::divide<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
+template EXPORT_SHARED void silt::divide<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs);
+template EXPORT_SHARED void silt::divide<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs);
+template EXPORT_SHARED void silt::divide<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs);
 
 // Mix
 
@@ -75,9 +75,9 @@ void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w) {
   });
 }
 
-template void silt::mix<int>   (silt::tensor_t<int> buffer,     const silt::tensor_t<int> rhs, const float w);
-template void silt::mix<float> (silt::tensor_t<float> buffer,   const silt::tensor_t<float> rhs, const float w);
-template void silt::mix<double>(silt::tensor_t<double> buffer,  const silt::tensor_t<double> rhs, const float w);
+template EXPORT_SHARED void silt::mix<int>   (silt::tensor_t<int> buffer,     const silt::tensor_t<int> rhs, const float w);
+template EXPORT_SHARED void silt::mix<float> (silt::tensor_t<float> buffer,   const silt::tensor_t<float> rhs, const float w);
+template EXPORT_SHARED void silt::mix<double>(silt::tensor_t<double> buffer,  const silt::tensor_t<double> rhs, const float w);
 
 } // end of namespace silt
 

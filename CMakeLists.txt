@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20.0)
+cmake_minimum_required(VERSION 3.21.0)
 
 #
 # Project Configuration
@@ -22,5 +22,7 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr --extended-la
 # Project Components
 #
 
-add_subdirectory(source)  # Build Library
-add_subdirectory(python)  # Build Bindings
+add_subdirectory(source)    # Build Library
+if(PROJECT_IS_TOP_LEVEL)
+  add_subdirectory(python)  # Build Bindings
+endif()

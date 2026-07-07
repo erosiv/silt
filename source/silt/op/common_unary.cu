@@ -23,9 +23,9 @@ void set(tensor_t<T> lhs, const T rhs) {
   });
 }
 
-template void silt::set<int>   (silt::tensor_t<int> lhs,     const int rhs);
-template void silt::set<float> (silt::tensor_t<float> lhs,   const float rhs);
-template void silt::set<double>(silt::tensor_t<double> lhs,  const double rhs);
+template EXPORT_SHARED void silt::set<int>   (silt::tensor_t<int> lhs,     const int rhs);
+template EXPORT_SHARED void silt::set<float> (silt::tensor_t<float> lhs,   const float rhs);
+template EXPORT_SHARED void silt::set<double>(silt::tensor_t<double> lhs,  const double rhs);
 
 template<typename T>
 void set(view_t<T> lhs, const T rhs) {
@@ -34,9 +34,9 @@ void set(view_t<T> lhs, const T rhs) {
   });
 }
 
-template void silt::set<int>   (silt::view_t<int> lhs,     const int rhs);
-template void silt::set<float> (silt::view_t<float> lhs,   const float rhs);
-template void silt::set<double>(silt::view_t<double> lhs,  const double rhs);
+template EXPORT_SHARED void silt::set<int>   (silt::view_t<int> lhs,     const int rhs);
+template EXPORT_SHARED void silt::set<float> (silt::view_t<float> lhs,   const float rhs);
+template EXPORT_SHARED void silt::set<double>(silt::view_t<double> lhs,  const double rhs);
 
 // Add
 
@@ -47,9 +47,9 @@ void add(tensor_t<T> lhs, const T rhs) {
   });
 }
 
-template void silt::add<int>   (silt::tensor_t<int> buffer,    const int val);
-template void silt::add<float> (silt::tensor_t<float> buffer,  const float val);
-template void silt::add<double>(silt::tensor_t<double> buffer, const double val);
+template EXPORT_SHARED void silt::add<int>   (silt::tensor_t<int> buffer,    const int val);
+template EXPORT_SHARED void silt::add<float> (silt::tensor_t<float> buffer,  const float val);
+template EXPORT_SHARED void silt::add<double>(silt::tensor_t<double> buffer, const double val);
 
 template<typename T>
 void add(view_t<T> lhs, const T rhs) {
@@ -58,9 +58,9 @@ void add(view_t<T> lhs, const T rhs) {
   });
 }
 
-template void silt::add<int>   (silt::view_t<int> buffer,    const int val);
-template void silt::add<float> (silt::view_t<float> buffer,  const float val);
-template void silt::add<double>(silt::view_t<double> buffer, const double val);
+template EXPORT_SHARED void silt::add<int>   (silt::view_t<int> buffer,    const int val);
+template EXPORT_SHARED void silt::add<float> (silt::view_t<float> buffer,  const float val);
+template EXPORT_SHARED void silt::add<double>(silt::view_t<double> buffer, const double val);
 
 // Multiply
 
@@ -71,9 +71,9 @@ void multiply(tensor_t<T> lhs, const T rhs) {
   });
 }
 
-template void silt::multiply<int>   (silt::tensor_t<int> buffer,    const int val);
-template void silt::multiply<float> (silt::tensor_t<float> buffer,  const float val);
-template void silt::multiply<double>(silt::tensor_t<double> buffer, const double val);
+template EXPORT_SHARED void silt::multiply<int>   (silt::tensor_t<int> buffer,    const int val);
+template EXPORT_SHARED void silt::multiply<float> (silt::tensor_t<float> buffer,  const float val);
+template EXPORT_SHARED void silt::multiply<double>(silt::tensor_t<double> buffer, const double val);
 
 template<typename T>
 void multiply(view_t<T> lhs, const T rhs) {
@@ -82,9 +82,9 @@ void multiply(view_t<T> lhs, const T rhs) {
   });
 }
 
-template void silt::multiply<int>   (silt::view_t<int> buffer,    const int val);
-template void silt::multiply<float> (silt::view_t<float> buffer,  const float val);
-template void silt::multiply<double>(silt::view_t<double> buffer, const double val);
+template EXPORT_SHARED void silt::multiply<int>   (silt::view_t<int> buffer,    const int val);
+template EXPORT_SHARED void silt::multiply<float> (silt::view_t<float> buffer,  const float val);
+template EXPORT_SHARED void silt::multiply<double>(silt::view_t<double> buffer, const double val);
 
 // Divide
 
@@ -95,9 +95,9 @@ void divide(tensor_t<T> lhs, const T rhs) {
   });
 }
 
-template void silt::divide<int>   (silt::tensor_t<int> buffer,    const int val);
-template void silt::divide<float> (silt::tensor_t<float> buffer,  const float val);
-template void silt::divide<double>(silt::tensor_t<double> buffer, const double val);
+template EXPORT_SHARED void silt::divide<int>   (silt::tensor_t<int> buffer,    const int val);
+template EXPORT_SHARED void silt::divide<float> (silt::tensor_t<float> buffer,  const float val);
+template EXPORT_SHARED void silt::divide<double>(silt::tensor_t<double> buffer, const double val);
 
 template<typename T>
 void divide(view_t<T> lhs, const T rhs) {
@@ -106,9 +106,9 @@ void divide(view_t<T> lhs, const T rhs) {
   });
 }
 
-template void silt::divide<int>   (silt::view_t<int> buffer,    const int val);
-template void silt::divide<float> (silt::view_t<float> buffer,  const float val);
-template void silt::divide<double>(silt::view_t<double> buffer, const double val);
+template EXPORT_SHARED void silt::divide<int>   (silt::view_t<int> buffer,    const int val);
+template EXPORT_SHARED void silt::divide<float> (silt::view_t<float> buffer,  const float val);
+template EXPORT_SHARED void silt::divide<double>(silt::view_t<double> buffer, const double val);
 
 // Clamp
 
@@ -119,9 +119,9 @@ void clamp(silt::tensor_t<T> lhs, const T min, const T max) {
   });
 }
 
-template void silt::clamp<int>   (silt::tensor_t<int> buffer,    const int min,     const int max);
-template void silt::clamp<float> (silt::tensor_t<float> buffer,  const float min,   const float max);
-template void silt::clamp<double>(silt::tensor_t<double> buffer, const double min,  const double max);
+template EXPORT_SHARED void silt::clamp<int>   (silt::tensor_t<int> buffer,    const int min,     const int max);
+template EXPORT_SHARED void silt::clamp<float> (silt::tensor_t<float> buffer,  const float min,   const float max);
+template EXPORT_SHARED void silt::clamp<double>(silt::tensor_t<double> buffer, const double min,  const double max);
 
 template<typename T>
 void clamp(silt::view_t<T> lhs, const T min, const T max) {
@@ -130,9 +130,9 @@ void clamp(silt::view_t<T> lhs, const T min, const T max) {
   });
 }
 
-template void silt::clamp<int>   (silt::view_t<int> buffer,    const int min,     const int max);
-template void silt::clamp<float> (silt::view_t<float> buffer,  const float min,   const float max);
-template void silt::clamp<double>(silt::view_t<double> buffer, const double min,  const double max);
+template EXPORT_SHARED void silt::clamp<int>   (silt::view_t<int> buffer,    const int min,     const int max);
+template EXPORT_SHARED void silt::clamp<float> (silt::view_t<float> buffer,  const float min,   const float max);
+template EXPORT_SHARED void silt::clamp<double>(silt::view_t<double> buffer, const double min,  const double max);
 
 // Clone
 
@@ -145,9 +145,9 @@ tensor_t<T> clone(const tensor_t<T> rhs) {
   return lhs;
 }
 
-template tensor_t<int>    silt::clone<int>   (const silt::tensor_t<int> rhs);
-template tensor_t<float>  silt::clone<float> (const silt::tensor_t<float> rhs);
-template tensor_t<double> silt::clone<double>(const silt::tensor_t<double> rhs);
+template EXPORT_SHARED tensor_t<int>    silt::clone<int>   (const silt::tensor_t<int> rhs);
+template EXPORT_SHARED tensor_t<float>  silt::clone<float> (const silt::tensor_t<float> rhs);
+template EXPORT_SHARED tensor_t<double> silt::clone<double>(const silt::tensor_t<double> rhs);
 
 } // end of namespace silt
 

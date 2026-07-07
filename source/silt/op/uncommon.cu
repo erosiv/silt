@@ -30,9 +30,9 @@ void set_impl(silt::tensor_t<T> lhs, const T val, size_t start, size_t stop, siz
   _set<<<block, thread>>>(lhs, val, start, stop, step);
 }
 
-template void set_impl<int>   (silt::tensor_t<int> buffer,    const int val, size_t start, size_t stop, size_t step);
-template void set_impl<float> (silt::tensor_t<float> buffer,  const float val, size_t start, size_t stop, size_t step);
-template void set_impl<double>(silt::tensor_t<double> buffer, const double val, size_t start, size_t stop, size_t step);
+template EXPORT_SHARED void set_impl<int>   (silt::tensor_t<int> buffer,    const int val, size_t start, size_t stop, size_t step);
+template EXPORT_SHARED void set_impl<float> (silt::tensor_t<float> buffer,  const float val, size_t start, size_t stop, size_t step);
+template EXPORT_SHARED void set_impl<double>(silt::tensor_t<double> buffer, const double val, size_t start, size_t stop, size_t step);
 
 //
 // RNG Kernels
@@ -143,9 +143,9 @@ tensor_t<T> resize(const tensor_t<T> rhs, const shape shape){
 
 }
 
-template silt::tensor_t<int>    silt::resize<int>   (const silt::tensor_t<int> lhs,     const shape shape);
-template silt::tensor_t<float>  silt::resize<float> (const silt::tensor_t<float> lhs,   const shape shape);
-template silt::tensor_t<double> silt::resize<double>(const silt::tensor_t<double> lhs,  const shape shape);
+template EXPORT_SHARED silt::tensor_t<int>    silt::resize<int>   (const silt::tensor_t<int> lhs,     const shape shape);
+template EXPORT_SHARED silt::tensor_t<float>  silt::resize<float> (const silt::tensor_t<float> lhs,   const shape shape);
+template EXPORT_SHARED silt::tensor_t<double> silt::resize<double>(const silt::tensor_t<double> lhs,  const shape shape);
 
 //
 // Tensor Re-Sampling Procedure
@@ -281,9 +281,9 @@ void resample(
 
 }
 
-template void silt::resample<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs,     const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
-template void silt::resample<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs,   const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
-template void silt::resample<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs,  const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
+template EXPORT_SHARED void silt::resample<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs,     const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
+template EXPORT_SHARED void silt::resample<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs,   const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
+template EXPORT_SHARED void silt::resample<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs,  const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
 
 } // end of namespace silt
 

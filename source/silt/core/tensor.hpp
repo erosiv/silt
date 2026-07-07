@@ -2,10 +2,10 @@
 #define SILT_TENSOR
 
 #include <silt/silt.hpp>
+#include <silt/core/memory.hpp>
 #include <silt/core/error.hpp>
 #include <silt/core/shape.hpp>
 #include <silt/core/view.hpp>
-#include <cuda_runtime.h>
 
 namespace silt {
 
@@ -184,7 +184,7 @@ void silt::tensor_t<T>::allocate(const silt::shape shape, const host_t host) {
   if (host == CPU) {
     this->_data = new T[shape.elem()];
   } else if (host == GPU) {
-    cudaMalloc(&this->_data, this->size());
+    this->_data = (T*)silt::device_alloc(this->size());
   } else {
     throw std::invalid_argument("device not recognized");
   }
@@ -218,8 +218,7 @@ void silt::tensor_t<T>::deallocate() {
     }
 
     if (this->_host == GPU) {
-
-      cudaFree(this->_data);
+      silt::device_free(this->_data);
       this->_data = NULL;
       this->_host = CPU;
     }
@@ -238,10 +237,8 @@ void silt::tensor_t<T>::to_gpu() {
   if (this->elem() == 0)
     return;
 
-  T *_data;
-
-  cudaMalloc(&_data, this->size());
-  cudaMemcpy(_data, this->data(), this->size(), cudaMemcpyHostToDevice);
+  T *_data = (T*)silt::device_alloc(this->size());
+  silt::device_copy(_data, this->data(), this->size(), silt::copy_t::HOST_TO_DEVICE);
 
   this->deallocate();
   this->_data = _data;
@@ -262,7 +259,7 @@ void silt::tensor_t<T>::to_cpu() {
     return;
 
   T *_data = new T[this->elem()];
-  cudaMemcpy(_data, this->data(), this->size(), cudaMemcpyDeviceToHost);
+  silt::device_copy(_data, this->data(), this->size(), silt::copy_t::DEVICE_TO_HOST);
 
   this->deallocate();
   this->_data = _data;
