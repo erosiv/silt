@@ -8,7 +8,7 @@ add_library(silt::silt ALIAS ${TARGET_NAME})
 
 set_target_properties(${TARGET_NAME} PROPERTIES 
   LINKER_LANGUAGE CUDA
-  CUDA_RUNTIME_LIBRARY Shared
+  CUDA_RUNTIME_LIBRARY Static
 )
 
 target_compile_definitions(${TARGET_NAME} PRIVATE SILT_SHARED_BUILD)

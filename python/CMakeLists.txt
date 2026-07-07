@@ -44,9 +44,15 @@ target_link_libraries(${MODULE_NAME} PRIVATE silt::silt)
 # Installation
 #
 
-# Install Directive for Scikit
+# Install Directive for scikit-build module
 install(TARGETS ${MODULE_NAME} LIBRARY DESTINATION ${MODULE_NAME})
 
-# Install Runtime Dependencies into Wheel File
-# install(TARGETS nanobind RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME})
-install(TARGETS silt_lib RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME})
+install(TARGETS silt_lib
+  RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME}
+  LIBRARY DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME}
+)
+
+install(TARGETS nanobind-erosiv
+  RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME}
+  LIBRARY DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME}
+)
