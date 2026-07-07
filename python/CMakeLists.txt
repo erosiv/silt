@@ -24,8 +24,9 @@ nanobind_add_module(${MODULE_NAME}
   source/op.cpp
   source/util.cpp
   source/indexed.cpp
-  NB_SHARED
 )
+
+target_compile_definitions(${MODULE_NAME} PRIVATE -DSHARED_BUILD)
 target_compile_definitions(${MODULE_NAME} PRIVATE
   MODULE_NAME=${MODULE_NAME})
 
@@ -44,5 +45,5 @@ target_link_libraries(${MODULE_NAME} PRIVATE silt_lib)
 install(TARGETS ${MODULE_NAME} LIBRARY DESTINATION ${MODULE_NAME})
 
 # Install Runtime Dependencies into Wheel File
-install(TARGETS nanobind RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME})
+# install(TARGETS nanobind RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME})
 install(TARGETS silt_lib RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/${MODULE_NAME})
