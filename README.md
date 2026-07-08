@@ -30,7 +30,17 @@ Note that this library doesn't implement complicated operations or features like
 
 ### Install Python Module
 
-*coming soon to PyPI.org*
+Install from PyPi:
+
+```bash
+pip install silt-erosiv
+```
+
+Import in Python:
+
+```python
+import silt
+```
 
 ### Typical Use-Case
 
