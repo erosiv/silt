@@ -3,6 +3,7 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 #include <format>
+#include <nanobind/stl/string.h>
 #include <silt/core/error.hpp>
 #include <silt/core/view.hpp>
 
@@ -26,4 +27,16 @@ void bind_view(nb::module_& module) {
   view.def_prop_ro("elem", &silt::view::elem);
   view.def_prop_ro("host", &silt::view::host);
   view.def_prop_ro("slice", &silt::view::slice);
+  // Alias matching numpy/torch naming, alongside the existing .type.
+  view.def_prop_ro("dtype", &silt::view::type);
+
+  view.def("__repr__", [](const silt::view& view) -> std::string {
+    const std::string slice_repr = nb::repr(nb::cast(view.slice())).c_str();
+    return std::format(
+        "silt.view(silt.{}, {}, silt.{})",
+        silt::detail::dtype_name(view.type()),
+        slice_repr,
+        silt::detail::host_name(view.host())
+    );
+  });
 }

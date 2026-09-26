@@ -1,4 +1,5 @@
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 namespace nb = nanobind;
 
 #include <format>
@@ -32,4 +33,21 @@ void bind_slice(nb::module_& module) {
 
   slice.def("reset", &silt::slice::reset);
   slice.def("transform", &silt::slice::transform);
+
+  slice.def("__repr__", [](const silt::slice& slice) -> std::string {
+    std::string offset, stride, extent;
+    for (int d = 0; d < slice.dim(); ++d) {
+      if (d) {
+        offset += ", ";
+        stride += ", ";
+        extent += ", ";
+      }
+      offset += std::to_string(slice.offset()[d]);
+      stride += std::to_string(slice.stride()[d]);
+      extent += std::to_string(slice.extent()[d]);
+    }
+    return std::format(
+        "silt.slice(offset=({}), stride=({}), extent=({}))", offset, stride, extent
+    );
+  });
 }

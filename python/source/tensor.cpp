@@ -5,6 +5,8 @@ using namespace nb::literals;
 #include "interop.hpp"
 #include "util.hpp"
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/optional.h>
+#include <nanobind/stl/string.h>
 #include <silt/core/tensor.hpp>
 #include <silt/core/view.hpp>
 #include <silt/op/common.hpp>
@@ -50,6 +52,19 @@ silt::view getitem_impl(silt::tensor& tensor, nb::tuple tuple) {
   });
 }
 
+// Shared by the "numpy" and "__array__" bindings below.
+nb::object tensor_to_numpy(const silt::tensor& tensor) {
+  if (tensor.host() != silt::host_t::CPU)
+    throw silt::error::unsupported_host(silt::host_t::CPU, tensor.host());
+  return silt::select(tensor.type(), [&tensor]<typename T>() -> nb::object {
+    if constexpr (nb::detail::is_ndarray_scalar_v<T>) {
+      return silt::detail::make_numpy(tensor.as<T>());
+    } else {
+      throw std::invalid_argument("tensor type cannot be converted");
+    }
+  });
+}
+
 } // namespace detail
 } // namespace silt
 
@@ -76,22 +91,83 @@ void bind_tensor(nb::module_& module) {
   tensor.def_prop_ro("nbytes", &silt::tensor::size);
   tensor.def_prop_ro("host", &silt::tensor::host);
   tensor.def_prop_ro("shape", &silt::tensor::shape);
+  // Aliases matching numpy/torch naming, alongside the existing .type/.shape.
+  tensor.def_prop_ro("dtype", &silt::tensor::type);
+  tensor.def_prop_ro("ndim", [](const silt::tensor& tensor) { return tensor.shape().dim(); });
+
+  tensor.def("__repr__", [](const silt::tensor& tensor) -> std::string {
+    const std::string shape_repr = nb::repr(nb::cast(tensor.shape())).c_str();
+    return std::format(
+        "silt.tensor(silt.{}, {}, silt.{}, refs={})",
+        silt::detail::dtype_name(tensor.type()),
+        shape_repr,
+        silt::detail::host_name(tensor.host()),
+        tensor.refs()
+    );
+  });
+
+  tensor.def("__len__", [](const silt::tensor& tensor) -> size_t {
+    return (size_t)tensor.shape()[0];
+  });
+
+  // Iterates over the first dimension, same as a numpy array. Eagerly
+  // builds each sub-view up front rather than lazily -- simpler than a
+  // custom C++ iterator type, and tensors are not expected to be huge
+  // along their leading dimension.
+  tensor.def("__iter__", [](silt::tensor& tensor) {
+    nb::list items;
+    const size_t n = (size_t)tensor.shape()[0];
+    for (size_t i = 0; i < n; ++i) {
+      items.append(silt::detail::getitem_impl(tensor, nb::make_tuple((Py_ssize_t)i)));
+    }
+    return nb::iter(items);
+  });
+
+  tensor.def("item", [](const silt::tensor& tensor) -> nb::object {
+    if (tensor.elem() != 1)
+      throw std::invalid_argument("item(): tensor has more than one element");
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
+      if (tensor.host() == silt::CPU)
+        return nb::cast(tensor.as<S>()[0]);
+      const silt::tensor_t<S> cpu = tensor.as<S>().transfer(silt::CPU);
+      return nb::cast(cpu[0]);
+    });
+  });
 
   // Device Switching
+  //  `to`/`to_cpu`/`to_gpu` move this tensor's own handle in place (no
+  //  new allocation if already on the target host). `copy_to` is the
+  //  out-of-place counterpart: it always allocates an independent tensor,
+  //  even when the target host matches the source's (see
+  //  tensor_t<T>::transfer(), which both are built on).
 
-  tensor.def("cpu", [](silt::tensor& tensor) {
+  tensor.def("to", [](silt::tensor& tensor, const silt::host_t host) {
+    silt::select(tensor.type(), [&tensor, host]<typename T>() {
+      tensor.as<T>().to(host);
+    });
+    return tensor;
+  });
+
+  tensor.def("to_cpu", [](silt::tensor& tensor) {
     silt::select(tensor.type(), [&tensor]<typename T>() {
       tensor.as<T>().to_cpu();
     });
     return tensor;
   });
 
-  tensor.def("gpu", [](silt::tensor& tensor) {
+  tensor.def("to_gpu", [](silt::tensor& tensor) {
     silt::select(tensor.type(), [&tensor]<typename T>() {
       tensor.as<T>().to_gpu();
     });
     return tensor;
   });
+
+  tensor.def("copy_to", [](const silt::tensor& tensor, std::optional<silt::host_t> host) {
+    const silt::host_t target = host.value_or(tensor.host());
+    return silt::select(tensor.type(), [&tensor, target]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(tensor.as<S>().transfer(target));
+    });
+  }, nb::arg("host") = nb::none());
 
   //
   // Tensor Shape Manipulation and Slicing Logic / Tensor Views
@@ -120,17 +196,14 @@ void bind_tensor(nb::module_& module) {
   //  See the 1.2 plan (E4) -- the docs previously claimed the no-copy behaviour.
   //
 
-  tensor.def("numpy", [](const silt::tensor& tensor) {
-    if (tensor.host() != silt::host_t::CPU)
-      throw silt::error::unsupported_host(silt::host_t::CPU, tensor.host());
-    return silt::select(tensor.type(), [&tensor]<typename T>() -> nb::object {
-      if constexpr (nb::detail::is_ndarray_scalar_v<T>) {
-        return silt::detail::make_numpy(tensor.as<T>());
-      } else {
-        throw std::invalid_argument("tensor type cannot be converted");
-      }
-    });
-  });
+  tensor.def("numpy", silt::detail::tensor_to_numpy);
+
+  // So np.asarray(t) works without an explicit .numpy() call. Like
+  // .numpy() itself, this is CPU-only -- no implicit host transfer (see
+  // the "Explicit Host Placement" design note).
+  tensor.def("__array__", [](const silt::tensor& tensor, nb::object, nb::object) {
+    return silt::detail::tensor_to_numpy(tensor);
+  }, nb::arg("dtype") = nb::none(), nb::arg("copy") = nb::none());
 
   tensor.def_static("from_numpy", [](const nb::object& object) {
     auto array = nb::cast<nb::ndarray<nb::numpy>>(object);

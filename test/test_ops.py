@@ -1,6 +1,6 @@
 """Tests for the free-function tensor operations in the `silt` module
 (set_/add_/multiply_/divide_/mix_/clamp_, their out-of-place counterparts
-add/multiply/divide/mix/clamp, clone/cast/min/max) and the indexed
+add/multiply/divide/mix/clamp, tensor.copy_to/cast/min/max) and the indexed
 operations (indexed_set/index_radius).
 
 All tensors here are CPU by default (silt.tensor's two-argument
@@ -134,16 +134,16 @@ def test_max_of_mixed_sign_tensor():
     assert silt.max(t) == pytest.approx(5.0)
 
 
-# -- clone / cast ----------------------------------------------------------
+# -- copy_to / cast ---------------------------------------------------------
 
 
-def test_clone_preserves_host():
-    """silt::clone<T> allocates its result on the GPU unconditionally,
-    even for a CPU source tensor, so the binary op inside it dispatches
-    to a GPU code path using the source's host (non-device) pointer.
-    Cloning a CPU tensor should yield a CPU tensor with identical data.
+def test_copy_to_preserves_host():
+    """tensor.copy_to() (built on tensor_t<T>::transfer()) always allocates
+    its result on the requested host -- defaulting to the source's own
+    host when none is given -- rather than assuming GPU. Copying a CPU
+    tensor should yield a CPU tensor with identical data.
 
-    Run in a subprocess: the underlying bug plausibly crashes the
+    Run in a subprocess: a regression here would plausibly crash the
     interpreter (a device kernel dispatch against a host pointer) on a
     machine that does have a GPU, rather than merely returning the
     wrong host tag.
@@ -153,18 +153,18 @@ def test_clone_preserves_host():
         import numpy as np
         import silt
         t = silt.tensor.from_numpy(np.array([1.0, 2.0, 3.5], dtype=np.float32))
-        c = silt.clone(t)
-        assert c.host == silt.cpu, f"clone returned host={c.host!r}"
+        c = t.copy_to()
+        assert c.host == silt.cpu, f"copy_to() returned host={c.host!r}"
         np.testing.assert_array_equal(c.numpy(), t.numpy())
         print("OK")
         """
     )
     assert not result.crashed, (
-        f"silt.clone() of a CPU tensor crashed.\n"
+        f"tensor.copy_to() of a CPU tensor crashed.\n"
         f"stdout={result.stdout}\nstderr={result.stderr}"
     )
     assert "OK" in result.stdout, (
-        f"silt.clone() did not preserve the source's host.\n"
+        f"tensor.copy_to() did not preserve the source's host.\n"
         f"stdout={result.stdout}\nstderr={result.stderr}"
     )
 
@@ -225,6 +225,6 @@ def test_index_radius_and_indexed_set():
     t = silt.tensor(silt.float32, s, silt.gpu)
     silt.set_(t, 0.0)
     silt.indexed_set(t, 1.0, idx)
-    data = t.cpu().numpy()
+    data = t.to_cpu().numpy()
     assert data.max() == pytest.approx(1.0)
     assert data.min() == pytest.approx(0.0)  # cells outside the radius are untouched

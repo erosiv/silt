@@ -33,7 +33,7 @@ void bind_op(nb::module_& module) {
   // These bindings mutate their first argument in place, hence the
   // trailing underscore (torch convention). The out-of-place forms
   // (`add`, `multiply`, ...) are a pure-Python wrapper in
-  // python/silt/__init__.py: clone the input, then call the `_` form.
+  // python/silt/__init__.py: copy_to() the input, then call the `_` form.
 
   //
   // Binary Operations:
@@ -136,14 +136,6 @@ void bind_op(nb::module_& module) {
   module.def("clamp_", [](silt::view& lhs, const float min, const float max) {
     silt::select(lhs.type(), [&lhs, min, max]<std::same_as<float> S>() -> void {
       silt::clamp(lhs.as<S>(), min, max);
-    });
-  });
-
-  // Tensor Only
-
-  module.def("clone", [](silt::tensor& lhs) {
-    return silt::select(lhs.type(), [&lhs]<silt::primitive S>() -> silt::tensor {
-      return silt::clone<S>(lhs.as<S>());
     });
   });
 

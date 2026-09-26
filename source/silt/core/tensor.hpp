@@ -105,6 +105,12 @@ struct EXPORT_SHARED tensor {
     });
   }
 
+  size_t refs() const {
+    return select(this->type(), [self = this]<typename S>() {
+      return self->as<S>().refs();
+    });
+  }
+
   void* data() {
     return select(this->type(), [self = this]<typename S>() {
       return (void*)self->as<S>().data();

@@ -41,9 +41,6 @@ void clamp(tensor_t<T> lhs, const T min, const T max);
 template<typename T>
 void clamp(view_t<T> lhs, const T min, const T max);
 
-template<typename T>
-tensor_t<T> clone(const tensor_t<T> rhs);
-
 // Binary Operations
 
 template<typename T>

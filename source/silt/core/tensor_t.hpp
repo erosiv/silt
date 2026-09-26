@@ -158,6 +158,7 @@ struct tensor_t: typedbase {
 
   void to_cpu(); //!< In-Place Copy Data to the CPU
   void to_gpu(); //!< In-Place Copy Data to the GPU (if available)
+  void to(const host_t target); //!< In-Place Transfer to `target`
 
   //! Return an independent copy of this tensor's data on `target`.
   //! Covers all four host pairings (CPU/GPU source x CPU/GPU target);
@@ -276,6 +277,14 @@ void silt::tensor_t<T>::to_cpu() {
     return;
 
   *this = this->transfer(CPU);
+}
+
+template<typename T>
+void silt::tensor_t<T>::to(const host_t target) {
+  if (target == CPU)
+    this->to_cpu();
+  else
+    this->to_gpu();
 }
 
 } // namespace silt

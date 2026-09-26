@@ -223,14 +223,20 @@ dereferences ``_data``, exactly as shown above. Indexing a GPU tensor from
 host code is therefore not a silt error, it is an illegal host dereference of
 a device pointer, the same as it would be with a raw ``cudaMalloc``'d buffer.
 
-The only host-crossing operations are the explicit ones: ``.cpu()``/``.gpu()``
-(in-place, via ``tensor_t<T>::transfer()``, which also backs ``clone()`` --
-all four host/device copy directions go through the one function) and the
-numpy/torch conversion functions. This mirrors PyTorch's own
-``.cpu()``/``.cuda()`` convention deliberately, for the same reason
-``silt.synchronize()`` mirrors ``torch.cuda.synchronize()``: someone moving
-between the two libraries should not have to learn a second mental model for
-where data lives and when it moves.
+The only host-crossing operations are the explicit ones -- all built on
+``tensor_t<T>::transfer()``, which covers all four host/device copy
+directions through the one function -- and the numpy/torch conversion
+functions. ``transfer()`` always allocates and copies, even when the
+target host matches the source's; ``.to(host)``/``.to_cpu()``/``.to_gpu()``
+build an in-place mutator on top of it (a no-op if already on the target
+host), while ``.copy_to(host=None)`` exposes ``transfer()`` directly as an
+out-of-place, always-independent copy -- the replacement for the former
+``clone()``, and usable across hosts, not just same-host. This mirrors
+PyTorch's ``.cpu()``/``.cuda()`` naming for the in-place movers
+deliberately, for the same reason ``silt.synchronize()`` mirrors
+``torch.cuda.synchronize()``: someone moving between the two libraries
+should not have to learn a second mental model for where data lives and
+when it moves.
 
 Manual Reference Counting, Not ``shared_ptr``
 -----------------------------------------------
@@ -303,14 +309,15 @@ own, and its Python binding carries a trailing underscore (``set_``, ``add_``,
 ``multiply_``, ``divide_``, ``mix_``, ``clamp_``) -- the same convention
 PyTorch uses for its mutating methods. The out-of-place counterparts
 (``silt.add``, ``silt.multiply``, ...) exist *only* in
-``python/silt/__init__.py``, as plain Python functions that clone the first
-argument and then call the in-place form on the clone:
+``python/silt/__init__.py``, as plain Python functions that copy the first
+argument via ``tensor.copy_to()`` and then call the in-place form on the
+copy:
 
 .. code ::
   python
 
   def add(lhs, rhs):
-      result = clone(lhs)
+      result = lhs.copy_to()
       add_(result, rhs)
       return result
 

@@ -47,4 +47,12 @@ void bind_shape(nb::module_& module) {
       return "silt.shape()";
     }
   });
+
+  // Needed for A12-style shape validation elsewhere, and generally useful.
+  shape.def("__eq__", [](const silt::shape& shape, const nb::object& other) -> bool {
+    if (!nb::isinstance<silt::shape>(other))
+      return false;
+    const silt::shape& rhs = nb::cast<const silt::shape&>(other);
+    return shape.dim() == rhs.dim() && shape.ext() == rhs.ext();
+  });
 }

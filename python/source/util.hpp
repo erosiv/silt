@@ -19,6 +19,33 @@ inline void require_type(const silt::tensor& t, silt::dtype want) {
 }
 
 //
+// Names for __repr__
+//
+
+//! The Python-facing name for a dtype, i.e. the name it is bound under
+//! in util.cpp's `nb::enum_<dtype>` (not `typedesc<T>::name`, which uses
+//! different strings for the C++-side error messages).
+inline const char* dtype_name(const silt::dtype type) {
+  switch (type) {
+  case silt::INT32:
+    return "int";
+  case silt::FLOAT32:
+    return "float32";
+  case silt::FLOAT64:
+    return "float64";
+  case silt::RNG:
+    return "rng";
+  default:
+    return "unknown";
+  }
+}
+
+//! The Python-facing name for a host, matching util.cpp's `nb::enum_<host_t>`.
+inline const char* host_name(const silt::host_t host) {
+  return host == silt::CPU ? "cpu" : "gpu";
+}
+
+//
 // Slice Unpacking
 //
 

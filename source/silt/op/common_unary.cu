@@ -130,15 +130,4 @@ template EXPORT_SHARED void silt::clamp<int>(silt::view_t<int> buffer, const int
 template EXPORT_SHARED void silt::clamp<float>(silt::view_t<float> buffer, const float min, const float max);
 template EXPORT_SHARED void silt::clamp<double>(silt::view_t<double> buffer, const double min, const double max);
 
-// Clone
-
-template<typename T>
-tensor_t<T> clone(const tensor_t<T> rhs) {
-  return rhs.transfer(rhs.host());
-}
-
-template EXPORT_SHARED tensor_t<int> silt::clone<int>(const silt::tensor_t<int> rhs);
-template EXPORT_SHARED tensor_t<float> silt::clone<float>(const silt::tensor_t<float> rhs);
-template EXPORT_SHARED tensor_t<double> silt::clone<double>(const silt::tensor_t<double> rhs);
-
 } // end of namespace silt
