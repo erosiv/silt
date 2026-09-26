@@ -1,17 +1,17 @@
-#include <silt/silt.hpp>
 #include <cuda_runtime.h>
-#include <silt/core/memory.hpp>
 #include <silt/core/error.hpp>
+#include <silt/core/memory.hpp>
+#include <silt/silt.hpp>
 
 namespace silt {
 
-void* device_alloc(size_t bytes) { 
+void* device_alloc(size_t bytes) {
   void* p;
   gpuErrchk(cudaMalloc(&p, bytes));
   return p;
 }
 
-void device_free(void* p) { 
+void device_free(void* p) {
   gpuErrchk(cudaFree(p));
 }
 
@@ -23,4 +23,4 @@ void synchronize() {
   gpuErrchk(cudaDeviceSynchronize());
 }
 
-}
+} // namespace silt

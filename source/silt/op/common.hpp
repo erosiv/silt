@@ -85,20 +85,20 @@ tensor_t<T> resize(const tensor_t<T> rhs, const shape shape);
 
 template<typename T>
 void resample(
-  tensor_t<T> target,       //!< Target Buffer
-  const tensor_t<T> source, //!< Source Buffer
-  const vec3 t_scale,       //!< Target World-Space Scale (incl. z)
-  const vec3 s_scale,       //!< Source World-Space Scale (incl. z)
-  const vec2 posdiff        //!< World-Space Positional Difference
+    tensor_t<T> target,       //!< Target Buffer
+    const tensor_t<T> source, //!< Source Buffer
+    const vec3 t_scale,       //!< Target World-Space Scale (incl. z)
+    const vec3 s_scale,       //!< Source World-Space Scale (incl. z)
+    const vec2 posdiff        //!< World-Space Positional Difference
 );
 
 template<typename To, typename From>
-silt::tensor_t<To> cast(const silt::tensor_t<From> &tensor) {
+silt::tensor_t<To> cast(const silt::tensor_t<From>& tensor) {
   if (tensor.host() != silt::host_t::CPU)
     throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
   tensor_t<To> tensor_to(tensor.shape(), silt::host_t::CPU);
-  for(size_t i = 0; i < tensor.elem(); ++i){
+  for (size_t i = 0; i < tensor.elem(); ++i) {
     tensor_to[i] = (To)tensor[i];
   }
   return tensor_to;
@@ -131,13 +131,13 @@ void set(silt::tensor_t<T> tensor, const T val, size_t start, size_t stop, size_
 //
 
 template<typename T>
-T min(const silt::tensor_t<T> &tensor) {
+T min(const silt::tensor_t<T>& tensor) {
 
   if (tensor.host() != silt::host_t::CPU)
     throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
   T val = std::numeric_limits<T>::max();
-  for(size_t i = 0; i < tensor.elem(); ++i){
+  for (size_t i = 0; i < tensor.elem(); ++i) {
     const T b = tensor[i];
     if (!std::isnan(b)) {
       val = std::min(val, b);
@@ -147,13 +147,13 @@ T min(const silt::tensor_t<T> &tensor) {
 }
 
 template<typename T>
-T max(const silt::tensor_t<T> &tensor) {
+T max(const silt::tensor_t<T>& tensor) {
 
   if (tensor.host() != silt::host_t::CPU)
     throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
   T val = std::numeric_limits<T>::lowest();
-  for(size_t i = 0; i < tensor.elem(); ++i){
+  for (size_t i = 0; i < tensor.elem(); ++i) {
     const T b = tensor[i];
     if (!std::isnan(b)) {
       val = std::max(val, b);
@@ -161,6 +161,5 @@ T max(const silt::tensor_t<T> &tensor) {
   }
   return val;
 }
-
 
 } // end of namespace silt

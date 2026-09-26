@@ -1,13 +1,12 @@
 #pragma once
 
-#include <silt/silt.hpp>
-#include <silt/core/memory.hpp>
 #include <silt/core/error.hpp>
+#include <silt/core/memory.hpp>
 #include <silt/core/shape.hpp>
 #include <silt/core/view_t.hpp>
+#include <silt/silt.hpp>
 
 namespace silt {
-
 
 //! tensor_t<T> is a strict-typed, owning raw-data extent.
 //!
@@ -39,7 +38,7 @@ struct tensor_t: typedbase {
   }
 
   //! Non-Allocating Constructor
-  tensor_t(T* data, const shape shape, const host_t host = CPU){
+  tensor_t(T* data, const shape shape, const host_t host = CPU) {
     this->_data = data;
     this->_refs = NULL;
     this->_shape = shape;
@@ -49,20 +48,20 @@ struct tensor_t: typedbase {
   ~tensor_t() { this->deallocate(); }
 
   //! Copy Constructor (Reference Increment)
-  tensor_t(const tensor_t<T> &other) {
+  tensor_t(const tensor_t<T>& other) {
     this->_data = other._data;
     this->_refs = other._refs;
     this->_shape = other._shape;
     this->_host = other._host;
     if (this->_data != NULL) {
-      if (this->_refs != NULL){
+      if (this->_refs != NULL) {
         ++(*this->_refs);
       }
     }
   }
 
   //! Copy Assignment Operator (Reference Increment)
-  tensor_t &operator=(const tensor_t<T> &other) {
+  tensor_t& operator=(const tensor_t<T>& other) {
     if (this == &other) return *this;
     this->deallocate();
     this->_data = other._data;
@@ -78,7 +77,7 @@ struct tensor_t: typedbase {
   }
 
   //! Move Constructor (Reference Steal)
-  tensor_t(tensor_t<T> &&other) {
+  tensor_t(tensor_t<T>&& other) {
     this->_data = other._data;
     this->_refs = other._refs;
     this->_shape = other._shape;
@@ -88,7 +87,7 @@ struct tensor_t: typedbase {
   }
 
   //! Move Assginmment Operator (Reference Steal)
-  tensor_t &operator=(tensor_t<T> &&other) {
+  tensor_t& operator=(tensor_t<T>&& other) {
     if (this == &other) return *this;
     this->deallocate();
     this->_data = other._data;
@@ -104,14 +103,14 @@ struct tensor_t: typedbase {
   // Data Inspection
   //
 
-  GPU_ENABLE inline silt::shape shape()   const { return this->_shape; }
-  GPU_ENABLE inline size_t elem()   const { return this->_shape.elem(); }       //!< Number of Elements
-  GPU_ENABLE inline size_t size()   const { return this->elem() * sizeof(T); }  //!< Total Size in Bytes
-  GPU_ENABLE inline size_t refs()   const { return this->_refs ? *this->_refs : 0; } //!< Reference Count (0 if non-owning)
-  GPU_ENABLE inline host_t host()   const { return this->_host; }               //!< Current Device (CPU / GPU)
-  GPU_ENABLE inline const T *data() const { return this->_data; }               //!< Raw Data Pointer (Const)
-  GPU_ENABLE inline T *data()             { return this->_data; }               //!< Raw Data Pointer (Mutable)
-  
+  GPU_ENABLE inline silt::shape shape() const { return this->_shape; }
+  GPU_ENABLE inline size_t elem() const { return this->_shape.elem(); }            //!< Number of Elements
+  GPU_ENABLE inline size_t size() const { return this->elem() * sizeof(T); }       //!< Total Size in Bytes
+  GPU_ENABLE inline size_t refs() const { return this->_refs ? *this->_refs : 0; } //!< Reference Count (0 if non-owning)
+  GPU_ENABLE inline host_t host() const { return this->_host; }                    //!< Current Device (CPU / GPU)
+  GPU_ENABLE inline const T* data() const { return this->_data; }                  //!< Raw Data Pointer (Const)
+  GPU_ENABLE inline T* data() { return this->_data; }                              //!< Raw Data Pointer (Mutable)
+
   //! Type Enumerator Retrieval
   constexpr silt::dtype type() noexcept {
     return silt::typedesc<T>::type;
@@ -123,31 +122,31 @@ struct tensor_t: typedbase {
   }
 
   //! Non-Const Subscript Operator (Float)
-  GPU_ENABLE T &operator[](const size_t index) noexcept {
+  GPU_ENABLE T& operator[](const size_t index) noexcept {
     return this->_data[index];
   }
 
   template<typename S>
   GPU_ENABLE view_t<S> view() noexcept {
     return view_t<S>(
-      silt::shape(this->size() / sizeof(S)),
-      this->host(),
-      reinterpret_cast<S*>(this->data())
+        silt::shape(this->size() / sizeof(S)),
+        this->host(),
+        reinterpret_cast<S*>(this->data())
     );
   };
 
   template<typename S>
   GPU_ENABLE view_t<const S> view() const noexcept {
     return view_t<const S>(
-      silt::shape(this->size() / sizeof(S)),
-      this->host(),
-      reinterpret_cast<const S*>(this->data())
+        silt::shape(this->size() / sizeof(S)),
+        this->host(),
+        reinterpret_cast<const S*>(this->data())
     );
   };
 
   // Shape Manipulation
 
-  void reshape (const int d0 = 1, const int d1 = 1, const int d2 = 1, const int d3 = 1) {
+  void reshape(const int d0 = 1, const int d1 = 1, const int d2 = 1, const int d3 = 1) {
     this->_shape.reshape(d0, d1, d2, d3);
   }
 
@@ -165,16 +164,15 @@ struct tensor_t: typedbase {
   //! transfer(host()) is a same-host deep copy.
   tensor_t<T> transfer(const host_t target) const;
 
-  size_t *_refs = NULL; //!< Pointer to Reference Count
+  size_t* _refs = NULL; //!< Pointer to Reference Count
 private:
-
   //! Device-Aware Allocation and De-Allocation
   void allocate(const silt::shape shape, const host_t host = CPU);
   void deallocate();
 
-  silt::shape _shape;   //!< Shape of Data
-  host_t _host = CPU;   //!< Currently Active Device
-  T *_data = NULL;      //!< Raw Data Pointer (Device Agnostic)
+  silt::shape _shape; //!< Shape of Data
+  host_t _host = CPU; //!< Currently Active Device
+  T* _data = NULL;    //!< Raw Data Pointer (Device Agnostic)
 };
 
 //
@@ -198,7 +196,6 @@ void silt::tensor_t<T>::allocate(const silt::shape shape, const host_t host) {
 
   this->_host = host;
   this->_refs = new size_t(1);
-
 }
 
 template<typename T>
@@ -238,10 +235,14 @@ tensor_t<T> silt::tensor_t<T>::transfer(const host_t target) const {
   tensor_t<T> out(this->_shape, target);
 
   copy_t kind;
-  if (this->_host == CPU && target == CPU) kind = copy_t::HOST_TO_HOST;
-  else if (this->_host == CPU && target == GPU) kind = copy_t::HOST_TO_DEVICE;
-  else if (this->_host == GPU && target == CPU) kind = copy_t::DEVICE_TO_HOST;
-  else kind = copy_t::DEVICE_TO_DEVICE;
+  if (this->_host == CPU && target == CPU)
+    kind = copy_t::HOST_TO_HOST;
+  else if (this->_host == CPU && target == GPU)
+    kind = copy_t::HOST_TO_DEVICE;
+  else if (this->_host == GPU && target == CPU)
+    kind = copy_t::DEVICE_TO_HOST;
+  else
+    kind = copy_t::DEVICE_TO_DEVICE;
 
   silt::device_copy(out.data(), this->data(), this->size(), kind);
   return out;
@@ -277,4 +278,4 @@ void silt::tensor_t<T>::to_cpu() {
   *this = this->transfer(CPU);
 }
 
-}
+} // namespace silt

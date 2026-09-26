@@ -1,14 +1,14 @@
 #pragma once
 
-#include <silt/silt.hpp>
-#include <silt/core/vector.hpp>
 #include <curand_kernel.h>
+#include <silt/core/vector.hpp>
+#include <silt/silt.hpp>
 
 #include <format>
 #include <typeinfo>
 
 namespace silt {
- 
+
 //
 // Hosts
 //
@@ -34,7 +34,7 @@ struct hostdesc<GPU> {
 };
 
 template<typename F, typename... Args>
-auto select(const silt::host_t host, F lambda, Args &&...args) {
+auto select(const silt::host_t host, F lambda, Args&&... args) {
   switch (host) {
   case silt::CPU:
     return lambda.template operator()<CPU>(std::forward<Args>(args)...);
@@ -65,7 +65,7 @@ struct dtype_list {};
 
 template<typename T, typename List>
 concept match_list = []<typename... Types>(dtype_list<Types...>) {
-   return (std::is_same_v<Types, T> || ...);
+  return (std::is_same_v<Types, T> || ...);
 }(List());
 
 template<typename T>
@@ -143,7 +143,7 @@ struct type_op_error: std::exception {
   type_op_error(F lambda) {
     this->msg = std::format("invalid type <{}>: failed to match constraints", typedesc<Type>::name);
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 
@@ -162,7 +162,7 @@ private:
 //  lambdas original concept is matched (a lambda meta concept).
 
 template<typename T, typename F, typename... Args>
-concept matches_lambda = requires(F lambda, Args &&...args) {
+concept matches_lambda = requires(F lambda, Args&&... args) {
   { lambda.template operator()<T>(std::forward<Args>(args)...) };
 };
 
@@ -172,7 +172,7 @@ concept matches_lambda = requires(F lambda, Args &&...args) {
 //! this effectively instantiates every required template of the
 //! desired lambda expression, and executes the runtime selection.
 template<typename F, typename... Args>
-auto select(const silt::dtype type, F lambda, Args &&...args) {
+auto select(const silt::dtype type, F lambda, Args&&... args) {
 
   // Note: Separating out the expressions below doesn't work,
   //  because otherwise the type of select_call would be deduced
@@ -214,8 +214,8 @@ auto select(const silt::dtype type, F lambda, Args &&...args) {
       throw silt::type_op_error<double, F>(lambda);
     }
     break;
-//  Note: The rng type is not included as polymorphically selectable, because
-//    it is a special data-type where you must check that it is of type rng.
+    //  Note: The rng type is not included as polymorphically selectable, because
+    //    it is a special data-type where you must check that it is of type rng.
   case silt::RNG:
     if constexpr (matches_lambda<rng, F, Args...>) {
       return lambda.template operator()<rng>(std::forward<Args>(args)...);

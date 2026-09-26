@@ -16,18 +16,17 @@ void bind_util(nb::module_& module);
 
 // Module Main Function
 
-NB_MODULE(MODULE_NAME, module){
+NB_MODULE(MODULE_NAME, module) {
 
-nb::set_leak_warnings(false);
+  nb::set_leak_warnings(false);
 
-module.doc() = "silt python bindings";
+  module.doc() = "silt python bindings";
 
-bind_shape(module);
-bind_slice(module);
-bind_tensor(module);
-bind_view(module);
-bind_op(module);
-bind_indexed(module);
-bind_util(module);
-
+  bind_shape(module);
+  bind_slice(module);
+  bind_tensor(module);
+  bind_view(module);
+  bind_op(module);
+  bind_indexed(module);
+  bind_util(module);
 }

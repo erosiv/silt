@@ -7,7 +7,7 @@
 // silt vector type definitions / aliases
 //  silt uses glm as its small vector type implementation.
 //  this is causing some portability issues and might be replaced.
-//  
+//
 
 namespace silt {
 

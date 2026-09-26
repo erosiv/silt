@@ -26,27 +26,27 @@
 // Enable Host+Device Code Macro
 
 #ifndef GPU_ENABLE
-#  define GPU_ENABLE
-#  ifdef HAS_CUDA
-#    undef GPU_ENABLE
-#    define GPU_ENABLE __host__ __device__
-#  endif
+#define GPU_ENABLE
+#ifdef HAS_CUDA
+#undef GPU_ENABLE
+#define GPU_ENABLE __host__ __device__
+#endif
 #endif
 
 // Exported Symbols from the Shared DLL Macro
 
 #if defined(_WIN32)
-#  if defined(SILT_SHARED_BUILD)
-#    define EXPORT_SHARED __declspec(dllexport)
-#  else
-#    define EXPORT_SHARED __declspec(dllimport)
-#  endif
+#if defined(SILT_SHARED_BUILD)
+#define EXPORT_SHARED __declspec(dllexport)
 #else
-#  if defined(SILT_SHARED_BUILD)
-#    define EXPORT_SHARED __attribute__((visibility("default")))
-#  else
-#    define EXPORT_SHARED
-#  endif
+#define EXPORT_SHARED __declspec(dllimport)
+#endif
+#else
+#if defined(SILT_SHARED_BUILD)
+#define EXPORT_SHARED __attribute__((visibility("default")))
+#else
+#define EXPORT_SHARED
+#endif
 #endif
 
 namespace silt {

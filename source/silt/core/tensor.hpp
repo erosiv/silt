@@ -1,7 +1,7 @@
 #pragma once
 
-#include <silt/silt.hpp>
 #include <silt/core/tensor_t.hpp>
+#include <silt/silt.hpp>
 
 namespace silt {
 
@@ -20,7 +20,7 @@ struct EXPORT_SHARED tensor {
   tensor(const silt::dtype type, const silt::shape shape, const host_t host): impl{make(type, shape, host)} {}
 
   //! Polymorphic Tensor Copy Constructor
-  tensor(const silt::tensor& rhs){
+  tensor(const silt::tensor& rhs) {
     this->impl = rhs.clone();
   }
 
@@ -31,13 +31,13 @@ struct EXPORT_SHARED tensor {
 
   //! Strict-Typed Tensor Copy Constructor
   template<typename T>
-  tensor(const silt::tensor_t<T> &ten) {
+  tensor(const silt::tensor_t<T>& ten) {
     this->impl = new silt::tensor_t<T>(ten);
   }
 
   //! Strict-Typed Tensor Move Constructor
   template<typename T>
-  tensor(silt::tensor_t<T> &&ten) {
+  tensor(silt::tensor_t<T>&& ten) {
     this->impl = new silt::tensor_t<T>(ten);
   }
 
@@ -51,7 +51,7 @@ struct EXPORT_SHARED tensor {
   }
 
   //! Move Assignment Operator
-  tensor& operator=(silt::tensor &&rhs) noexcept {
+  tensor& operator=(silt::tensor&& rhs) noexcept {
     if (this == &rhs) return *this;
     this->clear();
     this->impl = rhs.impl;
@@ -61,14 +61,14 @@ struct EXPORT_SHARED tensor {
 
   //! Polymorphic Strict-Type Cast (Const)
   template<typename T>
-  inline const tensor_t<T> &as() const noexcept {
-    return static_cast<tensor_t<T> &>(*(this->impl));
+  inline const tensor_t<T>& as() const noexcept {
+    return static_cast<tensor_t<T>&>(*(this->impl));
   }
 
   //! Polymorphic Strict-Type Cast (Mutable)
   template<typename T>
-  inline tensor_t<T> &as() noexcept {
-    return static_cast<tensor_t<T> &>(*(this->impl));
+  inline tensor_t<T>& as() noexcept {
+    return static_cast<tensor_t<T>&>(*(this->impl));
   }
 
   //
@@ -105,9 +105,9 @@ struct EXPORT_SHARED tensor {
     });
   }
 
-  void *data() {
+  void* data() {
     return select(this->type(), [self = this]<typename S>() {
-      return (void *)self->as<S>().data();
+      return (void*)self->as<S>().data();
     });
   }
 
@@ -115,7 +115,7 @@ struct EXPORT_SHARED tensor {
   // Shape Manipulation
   //
 
-  void reshape (const int d0 = 1, const int d1 = 1, const int d2 = 1, const int d3 = 1) {
+  void reshape(const int d0 = 1, const int d1 = 1, const int d2 = 1, const int d3 = 1) {
     select(this->type(), [&, self = this]<typename S>() {
       self->as<S>().reshape(d0, d1, d2, d3);
     });
@@ -128,14 +128,13 @@ struct EXPORT_SHARED tensor {
   }
 
 private:
-
   void clear() {
-    if(this->impl != NULL)
+    if (this->impl != NULL)
       delete this->impl;
     this->impl = NULL;
   }
 
-  //! Make a new Strict-Typed Tensor 
+  //! Make a new Strict-Typed Tensor
   static typedbase* make(const silt::dtype type, const silt::shape shape, const host_t host = CPU) {
     return select(type, [shape, host]<typename S>() -> typedbase* {
       return new silt::tensor_t<S>(shape, host);
@@ -144,7 +143,7 @@ private:
 
   //! Clone the implementation pointer with new
   typedbase* clone() const {
-    if(this->impl == NULL) 
+    if (this->impl == NULL)
       return NULL;
     return select(this->type(), [self = this]<typename S>() -> typedbase* {
       return new silt::tensor_t<S>(self->as<S>());
@@ -154,4 +153,4 @@ private:
   typedbase* impl = NULL; //!< Polymorphic Implementation Pointer
 };
 
-}
+} // namespace silt

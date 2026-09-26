@@ -1,7 +1,7 @@
 #pragma once
 
-#include <silt/silt.hpp>
 #include <silt/core/types.hpp>
+#include <silt/silt.hpp>
 #include <sstream>
 
 // Custom Soillib Exceptions
@@ -15,12 +15,12 @@ namespace error {
 //! uncaught std::exception into a Python exception, so this is
 //! catchable from Python rather than killing the interpreter.
 struct cuda_error: std::exception {
-  cuda_error(cudaError_t code, const char *file, int line) {
+  cuda_error(cudaError_t code, const char* file, int line) {
     std::stringstream ss;
     ss << "CUDA error: " << cudaGetErrorString(code) << " (" << file << ":" << line << ")";
     this->msg = ss.str();
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 
@@ -28,9 +28,11 @@ private:
   std::string msg;
 };
 
-#define gpuErrchk(ans) \
-  { silt::error::gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line) {
+#define gpuErrchk(ans)                                 \
+  {                                                    \
+    silt::error::gpuAssert((ans), __FILE__, __LINE__); \
+  }
+inline void gpuAssert(cudaError_t code, const char* file, int line) {
   if (code != cudaSuccess)
     throw cuda_error(code, file, line);
 }
@@ -43,7 +45,7 @@ struct cast_error: std::exception {
     ss << "invalid cast from <" << typedesc<From>::name << "> to <" << typedesc<To>::name << ">";
     this->msg = ss.str();
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 
@@ -63,7 +65,7 @@ struct mismatch_size: std::exception {
     ss << ")";
     this->msg = ss.str();
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 
@@ -81,7 +83,7 @@ struct mismatch_type: std::exception {
     ss << ")";
     this->msg = ss.str();
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 
@@ -99,7 +101,7 @@ struct mismatch_host: std::exception {
     ss << ">";
     this->msg = ss.str();
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 
@@ -117,7 +119,7 @@ struct out_of_bounds: std::exception {
     ss << ")";
     this->msg = ss.str();
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 
@@ -135,7 +137,7 @@ struct bad_reshape: std::exception {
     ss << ")";
     this->msg = ss.str();
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 
@@ -153,7 +155,7 @@ struct unsupported_host: std::exception {
     ss << ">";
     this->msg = ss.str();
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 
@@ -162,7 +164,7 @@ private:
 };
 
 struct uninitialized: std::exception {
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return "tensor is uninitialized (default-constructed and never assigned)";
   }
 };
@@ -174,7 +176,7 @@ struct missing_file: std::exception {
     ss << file;
     this->msg = ss.str();
   }
-  const char *what() const noexcept override {
+  const char* what() const noexcept override {
     return this->msg.c_str();
   }
 

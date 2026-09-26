@@ -29,10 +29,10 @@ inline void require_type(const silt::tensor& t, silt::dtype want) {
 // namespace, a named namespace does not give this internal linkage on
 // its own.
 inline void unpack_slice(
-  nb::handle& handle,
-  Py_ssize_t& offset,
-  Py_ssize_t& stride,
-  Py_ssize_t& extent
+    nb::handle& handle,
+    Py_ssize_t& offset,
+    Py_ssize_t& stride,
+    Py_ssize_t& extent
 ) {
 
   if (PySlice_Check(handle.ptr())) {
@@ -40,14 +40,13 @@ inline void unpack_slice(
       throw nb::python_error();
     }
   }
-  
+
   else {
     offset = nb::cast<Py_ssize_t>(handle);
     stride = 1;
     extent = 1;
   }
-
 }
 
-}
-}
+} // namespace detail
+} // namespace silt

@@ -21,7 +21,7 @@ struct lerp5_t {
   //  that performs a sum over multiple values somewhere. For now,
   //  we will just implement two separate functions.
 
-  GPU_ENABLE void gather(const silt::tensor_t<T> &tensor, glm::ivec2 p) {
+  GPU_ENABLE void gather(const silt::tensor_t<T>& tensor, glm::ivec2 p) {
 
     const silt::shape shape = tensor.shape();
 
@@ -42,8 +42,8 @@ struct lerp5_t {
     }
   }
 
-  lerp5_t(){}
-  lerp5_t(const silt::tensor_t<T> &tensor, glm::ivec2 p){
+  lerp5_t() {}
+  lerp5_t(const silt::tensor_t<T>& tensor, glm::ivec2 p) {
     this->gather(tensor, p);
   }
 
@@ -110,7 +110,6 @@ private:
   sample_t x[5];
   sample_t y[5];
 };
-
 
 template<typename T>
 struct lerp_t {

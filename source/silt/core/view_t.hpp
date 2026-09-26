@@ -1,9 +1,9 @@
 #pragma once
 
-#include <silt/silt.hpp>
-#include <silt/core/types.hpp>
-#include <silt/core/slice.hpp>
 #include <silt/core/error.hpp>
+#include <silt/core/slice.hpp>
+#include <silt/core/types.hpp>
+#include <silt/silt.hpp>
 
 namespace silt {
 
@@ -29,16 +29,15 @@ struct view_t: typedbase {
     this->_data = NULL;
   }
 
-  GPU_ENABLE view_t(const silt::slice slice, const host_t host, T* data):
-    _slice{slice},
-    _host{host},
-    _data{data}{}
+  GPU_ENABLE view_t(const silt::slice slice, const host_t host, T* data): _slice{slice},
+                                                                          _host{host},
+                                                                          _data{data} {}
 
-  GPU_ENABLE inline silt::slice slice()   const { return this->_slice; }        //!< View Sliced Shape
-  GPU_ENABLE inline size_t elem()         const { return this->_slice.elem(); } //!< Number of Elements
-  GPU_ENABLE inline host_t host()         const { return this->_host; }         //!< Current Device (CPU / GPU)
-  GPU_ENABLE inline const T *data()       const { return this->_data; }         //!< Raw Data Pointer (Const)
-  GPU_ENABLE inline T *data()                   { return this->_data; }         //!< Raw Data Pointer (Mutable)
+  GPU_ENABLE inline silt::slice slice() const { return this->_slice; }  //!< View Sliced Shape
+  GPU_ENABLE inline size_t elem() const { return this->_slice.elem(); } //!< Number of Elements
+  GPU_ENABLE inline host_t host() const { return this->_host; }         //!< Current Device (CPU / GPU)
+  GPU_ENABLE inline const T* data() const { return this->_data; }       //!< Raw Data Pointer (Const)
+  GPU_ENABLE inline T* data() { return this->_data; }                   //!< Raw Data Pointer (Mutable)
 
   //! Type Enumerator Retrieval
   constexpr silt::dtype type() noexcept {
@@ -49,9 +48,9 @@ struct view_t: typedbase {
   GPU_ENABLE T operator[](const size_t index) const noexcept {
     return this->_data[this->_slice.transform(index)];
   }
-  
+
   //! Non-Const Subscript Operator: With Slice Transform!
-  GPU_ENABLE T &operator[](const size_t index) noexcept {
+  GPU_ENABLE T& operator[](const size_t index) noexcept {
     return this->_data[this->_slice.transform(index)];
   }
 
@@ -70,11 +69,9 @@ struct view_t: typedbase {
   }
 
 private:
-
   silt::slice _slice; //!< Sliced Shape of Data
   host_t _host = CPU; //!< Compute Device Location
   T* _data = NULL;    //!< Raw Data Pointer
-
 };
 
-}
+} // namespace silt
