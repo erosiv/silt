@@ -1,6 +1,3 @@
-#ifndef SILT_PYTHON
-#define SILT_PYTHON
-
 // silt Python Bindings
 // Nicholas McDonald 2025
 
@@ -34,5 +31,3 @@ bind_indexed(module);
 bind_util(module);
 
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef SILT_PYTHON_GLM
-#define SILT_PYTHON_GLM
+#pragma once
 
 //! GLM Vector and Matrix Type Casters
 //!
@@ -102,5 +101,3 @@ struct type_caster<glm::tvec4<T, P>>
 }	// end of namespace detail
 
 }
-
-#endif

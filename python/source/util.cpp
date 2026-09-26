@@ -1,6 +1,3 @@
-#ifndef SILT_PYTHON_UTIL
-#define SILT_PYTHON_UTIL
-
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;
 
@@ -44,5 +41,3 @@ nb::enum_<silt::host_t>(module, "host")
   .export_values();
 
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef SILT_MEMORY
-#define SILT_MEMORY
+#pragma once
 
 #include <silt/silt.hpp>
 
@@ -24,5 +23,3 @@ EXPORT_SHARED void  device_free(void* ptr);
 EXPORT_SHARED void  device_copy(void* dst, const void* src, size_t bytes, copy_t copy);
 
 }
-
-#endif

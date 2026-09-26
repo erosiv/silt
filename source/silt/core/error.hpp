@@ -1,5 +1,4 @@
-#ifndef SILT_ERROR
-#define SILT_ERROR
+#pragma once
 
 #include <silt/silt.hpp>
 #include <silt/core/types.hpp>
@@ -159,5 +158,3 @@ private:
 
 } // end of namespace error
 } // end of namespace silt
-
-#endif

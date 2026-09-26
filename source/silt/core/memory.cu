@@ -1,6 +1,3 @@
-#ifndef SILT_MEMORY_CU
-#define SILT_MEMORY_CU
-
 #include <silt/silt.hpp>
 #include <silt/core/memory.hpp>
 #include <cuda_runtime.h>
@@ -22,5 +19,3 @@ void device_copy(void* d, const void* s, size_t n, copy_t k) {
 }
 
 }
-
-#endif

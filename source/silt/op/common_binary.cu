@@ -1,5 +1,3 @@
-#ifndef SILT_OP_COMMON_BINARY_CU
-#define SILT_OP_COMMON_BINARY_CU
 #define HAS_CUDA
 
 #include <silt/op/common.hpp>
@@ -80,5 +78,3 @@ template EXPORT_SHARED void silt::mix<float> (silt::tensor_t<float> buffer,   co
 template EXPORT_SHARED void silt::mix<double>(silt::tensor_t<double> buffer,  const silt::tensor_t<double> rhs, const float w);
 
 } // end of namespace silt
-
-#endif

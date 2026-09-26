@@ -1,5 +1,4 @@
-#ifndef SILT_OP_COMMON
-#define SILT_OP_COMMON
+#pragma once
 
 #include <limits>
 #include <silt/core/tensor.hpp>
@@ -189,5 +188,3 @@ T max(const silt::tensor_t<T> &tensor) {
 
 
 } // end of namespace silt
-
-#endif

@@ -1,3 +1,5 @@
+#pragma once
+
 //
 // Numpy Buffer from Type Buffer Generator
 //

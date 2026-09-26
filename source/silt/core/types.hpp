@@ -1,5 +1,4 @@
-#ifndef SILT_TYPES
-#define SILT_TYPES
+#pragma once
 
 #include <silt/silt.hpp>
 #include <silt/core/vector.hpp>
@@ -230,5 +229,3 @@ auto select(const silt::dtype type, F lambda, Args &&...args) {
 }
 
 } // namespace silt
-
-#endif

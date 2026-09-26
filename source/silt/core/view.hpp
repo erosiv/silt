@@ -1,5 +1,4 @@
-#ifndef SILT_VIEW
-#define SILT_VIEW
+#pragma once
 
 #include <silt/silt.hpp>
 #include <silt/core/types.hpp>
@@ -206,5 +205,3 @@ private:
 };
 
 }
-
-#endif

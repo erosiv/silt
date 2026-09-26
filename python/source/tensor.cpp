@@ -1,6 +1,3 @@
-#ifndef SILT_PYTHON_UTIL
-#define SILT_PYTHON_UTIL
-
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -100,9 +97,11 @@ tensor.def("slice", __slice);
 
 //
 // External Library Interop Interface
-//  Note: Memory is shared, not copied.
-//  The lifetimes of the objects are managed
-//  so that the memory is not deleted.
+//  Note: these conversions COPY the data. Each one allocates a fresh tensor and
+//  copies element-by-element, then hands numpy/pytorch a capsule owning that copy.
+//  tensor_t is already reference counted, so a genuinely zero-copy path is possible
+//  by making the capsule own a refcount-incremented handle to the source instead.
+//  See the 1.2 plan (E4) -- the docs previously claimed the no-copy behaviour.
 //
 
 tensor.def("numpy", [](const silt::tensor& tensor){
@@ -154,5 +153,3 @@ tensor.def_static("from_torch", [](const nb::object& object){
 });
 
 }
-
-#endif

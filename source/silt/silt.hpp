@@ -1,5 +1,4 @@
-#ifndef SILT
-#define SILT
+#pragma once
 
 #include <cstddef>
 #include <format>
@@ -51,5 +50,3 @@
 namespace silt {
 
 }; // namespace silt
-
-#endif

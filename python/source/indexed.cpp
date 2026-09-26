@@ -1,6 +1,3 @@
-#ifndef SILT_PYTHON_INDEXED
-#define SILT_PYTHON_INDEXED
-
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;
 
@@ -31,5 +28,3 @@ module.def("index_radius", [](const silt::shape& shape, const silt::vec2 center,
 });
 
 }
-
-#endif

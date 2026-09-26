@@ -1,5 +1,3 @@
-#ifndef SILT_OP_COMMON_UNARY_CU
-#define SILT_OP_COMMON_UNARY_CU
 #define HAS_CUDA
 
 #include <silt/op/common.hpp>
@@ -150,5 +148,3 @@ template EXPORT_SHARED tensor_t<float>  silt::clone<float> (const silt::tensor_t
 template EXPORT_SHARED tensor_t<double> silt::clone<double>(const silt::tensor_t<double> rhs);
 
 } // end of namespace silt
-
-#endif

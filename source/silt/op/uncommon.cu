@@ -1,5 +1,3 @@
-#ifndef SILT_OP_COMMON_BINARY_CU
-#define SILT_OP_COMMON_BINARY_CU
 #define HAS_CUDA
 
 #include <silt/op/common.hpp>
@@ -173,14 +171,6 @@ __device__ bool __isnanv(vec3 val){
   return __isnanf(val.x) || __isnanf(val.y) || __isnanf(val.z);
 }
 
-
-
-
-
-
-
-
-
 template<typename T>
 __device__ lerp_t<T> __gather(const silt::view_t<const T>& view, const silt::shape shape, const vec2 pos) {
 
@@ -286,5 +276,3 @@ template EXPORT_SHARED void silt::resample<float> (silt::tensor_t<float> lhs,   
 template EXPORT_SHARED void silt::resample<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs,  const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
 
 } // end of namespace silt
-
-#endif

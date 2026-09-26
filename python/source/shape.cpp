@@ -1,6 +1,3 @@
-#ifndef SILT_PYTHON_SHAPE
-#define SILT_PYTHON_SHAPE
-
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -52,5 +49,3 @@ shape.def("__repr__", [](const silt::shape& shape){
 });
 
 }
-
-#endif

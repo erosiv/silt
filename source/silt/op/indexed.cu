@@ -1,5 +1,3 @@
-#ifndef SILT_OP_INDEXED_CU
-#define SILT_OP_INDEXED_CU
 #define HAS_CUDA
 
 #include <silt/op/indexed.hpp>
@@ -26,7 +24,7 @@ template EXPORT_SHARED void silt::indexed_set<double>(silt::tensor_t<double> lhs
 // Index Generation Functions
 //
 
-__global__ void __index_radius(silt::tensor_t<int> index, const silt::shape shape, const silt::vec2 center, const float rad) {\
+__global__ void __index_radius(silt::tensor_t<int> index, const silt::shape shape, const silt::vec2 center, const float rad) {
   const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
   if(n < shape.elem()) {
     const silt::vec2 pos = shape.unflatten(n);
@@ -44,6 +42,4 @@ tensor_t<int> index_radius(const silt::shape shape, const silt::vec2 center, con
   return index;
 }
 
-} // end of namespace soil
-
-#endif
+} // end of namespace silt

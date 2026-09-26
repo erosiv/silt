@@ -1,5 +1,4 @@
-#ifndef SILT_OPERATION
-#define SILT_OPERATION
+#pragma once
 
 #include <silt/core/tensor.hpp>
 #include <silt/core/view.hpp>
@@ -121,5 +120,3 @@ void uniop_inplace_indexed(tensor_t<T> lhs, const tensor_t<int> ind, F func) {
 
 }
 }
-
-#endif

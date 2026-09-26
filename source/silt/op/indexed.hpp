@@ -1,5 +1,4 @@
-#ifndef SILT_OP_INDEXED
-#define SILT_OP_INDEXED
+#pragma once
 
 #include <silt/core/types.hpp>
 #include <silt/core/shape.hpp>
@@ -22,5 +21,3 @@ void indexed_set(tensor_t<T> lhs, const T rhs, const tensor_t<int> ind);
 EXPORT_SHARED tensor_t<int> index_radius(const silt::shape shape, const silt::vec2 center, const float rad);
 
 }
-
-#endif

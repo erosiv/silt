@@ -1,6 +1,3 @@
-#ifndef SILT_PYTHON_LAYER
-#define SILT_PYTHON_LAYER
-
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;
 
@@ -238,5 +235,3 @@ module.def("sample_normal", [](silt::tensor& tensor, const float mean, const flo
 });
 
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef SILT_SLICE
-#define SILT_SLICE
+#pragma once
 
 #include <silt/silt.hpp>
 #include <silt/core/types.hpp>
@@ -131,5 +130,3 @@ private:
 };
 
 } // end of namespace silt
-
-#endif

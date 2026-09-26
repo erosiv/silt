@@ -1,6 +1,3 @@
-#ifndef SILT_PYTHON_VIEW
-#define SILT_PYTHON_VIEW
-
 #include <nanobind/nanobind.h>
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -31,5 +28,3 @@ view.def_prop_ro("host", &silt::view::host);
 view.def_prop_ro("slice", &silt::view::slice);
 
 }
-
-#endif

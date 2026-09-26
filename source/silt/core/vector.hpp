@@ -1,5 +1,4 @@
-#ifndef SILT_VECTOR
-#define SILT_VECTOR
+#pragma once
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -53,5 +52,3 @@ using vec3 = vec<3>;
 using vec4 = vec<4>;
 
 } // end of namespace silt
-
-#endif

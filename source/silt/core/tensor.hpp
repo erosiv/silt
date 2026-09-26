@@ -1,5 +1,4 @@
-#ifndef SILT_TENSOR
-#define SILT_TENSOR
+#pragma once
 
 #include <silt/silt.hpp>
 #include <silt/core/memory.hpp>
@@ -413,5 +412,3 @@ private:
 };
 
 }
-
-#endif

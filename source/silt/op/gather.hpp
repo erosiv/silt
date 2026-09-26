@@ -1,5 +1,4 @@
-#ifndef SILT_OP_GATHER
-#define SILT_OP_GATHER
+#pragma once
 
 #include <silt/core/shape.hpp>
 #include <silt/core/tensor.hpp>
@@ -112,23 +111,6 @@ private:
   sample_t y[5];
 };
 
-namespace {
-
-//! Note: For lerp oob, we have to reduce the bound
-//! by one so that we have lerp support on the other end.
-GPU_ENABLE bool oob(const vec2 pos, const shape shape) {
-  if (pos.x < 0)
-    return true;
-  if (pos.y < 0)
-    return true;
-  if (pos.x >= shape[0] - 1)
-    return true;
-  if (pos.y >= shape[1] - 1)
-    return true;
-  return false;
-}
-
-} // namespace
 
 template<typename T>
 struct lerp_t {
@@ -175,35 +157,4 @@ private:
   vec2 w0, w1;
 };
 
-/*
-template<typename T>
-GPU_ENABLE lerp_t<T> gather(const silt::`fer_t<T> &buf, const shape shape, vec2 pos) {
-
-ivec2 p00 = ivec2(pos) + ivec2(0, 0);
-ivec2 p01 = ivec2(pos) + ivec2(0, 1);
-ivec2 p10 = ivec2(pos) + ivec2(1, 0);
-ivec2 p11 = ivec2(pos) + ivec2(1, 1);
-
-//  if(oob(p00, index)) return lerp_t<T>(T{CUDART_NAN_F});
-//  if(oob(p01, index)) return lerp_t<T>(T{CUDART_NAN_F});
-//  if(oob(p10, index)) return lerp_t<T>(T{CUDART_NAN_F});
-//  if(oob(p11, index)) return lerp_t<T>(T{CUDART_NAN_F});
-
-int i00 = shape.flatten(p00);
-int i01 = shape.flatten(p01);
-int i10 = shape.flatten(p10);
-int i11 = shape.flatten(p11);
-
-T v00 = buf[i00];
-T v01 = buf[i01];
-T v10 = buf[i10];
-T v11 = buf[i11];
-
-const vec2 w = pos - glm::floor(pos); // vec2(pos.x - floor(pos.x), pos.y - floor(pos.y));
-return lerp_t<T>{v00, v01, v10, v11, w};
-}
-*/
-
 } // end of namespace silt
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef SILT_SHAPE
-#define SILT_SHAPE
+#pragma once
 
 #include <silt/silt.hpp>
 #include <silt/core/types.hpp>
@@ -171,5 +170,3 @@ private:
 };
 
 }
-
-#endif
