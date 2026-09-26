@@ -38,6 +38,7 @@ nb::object __make_numpy(const silt::tensor_t<T>& source){
   //  object with original python pointer.
 
   switch(shape.dim()){
+    case 0: // a single-element tensor is treated as rank-1
     case 1: return __make_numpy<T, 1>(target->data(), shape, owner);
     case 2: return __make_numpy<T, 2>(target->data(), shape, owner);
     case 3: return __make_numpy<T, 3>(target->data(), shape, owner);
@@ -103,6 +104,7 @@ nb::object __make_torch(const silt::tensor_t<T>& source){
   silt::set(*target, source);
 
   switch(shape.dim()){
+    case 0: // a single-element tensor is treated as rank-1
     case 1: return __make_torch<T, 1>(target->data(), shape, owner);
     case 2: return __make_torch<T, 2>(target->data(), shape, owner);
     case 3: return __make_torch<T, 3>(target->data(), shape, owner);

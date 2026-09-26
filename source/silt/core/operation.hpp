@@ -48,6 +48,7 @@ void uniop_inplace(T lhs, F func) {
 
   else if(lhs.host() == silt::host_t::GPU) {
     __uniop_inplace_gpu<<<block(lhs.elem(), 512), 512>>>(lhs, func);
+    gpuErrchk(cudaGetLastError());
   }
 
 }
@@ -72,12 +73,16 @@ __host__ void __binop_inplace_cpu(T lhs, const T rhs, F func){
 template<typename T, typename F>
 void binop_inplace(T lhs, const T rhs, F func) {
 
+  if(lhs.host() != rhs.host())
+    throw silt::error::mismatch_host(lhs.host(), rhs.host());
+
   if(lhs.host() == silt::host_t::CPU){
     __binop_inplace_cpu(lhs, rhs, func);
   }
 
   else if(lhs.host() == silt::host_t::GPU){
     __binop_inplace_gpu<<<block(lhs.elem(), 512), 512>>>(lhs, rhs, func);
+    gpuErrchk(cudaGetLastError());
   }
 
 }
@@ -114,6 +119,7 @@ void uniop_inplace_indexed(tensor_t<T> lhs, const tensor_t<int> ind, F func) {
 
   else if(lhs.host() == silt::host_t::GPU){
     __uniop_inplace_indexed_gpu<<<block(ind.elem(), 512), 512>>>(lhs, ind, func);
+    gpuErrchk(cudaGetLastError());
   }
 
 }

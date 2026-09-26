@@ -136,11 +136,7 @@ template EXPORT_SHARED void silt::clamp<double>(silt::view_t<double> buffer, con
 
 template<typename T>
 tensor_t<T> clone(const tensor_t<T> rhs) {
-  tensor_t<T> lhs(rhs.shape(), silt::GPU);
-  op::binop_inplace(lhs, rhs, [] GPU_ENABLE (const T a, const T b){
-    return b;
-  });
-  return lhs;
+  return rhs.transfer(rhs.host());
 }
 
 template EXPORT_SHARED tensor_t<int>    silt::clone<int>   (const silt::tensor_t<int> rhs);

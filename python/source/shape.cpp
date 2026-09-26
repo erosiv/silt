@@ -1,4 +1,5 @@
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 namespace nb = nanobind;
 using namespace nb::literals;
 
@@ -33,16 +34,16 @@ shape.def("reshape", [](silt::shape& shape, int d0, int d1, int d2, int d3) {
   return shape;
 }, "d0"_a = 1, "d1"_a = 1, "d2"_a = 1, "d3"_a = 1);
 
-shape.def("__repr__", [](const silt::shape& shape){
+shape.def("__repr__", [](const silt::shape& shape) -> std::string {
   switch(shape.dim()){
     case 1:
-      return std::format("silt.shape({})", shape[0]).c_str(); 
+      return std::format("silt.shape({})", shape[0]); 
     case 2:
-      return std::format("silt.shape({}, {})", shape[0], shape[1]).c_str(); 
+      return std::format("silt.shape({}, {})", shape[0], shape[1]); 
     case 3:
-      return std::format("silt.shape({}, {}, {})", shape[0], shape[1], shape[2]).c_str(); 
+      return std::format("silt.shape({}, {}, {})", shape[0], shape[1], shape[2]); 
     case 4:
-      return std::format("silt.shape({}, {}, {}, {})", shape[0], shape[1], shape[2], shape[3]).c_str(); 
+      return std::format("silt.shape({}, {}, {}, {})", shape[0], shape[1], shape[2], shape[3]); 
     default:
       return "silt.shape()";  
   }

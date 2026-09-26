@@ -15,15 +15,11 @@ using silt::tensor_t;
 
 TEST_SUITE("tensor_t<T> ownership") {
 
-  TEST_CASE("default construction leaves data null but refs non-null") {
-    // A default-constructed tensor_t<T> sets _refs = new size_t(0), but
-    // deallocate() returns early whenever *_refs == 0 without freeing
-    // it, leaking 8 bytes. There's no portable way to assert "no leak"
-    // here, so this pins down the state that early return depends on.
+  TEST_CASE("default construction leaves data and refs both null") {
     tensor_t<float> t;
     CHECK(t.data() == nullptr);
-    CHECK(t._refs != nullptr);
-    CHECK(*t._refs == 0);
+    CHECK(t._refs == nullptr);
+    CHECK(t.refs() == 0);
   }
 
   TEST_CASE("copy assignment increments the shared refcount") {
@@ -101,20 +97,13 @@ TEST_SUITE("tensor (polymorphic wrapper)") {
     CHECK(a.as<float>().refs() == 2);
   }
 
-  TEST_CASE("move construction clones today rather than stealing") {
-    // tensor's move constructor calls rhs.clone(), which allocates a
-    // *new* tensor_t<T> (refcount-incrementing the impl, not deep-
-    // copying) rather than stealing rhs's impl pointer outright. So a
-    // "moved-from" tensor here is left holding a live, still-valid
-    // impl, unlike a real move. This pins down today's behaviour, not
-    // the desired one: once this steals rhs's impl instead, the second
-    // CHECK below should change to expect `a` to be empty.
+  TEST_CASE("move construction steals the impl, leaving the source uninitialized") {
     tensor a(silt::FLOAT32, silt::shape(4));
     void* original_data = a.data();
 
     tensor b(std::move(a));
     CHECK(b.data() == original_data);
-    CHECK(a.data() == original_data);  // documents the clone, not a requirement
+    CHECK_THROWS_AS(a.data(), silt::error::uninitialized);
   }
 
 }

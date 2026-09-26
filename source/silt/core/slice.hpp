@@ -84,9 +84,9 @@ struct slice {
     if(offset >= bound)
       throw silt::error::out_of_bounds(offset, bound);
 
-    // Extent is clamped to maximum extent
+    // Extent is clamped to maximum extent.
     //! todo: Throw an error instead?
-    extent = std::min(extent, (bound - offset) / stride);
+    extent = std::min(extent, (bound - offset + stride - 1) / stride);
 
     this->_offset[dim] = offset;
     this->_stride[dim] = stride;

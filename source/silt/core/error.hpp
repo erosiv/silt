@@ -10,25 +10,45 @@ namespace silt {
 namespace error {
 
 #ifdef HAS_CUDA
-#define gpuErrchk(ans) \
-  { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) {
-  if (code != cudaSuccess) {
-    fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-    if (abort)
-      exit(code);
+
+//! Thrown for any failing CUDA runtime call. nanobind translates an
+//! uncaught std::exception into a Python exception, so this is
+//! catchable from Python rather than killing the interpreter.
+struct cuda_error: std::exception {
+  cuda_error(cudaError_t code, const char *file, int line) {
+    std::stringstream ss;
+    ss << "CUDA error: " << cudaGetErrorString(code) << " (" << file << ":" << line << ")";
+    this->msg = ss.str();
   }
+  const char *what() const noexcept override {
+    return this->msg.c_str();
+  }
+
+private:
+  std::string msg;
+};
+
+#define gpuErrchk(ans) \
+  { silt::error::gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line) {
+  if (code != cudaSuccess)
+    throw cuda_error(code, file, line);
 }
 #endif
 
 template<typename From, typename To>
 struct cast_error: std::exception {
-  static std::string value() noexcept {
-    return std::format("invalid cast from <{}> to <{}>", typedesc<From>::name, typedesc<To>::name);
+  cast_error() {
+    std::stringstream ss;
+    ss << "invalid cast from <" << typedesc<From>::name << "> to <" << typedesc<To>::name << ">";
+    this->msg = ss.str();
   }
   const char *what() const noexcept override {
-    return value().c_str();
+    return this->msg.c_str();
   }
+
+private:
+  std::string msg;
 };
 
 // Mismatch Errors
@@ -139,6 +159,12 @@ struct unsupported_host: std::exception {
 
 private:
   std::string msg;
+};
+
+struct uninitialized: std::exception {
+  const char *what() const noexcept override {
+    return "tensor is uninitialized (default-constructed and never assigned)";
+  }
 };
 
 struct missing_file: std::exception {

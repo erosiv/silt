@@ -3,6 +3,7 @@
 #include <silt/silt.hpp>
 #include <silt/core/types.hpp>
 #include <silt/core/slice.hpp>
+#include <silt/core/error.hpp>
 
 namespace silt {
 
@@ -87,8 +88,8 @@ struct EXPORT_SHARED view {
   }
 
   //! Polymorphic Tensor Move Constructor
-  view(silt::view&& rhs){
-    this->impl = rhs.clone();
+  view(silt::view&& rhs) noexcept: impl{rhs.impl} {
+    rhs.impl = nullptr;
   }
 
   //! Strict-Typed Tensor Copy Constructor
@@ -113,9 +114,11 @@ struct EXPORT_SHARED view {
   }
 
   //! Move Assignment Operator
-  view& operator=(silt::view &&rhs) {
+  view& operator=(silt::view &&rhs) noexcept {
+    if (this == &rhs) return *this;
     this->clear();
-    this->impl = rhs.clone();
+    this->impl = rhs.impl;
+    rhs.impl = nullptr;
     return *this;
   }
 
@@ -135,7 +138,8 @@ struct EXPORT_SHARED view {
   // Data Inspection Operations (Type-Deducing)
   //
   
-  inline silt::dtype type() const noexcept {
+  inline silt::dtype type() const {
+    if (this->impl == NULL) throw silt::error::uninitialized();
     return this->impl->type();
   }
 

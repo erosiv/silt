@@ -28,7 +28,7 @@ struct tensor_t: typedbase {
   tensor_t() {
     this->_shape = shape();
     this->_data = NULL;
-    this->_refs = new size_t(0);
+    this->_refs = NULL;
     this->_host = CPU;
   }
 
@@ -62,6 +62,7 @@ struct tensor_t: typedbase {
 
   //! Copy Assignment Operator (Reference Increment)
   tensor_t &operator=(const tensor_t<T> &other) {
+    if (this == &other) return *this;
     this->deallocate();
     this->_data = other._data;
     this->_refs = other._refs;
@@ -87,6 +88,7 @@ struct tensor_t: typedbase {
 
   //! Move Assginmment Operator (Reference Steal)
   tensor_t &operator=(tensor_t<T> &&other) {
+    if (this == &other) return *this;
     this->deallocate();
     this->_data = other._data;
     this->_refs = other._refs;
@@ -104,7 +106,7 @@ struct tensor_t: typedbase {
   GPU_ENABLE inline silt::shape shape()   const { return this->_shape; }
   GPU_ENABLE inline size_t elem()   const { return this->_shape.elem(); }       //!< Number of Elements
   GPU_ENABLE inline size_t size()   const { return this->elem() * sizeof(T); }  //!< Total Size in Bytes
-  GPU_ENABLE inline size_t refs()   const { return *this->_refs; }              //!< Reference Count
+  GPU_ENABLE inline size_t refs()   const { return this->_refs ? *this->_refs : 0; } //!< Reference Count (0 if non-owning)
   GPU_ENABLE inline host_t host()   const { return this->_host; }               //!< Current Device (CPU / GPU)
   GPU_ENABLE inline const T *data() const { return this->_data; }               //!< Raw Data Pointer (Const)
   GPU_ENABLE inline T *data()             { return this->_data; }               //!< Raw Data Pointer (Mutable)
@@ -156,6 +158,11 @@ struct tensor_t: typedbase {
 
   void to_cpu(); //!< In-Place Copy Data to the CPU
   void to_gpu(); //!< In-Place Copy Data to the GPU (if available)
+
+  //! Return an independent copy of this tensor's data on `target`.
+  //! Covers all four host pairings (CPU/GPU source x CPU/GPU target);
+  //! transfer(host()) is a same-host deep copy.
+  tensor_t<T> transfer(const host_t target) const;
 
   size_t *_refs = NULL; //!< Pointer to Reference Count
 private:
@@ -225,6 +232,21 @@ void silt::tensor_t<T>::deallocate() {
 }
 
 template<typename T>
+tensor_t<T> silt::tensor_t<T>::transfer(const host_t target) const {
+
+  tensor_t<T> out(this->_shape, target);
+
+  copy_t kind;
+  if (this->_host == CPU && target == CPU) kind = copy_t::HOST_TO_HOST;
+  else if (this->_host == CPU && target == GPU) kind = copy_t::HOST_TO_DEVICE;
+  else if (this->_host == GPU && target == CPU) kind = copy_t::DEVICE_TO_HOST;
+  else kind = copy_t::DEVICE_TO_DEVICE;
+
+  silt::device_copy(out.data(), this->data(), this->size(), kind);
+  return out;
+}
+
+template<typename T>
 void silt::tensor_t<T>::to_gpu() {
 
   if (this->_host == GPU)
@@ -236,13 +258,7 @@ void silt::tensor_t<T>::to_gpu() {
   if (this->elem() == 0)
     return;
 
-  T *_data = (T*)silt::device_alloc(this->size());
-  silt::device_copy(_data, this->data(), this->size(), silt::copy_t::HOST_TO_DEVICE);
-
-  this->deallocate();
-  this->_data = _data;
-  this->_refs = new size_t(1);
-  this->_host = GPU;
+  *this = this->transfer(GPU);
 }
 
 template<typename T>
@@ -257,13 +273,7 @@ void silt::tensor_t<T>::to_cpu() {
   if (this->elem() == 0)
     return;
 
-  T *_data = new T[this->elem()];
-  silt::device_copy(_data, this->data(), this->size(), silt::copy_t::DEVICE_TO_HOST);
-
-  this->deallocate();
-  this->_data = _data;
-  this->_refs = new size_t(1);
-  this->_host = CPU;
+  *this = this->transfer(CPU);
 }
 
 //! tensor is a tag-poylymorphic tensor_t wrapper type.
@@ -286,8 +296,8 @@ struct EXPORT_SHARED tensor {
   }
 
   //! Polymorphic Tensor Move Constructor
-  tensor(silt::tensor&& rhs){
-    this->impl = rhs.clone();
+  tensor(silt::tensor&& rhs) noexcept: impl{rhs.impl} {
+    rhs.impl = nullptr;
   }
 
   //! Strict-Typed Tensor Copy Constructor
@@ -312,9 +322,11 @@ struct EXPORT_SHARED tensor {
   }
 
   //! Move Assignment Operator
-  tensor& operator=(silt::tensor &&rhs) {
+  tensor& operator=(silt::tensor &&rhs) noexcept {
+    if (this == &rhs) return *this;
     this->clear();
-    this->impl = rhs.clone();
+    this->impl = rhs.impl;
+    rhs.impl = nullptr;
     return *this;
   }
 
@@ -334,7 +346,9 @@ struct EXPORT_SHARED tensor {
   // Data Inspection Operations (Type-Deducing)
   //
 
-  inline silt::dtype type() const noexcept {
+  inline silt::dtype type() const {
+    if (this->impl == NULL)
+      throw silt::error::uninitialized();
     return this->impl->type();
   }
 

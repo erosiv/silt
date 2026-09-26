@@ -176,7 +176,7 @@ T max(const silt::tensor_t<T> &tensor) {
   if (tensor.host() != silt::host_t::CPU)
     throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
-  T val = std::numeric_limits<T>::min();
+  T val = std::numeric_limits<T>::lowest();
   for(int i = 0; i < tensor.elem(); ++i){
     const T b = tensor[i];
     if (!std::isnan(b)) {

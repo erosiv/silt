@@ -30,7 +30,8 @@ silt::view __slice(silt::tensor& tensor, nb::tuple tuple) {
       nb::handle handle = tuple[d];
       Py_ssize_t offset, stride, extent;
       __unpack_slice(handle, offset, stride, extent);
-      extent = std::min((shape.ext()[d] - offset) / stride, extent);
+      // Ceiling division: matches silt::slice::index (see slice.hpp).
+      extent = std::min((shape.ext()[d] - offset + stride - 1) / stride, extent);
       view_t.index(d, offset, stride, extent);
 
     }

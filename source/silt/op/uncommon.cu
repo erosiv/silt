@@ -271,8 +271,9 @@ void resample(
 
 }
 
-template EXPORT_SHARED void silt::resample<int>   (silt::tensor_t<int> lhs,     const silt::tensor_t<int> rhs,     const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
+// resample is only ever bound for float (see python/source/op.cpp); the
+// int/double instantiations reinterpreted the buffer as float/vec3 regardless
+// of T, which silently corrupted their data. Candidate for future removal.
 template EXPORT_SHARED void silt::resample<float> (silt::tensor_t<float> lhs,   const silt::tensor_t<float> rhs,   const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
-template EXPORT_SHARED void silt::resample<double>(silt::tensor_t<double> lhs,  const silt::tensor_t<double> rhs,  const vec3 t_scale, const vec3 s_scale, const vec2 posdiff);
 
 } // end of namespace silt

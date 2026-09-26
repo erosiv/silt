@@ -1,9 +1,21 @@
 #pragma once
 
 #include <nanobind/nanobind.h>
+#include <silt/core/error.hpp>
+#include <silt/core/tensor.hpp>
 namespace nb = nanobind;
 
 namespace {
+
+//
+// Type Guard
+//
+
+//! Throw silt::error::mismatch_type unless `t` holds dtype `want`.
+inline void require_type(const silt::tensor& t, silt::dtype want) {
+  if (t.type() != want)
+    throw silt::error::mismatch_type(want, t.type());
+}
 
 //
 // Slice Unpacking
