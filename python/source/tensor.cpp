@@ -3,8 +3,8 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 #include <nanobind/ndarray.h>
-#include <memory>
 #include <silt/core/tensor.hpp>
+#include <silt/core/view.hpp>
 #include <silt/op/common.hpp>
 #include "interop.hpp"
 #include "util.hpp"
@@ -40,7 +40,10 @@ silt::view __slice(silt::tensor& tensor, nb::tuple tuple) {
     // Keep the source tensor alive for as long as this view is (see the
     // view_t lifetime note in view.hpp): otherwise `del t` right after
     // `v = t[...]` leaves v pointing at freed memory.
-    return silt::view(view_t, std::make_shared<silt::tensor>(tensor));
+    // silt::tensor's copy constructor refcount-shares the underlying
+    // tensor_t<T> (see tensor.hpp), so this is a cheap owning handle,
+    // not a deep copy.
+    return silt::view(view_t, tensor);
   
   });
 }

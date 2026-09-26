@@ -8,6 +8,7 @@ namespace nb = nanobind;
 
 #include <silt/core/types.hpp>
 #include <silt/core/memory.hpp>
+#include <silt/core/view.hpp>
 #include <silt/op/common.hpp>
 #include <silt/op/normal.hpp>
 
