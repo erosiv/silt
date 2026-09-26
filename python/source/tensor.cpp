@@ -129,7 +129,7 @@ void bind_tensor(nb::module_& module) {
     return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
       if (tensor.host() == silt::CPU)
         return nb::cast(tensor.as<S>()[0]);
-      const silt::tensor_t<S> cpu = tensor.as<S>().transfer(silt::CPU);
+      const silt::tensor_t<S> cpu = tensor.as<S>().copy_to(silt::CPU);
       return nb::cast(cpu[0]);
     });
   });
@@ -139,7 +139,7 @@ void bind_tensor(nb::module_& module) {
   //  new allocation if already on the target host). `copy_to` is the
   //  out-of-place counterpart: it always allocates an independent tensor,
   //  even when the target host matches the source's (see
-  //  tensor_t<T>::transfer(), which both are built on).
+  //  tensor_t<T>::copy_to(), which both are built on).
 
   tensor.def("to", [](silt::tensor& tensor, const silt::host_t host) {
     silt::select(tensor.type(), [&tensor, host]<typename T>() {
@@ -165,7 +165,7 @@ void bind_tensor(nb::module_& module) {
   tensor.def("copy_to", [](const silt::tensor& tensor, std::optional<silt::host_t> host) {
     const silt::host_t target = host.value_or(tensor.host());
     return silt::select(tensor.type(), [&tensor, target]<silt::primitive S>() -> silt::tensor {
-      return silt::tensor(tensor.as<S>().transfer(target));
+      return silt::tensor(tensor.as<S>().copy_to(target));
     });
   }, nb::arg("host") = nb::none());
 

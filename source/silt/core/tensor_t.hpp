@@ -156,14 +156,17 @@ struct tensor_t: typedbase {
 
   // Host Manipulation
 
-  void to_cpu(); //!< In-Place Copy Data to the CPU
-  void to_gpu(); //!< In-Place Copy Data to the GPU (if available)
-  void to(const host_t target); //!< In-Place Transfer to `target`
+  //! In-Place Transfer to `target` -- the guard logic (no-op if already
+  //! on `target`, or if there is nothing to move) lives here; to_cpu()/
+  //! to_gpu() are simple aliases for it.
+  void to(const host_t target);
+  void to_cpu(); //!< Alias for to(CPU)
+  void to_gpu(); //!< Alias for to(GPU)
 
   //! Return an independent copy of this tensor's data on `target`.
   //! Covers all four host pairings (CPU/GPU source x CPU/GPU target);
-  //! transfer(host()) is a same-host deep copy.
-  tensor_t<T> transfer(const host_t target) const;
+  //! copy_to(host()) is a same-host deep copy.
+  tensor_t<T> copy_to(const host_t target) const;
 
   size_t* _refs = NULL; //!< Pointer to Reference Count
 private:
@@ -231,7 +234,7 @@ void silt::tensor_t<T>::deallocate() {
 }
 
 template<typename T>
-tensor_t<T> silt::tensor_t<T>::transfer(const host_t target) const {
+tensor_t<T> silt::tensor_t<T>::copy_to(const host_t target) const {
 
   tensor_t<T> out(this->_shape, target);
 
@@ -250,9 +253,9 @@ tensor_t<T> silt::tensor_t<T>::transfer(const host_t target) const {
 }
 
 template<typename T>
-void silt::tensor_t<T>::to_gpu() {
+void silt::tensor_t<T>::to(const host_t target) {
 
-  if (this->_host == GPU)
+  if (this->_host == target)
     return;
 
   if (this->_data == NULL)
@@ -261,30 +264,17 @@ void silt::tensor_t<T>::to_gpu() {
   if (this->elem() == 0)
     return;
 
-  *this = this->transfer(GPU);
+  *this = this->copy_to(target);
 }
 
 template<typename T>
 void silt::tensor_t<T>::to_cpu() {
-
-  if (this->_host == CPU)
-    return;
-
-  if (this->_data == NULL)
-    return;
-
-  if (this->elem() == 0)
-    return;
-
-  *this = this->transfer(CPU);
+  this->to(CPU);
 }
 
 template<typename T>
-void silt::tensor_t<T>::to(const host_t target) {
-  if (target == CPU)
-    this->to_cpu();
-  else
-    this->to_gpu();
+void silt::tensor_t<T>::to_gpu() {
+  this->to(GPU);
 }
 
 } // namespace silt

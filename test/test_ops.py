@@ -138,7 +138,7 @@ def test_max_of_mixed_sign_tensor():
 
 
 def test_copy_to_preserves_host():
-    """tensor.copy_to() (built on tensor_t<T>::transfer()) always allocates
+    """tensor.copy_to() (built on tensor_t<T>::copy_to()) always allocates
     its result on the requested host -- defaulting to the source's own
     host when none is given -- rather than assuming GPU. Copying a CPU
     tensor should yield a CPU tensor with identical data.

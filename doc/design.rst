@@ -224,14 +224,14 @@ host code is therefore not a silt error, it is an illegal host dereference of
 a device pointer, the same as it would be with a raw ``cudaMalloc``'d buffer.
 
 The only host-crossing operations are the explicit ones -- all built on
-``tensor_t<T>::transfer()``, which covers all four host/device copy
+``tensor_t<T>::copy_to()``, which covers all four host/device copy
 directions through the one function -- and the numpy/torch conversion
-functions. ``transfer()`` always allocates and copies, even when the
-target host matches the source's; ``.to(host)``/``.to_cpu()``/``.to_gpu()``
-build an in-place mutator on top of it (a no-op if already on the target
-host), while ``.copy_to(host=None)`` exposes ``transfer()`` directly as an
-out-of-place, always-independent copy -- the replacement for the former
-``clone()``, and usable across hosts, not just same-host. This mirrors
+functions. ``copy_to()`` always allocates and copies, even when the
+target host matches the source's; ``.to(host)`` (the in-place mutator, a
+no-op if already on the target host -- ``.to_cpu()``/``.to_gpu()`` are
+simple aliases for it) is built on top of it. The Python-facing
+``.copy_to(host=None)`` exposes it directly as an out-of-place,
+always-independent copy, and usable across hosts, not just same-host. This mirrors
 PyTorch's ``.cpu()``/``.cuda()`` naming for the in-place movers
 deliberately, for the same reason ``silt.synchronize()`` mirrors
 ``torch.cuda.synchronize()``: someone moving between the two libraries
