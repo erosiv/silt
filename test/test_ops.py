@@ -1,5 +1,6 @@
 """Tests for the free-function tensor operations in the `silt` module
-(set/add/multiply/divide/mix/clamp/clone/cast/min/max) and the indexed
+(set_/add_/multiply_/divide_/mix_/clamp_, their out-of-place counterparts
+add/multiply/divide/mix/clamp, clone/cast/min/max) and the indexed
 operations (indexed_set/index_radius).
 
 All tensors here are CPU by default (silt.tensor's two-argument
@@ -17,55 +18,95 @@ from conftest import run_python
 
 def test_set_scalar():
     t = silt.tensor(silt.float32, silt.shape(4))
-    silt.set(t, 2.5)
+    silt.set_(t, 2.5)
     np.testing.assert_array_equal(t.numpy(), np.full(4, 2.5, dtype=np.float32))
 
 
 def test_add_scalar():
     t = silt.tensor.from_numpy(np.array([1.0, 2.0, 3.0], dtype=np.float32))
-    silt.add(t, 10.0)
+    silt.add_(t, 10.0)
     np.testing.assert_array_equal(t.numpy(), [11.0, 12.0, 13.0])
 
 
 def test_multiply_scalar():
     t = silt.tensor.from_numpy(np.array([1.0, 2.0, 3.0], dtype=np.float32))
-    silt.multiply(t, 2.0)
+    silt.multiply_(t, 2.0)
     np.testing.assert_array_equal(t.numpy(), [2.0, 4.0, 6.0])
 
 
 def test_divide_scalar():
     t = silt.tensor.from_numpy(np.array([2.0, 4.0, 6.0], dtype=np.float32))
-    silt.divide(t, 2.0)
+    silt.divide_(t, 2.0)
     np.testing.assert_array_equal(t.numpy(), [1.0, 2.0, 3.0])
 
 
 def test_add_tensor_tensor():
     a = silt.tensor.from_numpy(np.array([1.0, 2.0, 3.0], dtype=np.float32))
     b = silt.tensor.from_numpy(np.array([10.0, 20.0, 30.0], dtype=np.float32))
-    silt.add(a, b)
+    silt.add_(a, b)
     np.testing.assert_array_equal(a.numpy(), [11.0, 22.0, 33.0])
 
 
 def test_mix_interpolates():
     a = silt.tensor.from_numpy(np.array([0.0, 0.0], dtype=np.float32))
     b = silt.tensor.from_numpy(np.array([10.0, 10.0], dtype=np.float32))
-    silt.mix(a, b, 0.25)
+    silt.mix_(a, b, 0.25)
     np.testing.assert_allclose(a.numpy(), [2.5, 2.5])
 
 
 def test_clamp_float32():
     t = silt.tensor.from_numpy(np.array([-5.0, 0.5, 5.0], dtype=np.float32))
-    silt.clamp(t, 0.0, 1.0)
+    silt.clamp_(t, 0.0, 1.0)
     np.testing.assert_array_equal(t.numpy(), [0.0, 0.5, 1.0])
 
 
 def test_clamp_rejects_non_float32():
-    # `clamp`'s binding constrains its type parameter to
+    # `clamp_`'s binding constrains its type parameter to
     # `std::same_as<float>`, so calling it on a float64 tensor should
     # raise rather than silently doing nothing or misinterpreting data.
     t = silt.tensor.from_numpy(np.array([-5.0, 0.5, 5.0], dtype=np.float64))
     with pytest.raises(Exception):
-        silt.clamp(t, 0.0, 1.0)
+        silt.clamp_(t, 0.0, 1.0)
+
+
+# -- out-of-place counterparts (add/multiply/divide/mix/clamp) -------------
+
+
+def test_add_out_of_place_leaves_input_unmutated():
+    a = silt.tensor.from_numpy(np.array([1.0, 2.0, 3.0], dtype=np.float32))
+    b = silt.tensor.from_numpy(np.array([10.0, 20.0, 30.0], dtype=np.float32))
+    result = silt.add(a, b)
+    np.testing.assert_array_equal(a.numpy(), [1.0, 2.0, 3.0])
+    np.testing.assert_array_equal(result.numpy(), [11.0, 22.0, 33.0])
+
+
+def test_multiply_out_of_place_leaves_input_unmutated():
+    t = silt.tensor.from_numpy(np.array([1.0, 2.0, 3.0], dtype=np.float32))
+    result = silt.multiply(t, 2.0)
+    np.testing.assert_array_equal(t.numpy(), [1.0, 2.0, 3.0])
+    np.testing.assert_array_equal(result.numpy(), [2.0, 4.0, 6.0])
+
+
+def test_divide_out_of_place_leaves_input_unmutated():
+    t = silt.tensor.from_numpy(np.array([2.0, 4.0, 6.0], dtype=np.float32))
+    result = silt.divide(t, 2.0)
+    np.testing.assert_array_equal(t.numpy(), [2.0, 4.0, 6.0])
+    np.testing.assert_array_equal(result.numpy(), [1.0, 2.0, 3.0])
+
+
+def test_mix_out_of_place_leaves_input_unmutated():
+    a = silt.tensor.from_numpy(np.array([0.0, 0.0], dtype=np.float32))
+    b = silt.tensor.from_numpy(np.array([10.0, 10.0], dtype=np.float32))
+    result = silt.mix(a, b, 0.25)
+    np.testing.assert_array_equal(a.numpy(), [0.0, 0.0])
+    np.testing.assert_allclose(result.numpy(), [2.5, 2.5])
+
+
+def test_clamp_out_of_place_leaves_input_unmutated():
+    t = silt.tensor.from_numpy(np.array([-5.0, 0.5, 5.0], dtype=np.float32))
+    result = silt.clamp(t, 0.0, 1.0)
+    np.testing.assert_array_equal(t.numpy(), [-5.0, 0.5, 5.0])
+    np.testing.assert_array_equal(result.numpy(), [0.0, 0.5, 1.0])
 
 
 # -- min / max -----------------------------------------------------------
@@ -182,7 +223,7 @@ def test_index_radius_and_indexed_set():
     s = silt.shape(8, 8)
     idx = silt.index_radius(s, [4.0, 4.0], 2.5)
     t = silt.tensor(silt.float32, s, silt.gpu)
-    silt.set(t, 0.0)
+    silt.set_(t, 0.0)
     silt.indexed_set(t, 1.0, idx)
     data = t.cpu().numpy()
     assert data.max() == pytest.approx(1.0)

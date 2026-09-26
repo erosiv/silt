@@ -6,13 +6,15 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include <cuda_runtime.h>
+
 //
 // Macro Definitions
 //
 
 // Suppress Unnecessary Warnings
 
-#ifdef HAS_CUDA
+#if defined(HAS_CUDA) && defined(__CUDACC__)
 #pragma nv_diag_suppress 177
 #pragma nv_diag_suppress 445
 #pragma nv_diag_suppress 20011

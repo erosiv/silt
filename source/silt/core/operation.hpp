@@ -14,7 +14,9 @@ namespace silt {
 
 namespace {
 
-inline int block(const int elem, const int thread) {
+// elem is int64_t (a tensor can exceed 2^31 elements); the block count
+// itself stays well within range for any realistic launch.
+inline int64_t block(const int64_t elem, const int thread) {
   return (elem + thread - 1) / thread;
 }
 
@@ -26,7 +28,10 @@ namespace op {
 
 template<typename T, typename F>
 __global__ void __uniop_inplace_gpu(T lhs, F func){
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  // 64-bit index: blockIdx.x * blockDim.x alone can already exceed
+  // UINT32_MAX for a large enough grid, wrapping silently in 32-bit
+  // arithmetic.
+  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n < lhs.elem()){
     lhs[n] = func(lhs[n]);
   }
@@ -34,7 +39,7 @@ __global__ void __uniop_inplace_gpu(T lhs, F func){
 
 template<typename T, typename F>
 __host__ void __uniop_inplace_cpu(T lhs, F func){
-  for(unsigned int n = 0; n < lhs.elem(); ++n){
+  for(size_t n = 0; n < lhs.elem(); ++n){
     lhs[n] = func(lhs[n]);
   }
 }
@@ -57,7 +62,7 @@ void uniop_inplace(T lhs, F func) {
 
 template<typename T, typename F>
 __global__ void __binop_inplace_gpu(T lhs, const T rhs, F func) {
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n < lhs.elem()){
     lhs[n] = func(lhs[n], rhs[n]);
   }
@@ -65,7 +70,7 @@ __global__ void __binop_inplace_gpu(T lhs, const T rhs, F func) {
 
 template<typename T, typename F>
 __host__ void __binop_inplace_cpu(T lhs, const T rhs, F func){
-  for(unsigned int n = 0; n < lhs.elem(); ++n){
+  for(size_t n = 0; n < lhs.elem(); ++n){
     lhs[n] = func(lhs[n], rhs[n]);
   }
 }
@@ -75,6 +80,9 @@ void binop_inplace(T lhs, const T rhs, F func) {
 
   if(lhs.host() != rhs.host())
     throw silt::error::mismatch_host(lhs.host(), rhs.host());
+
+  if(lhs.elem() != rhs.elem())
+    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
 
   if(lhs.host() == silt::host_t::CPU){
     __binop_inplace_cpu(lhs, rhs, func);
@@ -91,8 +99,10 @@ void binop_inplace(T lhs, const T rhs, F func) {
 
 template<typename T, typename F>
 __global__ void __uniop_inplace_indexed_gpu(tensor_t<T> lhs, const tensor_t<int> ind, F func){
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n < ind.elem()){
+    // ind stores plain `int` indices -- unrelated to this widening pass;
+    // deferred to the generic-indexed-operations redesign (see B5).
     const int i = ind[n];
     if(i < lhs.elem()){
       lhs[i] = func(lhs[i]);
@@ -102,7 +112,7 @@ __global__ void __uniop_inplace_indexed_gpu(tensor_t<T> lhs, const tensor_t<int>
 
 template<typename T, typename F>
 __host__ void __uniop_inplace_indexed_cpu(tensor_t<T> lhs, const tensor_t<int> ind, F func){
-  for(unsigned int n = 0; n < ind.elem(); ++n) {
+  for(size_t n = 0; n < ind.elem(); ++n) {
     const int i = ind[n];
     if(i < lhs.elem()) {
       lhs[i] = func(lhs[i]);

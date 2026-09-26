@@ -3,6 +3,7 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 #include <nanobind/ndarray.h>
+#include <memory>
 #include <silt/core/tensor.hpp>
 #include <silt/op/common.hpp>
 #include "interop.hpp"
@@ -24,19 +25,22 @@ silt::view __slice(silt::tensor& tensor, nb::tuple tuple) {
       throw silt::error::mismatch_size(shape.dim(), size);
     }
 
-    // Slice the View:
+    // Slice the View: unpack raw offset/stride/extent and forward to
+    // view_t::index, which forwards to slice::index -- the single place
+    // slicing is clamped and validated (see slice.hpp).
     for(size_t d = 0; d < size; ++d) {
 
       nb::handle handle = tuple[d];
       Py_ssize_t offset, stride, extent;
       __unpack_slice(handle, offset, stride, extent);
-      // Ceiling division: matches silt::slice::index (see slice.hpp).
-      extent = std::min((shape.ext()[d] - offset + stride - 1) / stride, extent);
       view_t.index(d, offset, stride, extent);
 
     }
 
-    return silt::view(view_t);
+    // Keep the source tensor alive for as long as this view is (see the
+    // view_t lifetime note in view.hpp): otherwise `del t` right after
+    // `v = t[...]` leaves v pointing at freed memory.
+    return silt::view(view_t, std::make_shared<silt::tensor>(tensor));
   
   });
 }
@@ -58,6 +62,10 @@ tensor.def(nb::init<const silt::dtype, const silt::shape, const silt::host_t>())
 tensor.def_prop_ro("type", &silt::tensor::type);
 tensor.def_prop_ro("elem", &silt::tensor::elem);
 tensor.def_prop_ro("size", &silt::tensor::size);
+// .size means bytes here (not element count, unlike numpy's .size) --
+// .elem is the descriptive name for element count. .nbytes is an alias
+// for people coming from numpy/torch, where .size means something else.
+tensor.def_prop_ro("nbytes", &silt::tensor::size);
 tensor.def_prop_ro("host", &silt::tensor::host);
 tensor.def_prop_ro("shape", &silt::tensor::shape);
 

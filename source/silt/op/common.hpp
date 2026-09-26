@@ -98,7 +98,7 @@ silt::tensor_t<To> cast(const silt::tensor_t<From> &tensor) {
     throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
   tensor_t<To> tensor_to(tensor.shape(), silt::host_t::CPU);
-  for(int i = 0; i < tensor.elem(); ++i){
+  for(size_t i = 0; i < tensor.elem(); ++i){
     tensor_to[i] = (To)tensor[i];
   }
   return tensor_to;
@@ -106,30 +106,6 @@ silt::tensor_t<To> cast(const silt::tensor_t<From> &tensor) {
 
 //
 // Legacy Functions
-//! \todo get rid of this...
-
-template<typename To, typename From>
-void copy(silt::tensor_t<To> &out, const silt::tensor_t<From> &in, vec2 gmin, vec2 gmax, vec2 gscale, vec2 wmin, vec2 wmax, vec2 wscale, float pscale) {
-
-  const ivec2 pmin = ivec2(pscale * (gmin - wmin) / wscale);
-  const ivec2 pmax = ivec2(pscale * (gmax - wmin) / wscale);
-  const ivec2 pext = ivec2(pscale * (wmax - wmin) / wscale);
-  const ivec2 gext = ivec2((gmax - gmin) / gscale);
-
-  for (int x = pmin[1]; x < pmax[1]; ++x) {
-    for (int y = pmin[0]; y < pmax[0]; ++y) {
-
-      const int ind_out = y + pext[0] * (pext[1] - x - 1);
-
-      const size_t px = size_t((pmax[1] - x - 1) / pscale);
-      const size_t py = size_t((y - pmin[0]) / pscale);
-      const size_t ind_in = py + px * gext[0];
-
-      out[ind_out] = To(From(pscale) * in[ind_in]);
-    }
-  }
-}
-
 //
 // Set Buffer from Value and Buffer
 //
@@ -161,7 +137,7 @@ T min(const silt::tensor_t<T> &tensor) {
     throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
   T val = std::numeric_limits<T>::max();
-  for(int i = 0; i < tensor.elem(); ++i){
+  for(size_t i = 0; i < tensor.elem(); ++i){
     const T b = tensor[i];
     if (!std::isnan(b)) {
       val = std::min(val, b);
@@ -177,7 +153,7 @@ T max(const silt::tensor_t<T> &tensor) {
     throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
 
   T val = std::numeric_limits<T>::lowest();
-  for(int i = 0; i < tensor.elem(); ++i){
+  for(size_t i = 0; i < tensor.elem(); ++i){
     const T b = tensor[i];
     if (!std::isnan(b)) {
       val = std::max(val, b);

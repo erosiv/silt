@@ -1,5 +1,3 @@
-#define HAS_CUDA
-
 #include <silt/op/common.hpp>
 #include <silt/op/gather.hpp>
 #include <silt/core/error.hpp>
@@ -14,17 +12,19 @@ namespace silt {
 
 template<typename T>
 __global__ void _set(silt::tensor_t<T> lhs, const T val, size_t start, size_t stop, size_t step){
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
-  const unsigned int i = start + n*step;
+  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t i = start + n*step;
   if(i >= stop) return;
   lhs[i] = val;
 }
 
 template<typename T>
 void set_impl(silt::tensor_t<T> lhs, const T val, size_t start, size_t stop, size_t step){
+  if(stop > lhs.elem())
+    throw silt::error::out_of_bounds(stop, lhs.elem());
   int thread = 1024;
-  int elem = (stop - start + step - 1)/step;
-  int block = (elem + thread - 1)/thread;
+  size_t elem = (stop - start + step - 1)/step;
+  size_t block = (elem + thread - 1)/thread;
   _set<<<block, thread>>>(lhs, val, start, stop, step);
 }
 
@@ -37,7 +37,7 @@ template EXPORT_SHARED void set_impl<double>(silt::tensor_t<double> buffer, cons
 //
 
 __global__ void __seed(tensor_t<rng> buf, const size_t seed, const size_t offset) {
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= buf.elem()) return;
   curand_init(seed, n, offset, &buf[n]);
 }
@@ -50,7 +50,7 @@ void seed(tensor_t<rng>& buf, const size_t seed, const size_t offset){
 // Uniform Sampling
 
 __global__ void __sample_uniform(tensor_t<rng> buf, tensor_t<float> sample, const float min, const float max) {
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= buf.elem()) return;
   sample[n] = min + curand_uniform(&buf[n])*(max - min);
 }
@@ -70,7 +70,7 @@ tensor_t<float> sample_uniform(tensor_t<rng>& buf, const float min, const float 
 // Normal Distribution Sampling
 
 __global__ void __sample_normal(tensor_t<rng> buf, tensor_t<float> sample, const float mean, const float std) {
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= buf.elem()) return;
   sample[n] = mean + std * curand_normal(&buf[n]);
 }
@@ -94,7 +94,7 @@ tensor_t<float> sample_normal(tensor_t<rng>& buf, const float mean, const float 
 template<typename T>
 __global__ void __resize(silt::tensor_t<T> lhs, const silt::tensor_t<T> rhs){
 
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= lhs.elem()){
     return;
   }
@@ -104,13 +104,14 @@ __global__ void __resize(silt::tensor_t<T> lhs, const silt::tensor_t<T> rhs){
   const ivec2 ipos = out.unflatten(n);
   const vec2 fpos = vec2(ipos)/vec2(out[0]-1, out[1]-1);
   
-  // Unnormalize in Source Frame
+  // Unnormalize in Source Frame. Flat indices into the (potentially very
+  // large) source buffer, so these must not be truncated to `int`.
   const shape in = silt::shape(rhs.shape()[1], rhs.shape()[0]);
   const vec2 npos = fpos * vec2(in[0]-1, in[1]-1);
-  const int i00 = in.flatten(npos + vec2(0, 0));
-  const int i01 = in.flatten(npos + vec2(0, 1));
-  const int i10 = in.flatten(npos + vec2(1, 0));
-  const int i11 = in.flatten(npos + vec2(1, 1));
+  const int64_t i00 = in.flatten(npos + vec2(0, 0));
+  const int64_t i01 = in.flatten(npos + vec2(0, 1));
+  const int64_t i10 = in.flatten(npos + vec2(1, 0));
+  const int64_t i11 = in.flatten(npos + vec2(1, 1));
 
   // Linear Interpolation w. Bounds Handling
   if(in.oob(npos)){
@@ -152,7 +153,7 @@ template EXPORT_SHARED silt::tensor_t<double> silt::resize<double>(const silt::t
 // template<typename T, typename F>
 template<typename T, typename F>
 __global__ void __resample(view_t<T> target, const view_t<const T> source, F f){
-  const unsigned int n = blockIdx.x * blockDim.x + threadIdx.x;
+  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n < target.elem()) {
     f(target, source, n);
   }
@@ -185,10 +186,12 @@ __device__ lerp_t<T> __gather(const silt::view_t<const T>& view, const silt::sha
   if(pos.x > shape[0] - 1) return lerp_t<T>(T{CUDART_NAN_F});
   if(pos.y > shape[1] - 1) return lerp_t<T>(T{CUDART_NAN_F});
   
-  int i00 = shape.flatten(p00);
-  int i01 = shape.flatten(p01);
-  int i10 = shape.flatten(p10);
-  int i11 = shape.flatten(p11);
+  // Flat indices into the source view's (potentially very large) buffer,
+  // so these must not be truncated to `int`.
+  int64_t i00 = shape.flatten(p00);
+  int64_t i01 = shape.flatten(p01);
+  int64_t i10 = shape.flatten(p10);
+  int64_t i11 = shape.flatten(p11);
 
   if(pos.x + 1 > shape[0] - 1){ w.x = 0; i10 = 0; i11 = 0; }
   if(pos.y + 1 > shape[1] - 1){ w.y = 0; i01 = 0; i11 = 0; }
@@ -222,7 +225,7 @@ void __resample_impl(
   view_t target_v = target.template view<S>();
 
   resample__(target_v, source_v,
-    [=] __device__ (view_t<S>& target, const view_t<const S> source, const unsigned int n){
+    [=] __device__ (view_t<S>& target, const view_t<const S> source, const size_t n){
 
       vec2 t_pos = shape_t.unflatten(n);
       t_pos.x = shape_t[0] - t_pos.x;

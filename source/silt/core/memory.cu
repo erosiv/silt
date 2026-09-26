@@ -1,5 +1,3 @@
-#define HAS_CUDA
-
 #include <silt/silt.hpp>
 #include <cuda_runtime.h>
 #include <silt/core/memory.hpp>

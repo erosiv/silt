@@ -1,5 +1,3 @@
-#define HAS_CUDA
-
 #include <silt/op/common.hpp>
 #include <silt/op/gather.hpp>
 #include <silt/core/error.hpp>

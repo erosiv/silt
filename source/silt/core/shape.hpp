@@ -55,8 +55,8 @@ struct shape {
 
   // Member Lookup
 
-  GPU_ENABLE inline int dim()   const { return this->_dim; }
-  GPU_ENABLE inline int elem()  const { return this->_elem; }
+  GPU_ENABLE inline int dim()       const { return this->_dim; }
+  GPU_ENABLE inline int64_t elem()  const { return this->_elem; }
   GPU_ENABLE inline vec_t ext() const { return this->_ext; }
 
   //! Dimension Subscript Operator
@@ -88,8 +88,8 @@ struct shape {
     return false;
   }
   
-  GPU_ENABLE int flatten(const silt::ivec2 pos) const {
-    int index{0};
+  GPU_ENABLE int64_t flatten(const silt::ivec2 pos) const {
+    int64_t index{0};
     for (size_t d = 0; d < 2; ++d) {
       index *= this->_ext[d];
       index += pos[d];
@@ -97,8 +97,8 @@ struct shape {
     return index;
   }
 
-  GPU_ENABLE int flatten(const silt::ivec3 pos) const {
-    int index{0};
+  GPU_ENABLE int64_t flatten(const silt::ivec3 pos) const {
+    int64_t index{0};
     for (size_t d = 0; d < 3; ++d) {
       index *= this->_ext[d];
       index += pos[d];
@@ -107,8 +107,8 @@ struct shape {
   }
 
   //! Flattening Operator
-  GPU_ENABLE int flatten(const vec_t pos) const {
-    int index{0};
+  GPU_ENABLE int64_t flatten(const vec_t pos) const {
+    int64_t index{0};
     for (size_t d = 0; d < this->_dim; ++d) {
       index *= this->_ext[d];
       index += pos[d];
@@ -117,11 +117,11 @@ struct shape {
   }
   
   //! Unflattening Operator
-  GPU_ENABLE vec_t unflatten(const int index) const {
+  GPU_ENABLE vec_t unflatten(const int64_t index) const {
     vec_t value{0};
-    int scale = 1;
+    int64_t scale = 1;
     for (int d = this->_dim - 1; d >= 0; --d) {
-      value[d] = (index / scale) % this->_ext[d];
+      value[d] = (int)((index / scale) % this->_ext[d]);
       scale *= this->_ext[d];
     }
     return value;
@@ -133,7 +133,7 @@ struct shape {
 
   void reshape(int d0, int d1 = 1, int d2 = 1, int d3 = 1) {
 
-    const int elem = d0 * d1 * d2 * d3;
+    const int64_t elem = (int64_t)d0 * d1 * d2 * d3;
     if(elem != this->elem())
       throw silt::error::bad_reshape(this->elem(), elem);
 
@@ -146,8 +146,8 @@ struct shape {
   // Static Helper Functions
   //
 
-  static GPU_ENABLE int count_elem(const vec_t ext) {
-    return ext[0] * ext[1] * ext[2] * ext[3];
+  static GPU_ENABLE int64_t count_elem(const vec_t ext) {
+    return (int64_t)ext[0] * ext[1] * ext[2] * ext[3];
   }
 
   static GPU_ENABLE int count_dim(const vec_t ext) {
@@ -163,9 +163,9 @@ private:
 
   // Data Members
 
-  int _dim;    //!< Total Number of Active Dimensions
-  int _elem;   //!< Total Number of Elements
-  vec_t _ext;  //!< Per-Dimension Extent
+  int _dim;       //!< Total Number of Active Dimensions
+  int64_t _elem;  //!< Total Number of Elements
+  vec_t _ext;     //!< Per-Dimension Extent
 
 };
 

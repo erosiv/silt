@@ -1,5 +1,3 @@
-#define HAS_CUDA
-
 #include <silt/op/indexed.hpp>
 #include <silt/core/operation.hpp>
 

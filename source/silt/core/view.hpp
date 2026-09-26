@@ -4,6 +4,7 @@
 #include <silt/core/types.hpp>
 #include <silt/core/slice.hpp>
 #include <silt/core/error.hpp>
+#include <memory>
 
 namespace silt {
 
@@ -83,24 +84,28 @@ struct EXPORT_SHARED view {
   view() = default;
 
   //! Polymorphic Tensor Copy Constructor
-  view(const silt::view& rhs){
+  view(const silt::view& rhs): _owner{rhs._owner} {
     this->impl = rhs.clone();
   }
 
   //! Polymorphic Tensor Move Constructor
-  view(silt::view&& rhs) noexcept: impl{rhs.impl} {
+  view(silt::view&& rhs) noexcept: impl{rhs.impl}, _owner{std::move(rhs._owner)} {
     rhs.impl = nullptr;
   }
 
-  //! Strict-Typed Tensor Copy Constructor
+  //! Strict-Typed Tensor Copy Constructor.
+  //! `owner`, if given, is kept alive for as long as this view is -- see
+  //! the non-owning-view lifetime note on view_t above. Defaults to
+  //! nothing, preserving the non-owning behaviour for internal
+  //! constructions that don't need it (e.g. views never handed to Python).
   template<typename T>
-  view(const silt::view_t<T> &view) {
+  view(const silt::view_t<T> &view, std::shared_ptr<void> owner = nullptr): _owner{std::move(owner)} {
     this->impl = new silt::view_t<T>(view);
   }
 
   //! Strict-Typed Tensor Move Constructor
   template<typename T>
-  view(silt::view_t<T> &&ten) {
+  view(silt::view_t<T> &&ten, std::shared_ptr<void> owner = nullptr): _owner{std::move(owner)} {
     this->impl = new silt::view_t<T>(ten);
   }
 
@@ -110,6 +115,7 @@ struct EXPORT_SHARED view {
   view& operator=(const silt::view& rhs) {
     this->clear();
     this->impl = rhs.clone();
+    this->_owner = rhs._owner;
     return *this;
   }
 
@@ -118,6 +124,7 @@ struct EXPORT_SHARED view {
     if (this == &rhs) return *this;
     this->clear();
     this->impl = rhs.impl;
+    this->_owner = std::move(rhs._owner);
     rhs.impl = nullptr;
     return *this;
   }
@@ -204,7 +211,8 @@ private:
     });
   }
 
-  typedbase* impl = NULL; //!< Polymorphic Implementation Pointer
+  typedbase* impl = NULL;       //!< Polymorphic Implementation Pointer
+  std::shared_ptr<void> _owner; //!< Keeps a slice's source tensor alive (see the constructor above)
 
 };
 

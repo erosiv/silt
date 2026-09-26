@@ -13,6 +13,13 @@ set_target_properties(${TARGET_NAME} PROPERTIES
 
 target_compile_definitions(${TARGET_NAME} PRIVATE SILT_SHARED_BUILD)
 
+# Was previously #define'd separately in each .cu file, which meant
+# shape/slice/tensor_t/view_t had different inline-member definitions
+# (GPU_ENABLE expanding differently) depending on which translation unit
+# included them -- an ODR violation. PUBLIC so every consumer, including
+# the plain-host nanobind .cpp files, agrees on one definition.
+target_compile_definitions(${TARGET_NAME} PUBLIC HAS_CUDA)
+
 # Version macros, for downstream #if guarding. PUBLIC so that anything linking
 # silt_lib sees them. SILT_VERSION_NUM is the comparable form, e.g.
 #   #if SILT_VERSION_NUM >= 10200

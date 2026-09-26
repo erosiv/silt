@@ -29,40 +29,45 @@ void assert_match(const T& lhs, const T& rhs) {
 
 void bind_op(nb::module_& module) {
 
+// These bindings mutate their first argument in place, hence the
+// trailing underscore (torch convention). The out-of-place forms
+// (`add`, `multiply`, ...) are a pure-Python wrapper in
+// python/silt/__init__.py: clone the input, then call the `_` form.
+
 //
 // Binary Operations:
 //  Note that for nanobind, specificity wins in the function parameters.
 //
 
-module.def("set", [](silt::tensor& lhs, const silt::tensor& rhs){
+module.def("set_", [](silt::tensor& lhs, const silt::tensor& rhs){
   assert_match(lhs, rhs);
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::set<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
-module.def("add", [](silt::tensor& lhs, const silt::tensor& rhs){
+module.def("add_", [](silt::tensor& lhs, const silt::tensor& rhs){
   assert_match(lhs, rhs);
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::add<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
-module.def("multiply", [](silt::tensor& lhs, const silt::tensor& rhs){
+module.def("multiply_", [](silt::tensor& lhs, const silt::tensor& rhs){
   assert_match(lhs, rhs);
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::multiply<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
-module.def("divide", [](silt::tensor& lhs, const silt::tensor& rhs){
+module.def("divide_", [](silt::tensor& lhs, const silt::tensor& rhs){
   assert_match(lhs, rhs);
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::divide<S>(lhs.as<S>(), rhs.as<S>());
   });
 });
 
-module.def("mix", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) {
+module.def("mix_", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) {
   assert_match(lhs, rhs);
   silt::select(lhs.type(), [&lhs, &rhs, w]<silt::primitive S>(){
     silt::mix<S>(lhs.as<S>(), rhs.as<S>(), w);
@@ -73,61 +78,61 @@ module.def("mix", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) 
 // Unary Operations
 //
 
-module.def("set", [](silt::tensor& lhs, const nb::object rhs){
+module.def("set_", [](silt::tensor& lhs, const nb::object rhs){
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::set<S>(lhs.as<S>(), nb::cast<S>(rhs));
   });
 });
 
-module.def("set", [](silt::view& lhs, const nb::object rhs){
+module.def("set_", [](silt::view& lhs, const nb::object rhs){
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::set<S>(lhs.as<S>(), nb::cast<S>(rhs));
   });
 });
 
-module.def("add", [](silt::tensor& lhs, const nb::object rhs){
+module.def("add_", [](silt::tensor& lhs, const nb::object rhs){
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::add<S>(lhs.as<S>(), nb::cast<S>(rhs));
   });
 });
 
-module.def("add", [](silt::view& lhs, const nb::object rhs){
+module.def("add_", [](silt::view& lhs, const nb::object rhs){
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::add<S>(lhs.as<S>(), nb::cast<S>(rhs));
   });
 });
 
-module.def("multiply", [](silt::tensor& lhs, const nb::object rhs){
+module.def("multiply_", [](silt::tensor& lhs, const nb::object rhs){
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::multiply<S>(lhs.as<S>(), nb::cast<S>(rhs));
   });
 });
 
-module.def("multiply", [](silt::view& lhs, const nb::object rhs){
+module.def("multiply_", [](silt::view& lhs, const nb::object rhs){
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::multiply<S>(lhs.as<S>(), nb::cast<S>(rhs));
   });
 });
 
-module.def("divide", [](silt::tensor& lhs, const nb::object rhs){
+module.def("divide_", [](silt::tensor& lhs, const nb::object rhs){
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::divide<S>(lhs.as<S>(), nb::cast<S>(rhs));
   });
 });
 
-module.def("divide", [](silt::view& lhs, const nb::object rhs){
+module.def("divide_", [](silt::view& lhs, const nb::object rhs){
   silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>(){
     silt::divide<S>(lhs.as<S>(), nb::cast<S>(rhs));
   });
 });
 
-module.def("clamp", [](silt::tensor& lhs, const float min, const float max){
+module.def("clamp_", [](silt::tensor& lhs, const float min, const float max){
   silt::select(lhs.type(), [&lhs, min, max]<std::same_as<float> S>() -> void {
     silt::clamp(lhs.as<S>(), min, max);
   });
 });
 
-module.def("clamp", [](silt::view& lhs, const float min, const float max){
+module.def("clamp_", [](silt::view& lhs, const float min, const float max){
   silt::select(lhs.type(), [&lhs, min, max]<std::same_as<float> S>() -> void {
     silt::clamp(lhs.as<S>(), min, max);
   });
@@ -172,19 +177,6 @@ module.def("max", [](const silt::tensor& tensor){
 //
 // Generic Buffer Functions
 //
-
-module.def("copy", [](silt::tensor& lhs, const silt::tensor& rhs, silt::vec2 gmin, silt::vec2 gmax, silt::vec2 gscale, silt::vec2 wmin, silt::vec2 wmax, silt::vec2 wscale, float pscale){
-
-  // Note: This supports copy between different buffer types.
-  // The interior template selection just requires that the source
-  // buffer's type can be converted to the target buffer's type.
-
-  silt::select(lhs.type(), [&]<silt::primitive To>(){
-    silt::select(rhs.type(), [&]<silt::primitive From>(){
-      silt::copy<To, From>(lhs.as<To>(), rhs.as<From>(), gmin, gmax, gscale, wmin, wmax, wscale, pscale);
-    });
-  });
-});
 
 module.def("resize", [](const silt::tensor& rhs, const silt::shape shape){
   return silt::select(rhs.type(), [&rhs, shape]<silt::primitive S>() -> silt::tensor {

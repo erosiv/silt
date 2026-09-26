@@ -50,7 +50,7 @@ def test_single_element_tensor_round_trips():
     the `default:` case and raises "too many dimensions" instead of
     producing a scalar or 1-element array."""
     t = silt.tensor(silt.float32, silt.shape(1))
-    silt.set(t, 7.0)
+    silt.set_(t, 7.0)
     arr = t.numpy()
     assert arr.size == 1
     assert float(np.asarray(arr).reshape(-1)[0]) == pytest.approx(7.0)
@@ -63,7 +63,7 @@ def test_trailing_singleton_dimension_round_trips():
     element count, is what's affected -- data should still round-trip
     correctly."""
     t = silt.tensor(silt.float32, silt.shape(512, 1))
-    silt.set(t, 2.0)
+    silt.set_(t, 2.0)
     arr = np.asarray(t.numpy())
     assert arr.size == 512
     np.testing.assert_array_equal(arr.reshape(-1), np.full(512, 2.0, dtype=np.float32))

@@ -8,7 +8,7 @@ Python API
 
   s = silt.shape(512, 512)                    # 2D Tensor Shape
   t = silt.tensor(silt.float32, s, silt.gpu)  # Strict-Typed GPU Tensor
-  silt.set(t, 0.0)                            # Set Data to Zeros
+  silt.set_(t, 0.0)                           # Set Data to Zeros (In-Place)
 
 
 `silt` converts data to and from pytorch and numpy, and provides a simple device
