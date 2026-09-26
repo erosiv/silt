@@ -100,7 +100,7 @@ def test_non_contiguous_numpy_array_is_read_correctly():
     )
 
 
-# -- pytorch interop (optional dependency, GPU only) ------------------------
+# -- pytorch interop (optional dependency, CPU and GPU) ---------------------
 
 torch = pytest.importorskip("torch")
 
@@ -114,3 +114,57 @@ def test_torch_round_trip():
     assert t.host == silt.gpu
     back = t.torch()
     torch.testing.assert_close(back.cpu(), t_torch.cpu())
+
+
+def test_torch_from_cpu_tensor_round_trip():
+    """from_torch used to assume every incoming tensor was CUDA data and
+    handed its pointer straight to a GPU kernel -- for a CPU torch
+    tensor this reinterpreted host memory as device memory. It now
+    branches on the tensor's device and, for CPU, copies the same way
+    from_numpy does. No CUDA required for this one.
+    """
+    t_torch = torch.arange(12, dtype=torch.float32).reshape(3, 4)
+    t = silt.tensor.from_torch(t_torch)
+    assert t.host == silt.cpu
+    np.testing.assert_array_equal(t.numpy(), t_torch.numpy())
+
+
+def test_torch_export_of_cpu_tensor():
+    """The export direction (tensor.torch()) used to unconditionally
+    require a GPU-hosted silt tensor, even though nothing about a torch
+    tensor requires CUDA. It now mirrors the source tensor's own host
+    into the returned torch tensor's device, matching from_torch's
+    symmetric CPU/CUDA handling above. No CUDA required for this one.
+    """
+    arr = np.arange(12, dtype=np.float32).reshape(3, 4)
+    t = silt.tensor.from_numpy(arr)  # CPU-hosted silt tensor
+    assert t.host == silt.cpu
+    t_torch = t.torch()
+    assert not t_torch.is_cuda
+    np.testing.assert_array_equal(t_torch.numpy(), arr)
+
+
+def test_torch_from_non_contiguous_cpu_tensor_is_read_correctly():
+    """Mirrors test_non_contiguous_numpy_array_is_read_correctly for the
+    CPU torch path: a transposed tensor is not contiguous, and must be
+    read through its strides rather than scanned as if it were flat.
+    """
+    base = torch.arange(12, dtype=torch.float32).reshape(3, 4)
+    transposed = base.t()  # shape (4, 3), non-contiguous
+    assert not transposed.is_contiguous()
+    t = silt.tensor.from_torch(transposed)
+    np.testing.assert_array_equal(t.numpy(), transposed.numpy())
+
+
+@pytest.mark.gpu
+def test_torch_rejects_non_contiguous_cuda_tensor():
+    """silt has no strided GPU copy, so a non-contiguous CUDA tensor is
+    rejected rather than silently misread (the CUDA counterpart of the
+    two tests above)."""
+    if not torch.cuda.is_available():
+        pytest.skip("torch has no CUDA device available")
+    base = torch.arange(12, dtype=torch.float32, device="cuda").reshape(3, 4)
+    transposed = base.t()
+    assert not transposed.is_contiguous()
+    with pytest.raises(Exception):
+        silt.tensor.from_torch(transposed)

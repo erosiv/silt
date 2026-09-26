@@ -142,8 +142,9 @@ tensor.def_static("from_numpy", [](const nb::object& object){
 });
 
 tensor.def("torch", [](const silt::tensor& tensor){
-  if(tensor.host() != silt::host_t::GPU)
-    throw silt::error::unsupported_host(silt::host_t::GPU, tensor.host());
+  // Unlike numpy(), which is CPU-only by definition, torch tensors can be
+  // on either host -- __make_torch mirrors source.host() into the
+  // returned torch tensor's device, so no host guard is needed here.
   return silt::select(tensor.type(), [&tensor]<typename T>() -> nb::object {
     if constexpr(nb::detail::is_ndarray_scalar_v<T>){
       return __make_torch(tensor.as<T>());
