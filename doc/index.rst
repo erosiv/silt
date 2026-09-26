@@ -22,7 +22,7 @@ What is silt?
 -------------
 
 .. include:: ../README.md
-   :parser: myst_parser.sphinx_parser.MystParser
+   :parser: myst_parser.sphinx_
    :start-after: <!-- silt-doc:overview-start -->
    :end-before: <!-- silt-doc:overview-end -->
 
@@ -30,7 +30,7 @@ Typical Use-Case
 ----------------
 
 .. include:: ../README.md
-   :parser: myst_parser.sphinx_parser.MystParser
+   :parser: myst_parser.sphinx_
    :start-after: <!-- silt-doc:usecase-start -->
    :end-before: <!-- silt-doc:usecase-end -->
 

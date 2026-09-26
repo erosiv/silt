@@ -7,20 +7,10 @@ implementation details off the public surface) are excluded -- see
 :doc:`design` for the reasoning behind the types below, and :doc:`extending`
 for how to add a new operation.
 
-Core Types
-----------
+Tensor operations are dispatched through ``silt::op``, rendered below as a
+nested namespace -- it is also the extension point user code hooks into to
+add new operations (see :doc:`extending`).
 
 .. doxygennamespace:: silt
-   :members:
-   :undoc-members:
-
-Operations
-----------
-
-Tensor operations are dispatched through ``silt::op``, which is also the
-extension point user code hooks into to add new operations (see
-:doc:`extending`).
-
-.. doxygennamespace:: silt::op
    :members:
    :undoc-members:

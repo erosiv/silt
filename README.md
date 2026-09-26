@@ -138,7 +138,7 @@ The documentation is build with sphinx:
 sphinx-build doc build/html
 ```
 
-Note that building the documentation requires sphinx and doxygen.
+Note that building the documentation requires sphinx, doxygen, breathe and myst_parser. All except doxygen are available through `pip`.
 
 ## Running Tests
 
@@ -157,6 +157,16 @@ A small C++ test target covers ownership/lifetime behaviour that isn't reachable
 cmake -S . -B build -DSILT_BUILD_TESTS=ON
 cmake --build build
 ctest --test-dir build --output-on-failure
+```
+
+## Formatting
+
+#### On Windows
+
+Make sure you have `clang-format` installed (installable via `pip`) and run:
+
+```ps1
+Get-ChildItem -Recurse -Include *.hpp,*.h,*.cpp,*.cu,*.cuh source,python | ForEach-Object { clang-format -i -style=file $_.FullName }
 ```
 
 ## Why another tensor library?
