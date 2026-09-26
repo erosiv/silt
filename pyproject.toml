@@ -1,10 +1,10 @@
 [build-system]
-requires = ["scikit-build-core >=0.4.3"]
+requires = ["scikit-build-core >=0.10"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "silt-erosiv"
-version = "1.1.1"
+dynamic = ["version"]
 description = "Simple Immediate Lightweight Tensors"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -28,3 +28,18 @@ Repository = "https://github.com/erosiv/silt.git"
 minimum-version = "build-system.requires"
 build-dir = "build/{wheel_tag}"
 wheel.py-api = "cp312"
+
+# The package lives in python/silt, not src/silt or ./silt. State it explicitly
+# rather than relying on auto-detection: under the old 0.4.3 behaviour floor
+# python/<name> was not auto-detected, so __init__.py was silently omitted from
+# the wheel and `pip install silt-erosiv` produced an empty namespace package
+# even though editable installs worked.
+wheel.packages = ["python/silt"]
+
+# Version is read from the root VERSION file, the single source of truth.
+# scikit-build-core resolves project metadata before invoking CMake, so it reads
+# the file itself rather than picking up any CMake variable.
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "VERSION"
+regex = '(?P<value>[0-9][^\s]*)'
