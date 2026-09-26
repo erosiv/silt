@@ -25,3 +25,21 @@ upload / download interface. Note that these conversions currently **copy** the 
 
   t_numpy = t_numpy.torch() # Convert to pytorch
   t_torch = t_torch.numpy() # Convert to numpy
+
+API Reference
+-------------
+
+Generated from the built extension module (docstrings come from nanobind's
+``.def(...)`` bindings, or its own auto-generated signature when none is
+given). ``:imported-members:`` is needed because ``python/silt/__init__.py``
+re-exports the extension's contents via ``from .silt import *`` -- without
+it, autodoc treats everything as "imported" rather than defined here and
+skips it. Requires ``silt`` to be importable in whatever Python environment
+runs ``sphinx-build`` (i.e. installed via ``pip install -e .`` first) --
+unlike the C++ reference, this reads the real module, not source text.
+
+.. automodule:: silt
+   :members:
+   :undoc-members:
+   :imported-members:
+   :show-inheritance:

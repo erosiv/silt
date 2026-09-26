@@ -19,8 +19,9 @@ version = '.'.join(release.split('.')[:2])
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'breathe',      # renders Doxygen XML (below) as Sphinx pages -- api_cpp.rst
-    'myst_parser',  # lets .rst files pull in fragments of README.md -- see index.rst
+    'breathe',            # renders Doxygen XML (below) as Sphinx pages -- api_cpp.rst
+    'myst_parser',        # lets .rst files pull in fragments of README.md -- see index.rst
+    'sphinx.ext.autodoc', # generates api_python.rst's reference from the built `silt` module
 ]
 
 templates_path = ['_templates']

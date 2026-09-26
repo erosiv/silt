@@ -12,6 +12,8 @@ Contents
 --------
 
 .. toctree::
+   :maxdepth: 1
+
    usage
    api_cpp
    api_python
