@@ -188,8 +188,8 @@ module.def("resize", [](const silt::tensor& rhs, const silt::shape shape){
 // resample only supports float today (see uncommon.cu) and is a
 // candidate for future deprecation.
 module.def("resample", [](silt::tensor& target, const silt::tensor& source, const silt::vec3 t_scale, const silt::vec3 s_scale, const silt::vec2 pdiff){
-  require_type(target, silt::FLOAT32);
-  require_type(source, silt::FLOAT32);
+  silt::detail::require_type(target, silt::FLOAT32);
+  silt::detail::require_type(source, silt::FLOAT32);
   silt::select(target.type(), [&]<std::same_as<float> S>() {
     silt::resample<S>(target.as<S>(), source.as<S>(), t_scale, s_scale, pdiff);
   });
@@ -215,27 +215,27 @@ module.def("normal", [](const silt::tensor& tensor, const silt::vec3 scale){
 //
 
 module.def("seed", [](silt::tensor& tensor, const size_t seed, const size_t offset){
-  require_type(tensor, silt::RNG);
+  silt::detail::require_type(tensor, silt::RNG);
   return silt::seed(tensor.as<silt::rng>(), seed, offset);
 });
 
 module.def("sample_uniform", [](silt::tensor& tensor){
-  require_type(tensor, silt::RNG);
+  silt::detail::require_type(tensor, silt::RNG);
   return silt::tensor(silt::sample_uniform(tensor.as<silt::rng>()));
 });
 
 module.def("sample_uniform", [](silt::tensor& tensor, const float min, const float max){
-  require_type(tensor, silt::RNG);
+  silt::detail::require_type(tensor, silt::RNG);
   return silt::tensor(silt::sample_uniform(tensor.as<silt::rng>(), min, max));
 });
 
 module.def("sample_normal", [](silt::tensor& tensor){
-  require_type(tensor, silt::RNG);
+  silt::detail::require_type(tensor, silt::RNG);
   return silt::tensor(silt::sample_normal(tensor.as<silt::rng>()));
 });
 
 module.def("sample_normal", [](silt::tensor& tensor, const float mean, const float std){
-  require_type(tensor, silt::RNG);
+  silt::detail::require_type(tensor, silt::RNG);
   return silt::tensor(silt::sample_normal(tensor.as<silt::rng>(), mean, std));
 });
 

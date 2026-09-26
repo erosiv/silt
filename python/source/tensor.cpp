@@ -9,7 +9,12 @@ using namespace nb::literals;
 #include "interop.hpp"
 #include "util.hpp"
 
-silt::view __slice(silt::tensor& tensor, nb::tuple tuple) {
+namespace silt {
+namespace detail {
+
+// Behind tensor.cpp's __getitem__/slice bindings; not part of the public
+// API surface, hence `detail` and no leading double-underscore.
+silt::view getitem_impl(silt::tensor& tensor, nb::tuple tuple) {
   return silt::select(tensor.type(), [&tensor, tuple]<typename T>() -> silt::view {
 
     // Construct a View from the Tensor:
@@ -32,7 +37,7 @@ silt::view __slice(silt::tensor& tensor, nb::tuple tuple) {
 
       nb::handle handle = tuple[d];
       Py_ssize_t offset, stride, extent;
-      __unpack_slice(handle, offset, stride, extent);
+      unpack_slice(handle, offset, stride, extent);
       view_t.index(d, offset, stride, extent);
 
     }
@@ -46,6 +51,9 @@ silt::view __slice(silt::tensor& tensor, nb::tuple tuple) {
     return silt::view(view_t, tensor);
   
   });
+}
+
+}
 }
 
 //! General Util Binding Function
@@ -104,8 +112,8 @@ tensor.def("flatten", [](silt::tensor& tensor) {
   return tensor;
 });
 
-tensor.def("__getitem__", __slice);
-tensor.def("slice", __slice);
+tensor.def("__getitem__", silt::detail::getitem_impl);
+tensor.def("slice", silt::detail::getitem_impl);
 
 //
 // External Library Interop Interface
@@ -121,7 +129,7 @@ tensor.def("numpy", [](const silt::tensor& tensor){
     throw silt::error::unsupported_host(silt::host_t::CPU, tensor.host());
   return silt::select(tensor.type(), [&tensor]<typename T>() -> nb::object {
     if constexpr(nb::detail::is_ndarray_scalar_v<T>){
-      return __make_numpy(tensor.as<T>());
+      return silt::detail::make_numpy(tensor.as<T>());
     } else {
       throw std::invalid_argument("tensor type cannot be converted");
     }
@@ -131,11 +139,11 @@ tensor.def("numpy", [](const silt::tensor& tensor){
 tensor.def_static("from_numpy", [](const nb::object& object){
   auto array = nb::cast<nb::ndarray<nb::numpy>>(object);
   if(array.dtype() == nb::dtype<float>()){
-    return __tensor_from_numpy<float>(array);
+    return silt::detail::tensor_from_numpy<float>(array);
   } else if(array.dtype() == nb::dtype<double>()){
-    return __tensor_from_numpy<double>(array);
+    return silt::detail::tensor_from_numpy<double>(array);
   } else if(array.dtype() == nb::dtype<int>()){
-    return __tensor_from_numpy<int>(array);
+    return silt::detail::tensor_from_numpy<int>(array);
   } else {
     throw std::runtime_error("type not supported");
   }
@@ -143,11 +151,11 @@ tensor.def_static("from_numpy", [](const nb::object& object){
 
 tensor.def("torch", [](const silt::tensor& tensor){
   // Unlike numpy(), which is CPU-only by definition, torch tensors can be
-  // on either host -- __make_torch mirrors source.host() into the
+  // on either host -- make_torch mirrors source.host() into the
   // returned torch tensor's device, so no host guard is needed here.
   return silt::select(tensor.type(), [&tensor]<typename T>() -> nb::object {
     if constexpr(nb::detail::is_ndarray_scalar_v<T>){
-      return __make_torch(tensor.as<T>());
+      return silt::detail::make_torch(tensor.as<T>());
     } else {
       throw std::invalid_argument("tensor type cannot be converted");
     }
@@ -157,9 +165,9 @@ tensor.def("torch", [](const silt::tensor& tensor){
 tensor.def_static("from_torch", [](const nb::object& object){
   auto array = nb::cast<nb::ndarray<nb::pytorch>>(object);
   if(array.dtype() == nb::dtype<float>()){
-    return __tensor_from_torch<float>(array);
+    return silt::detail::tensor_from_torch<float>(array);
   } else if(array.dtype() == nb::dtype<double>()){
-    return __tensor_from_torch<double>(array);
+    return silt::detail::tensor_from_torch<double>(array);
   } else {
     throw std::runtime_error("type not supported");
   }

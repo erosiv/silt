@@ -36,54 +36,66 @@ template EXPORT_SHARED void set_impl<double>(silt::tensor_t<double> buffer, cons
 // RNG Kernels
 //
 
-__global__ void __seed(tensor_t<rng> buf, const size_t seed, const size_t offset) {
+namespace detail {
+
+__global__ void seed_kernel(tensor_t<rng> buf, const size_t seed, const size_t offset) {
   const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= buf.elem()) return;
   curand_init(seed, n, offset, &buf[n]);
 }
 
+}
+
 void seed(tensor_t<rng>& buf, const size_t seed, const size_t offset){
-  __seed<<<block(buf.elem(), 512), 512>>>(buf, seed, offset);
+  detail::seed_kernel<<<block(buf.elem(), 512), 512>>>(buf, seed, offset);
   cudaDeviceSynchronize();
 }
 
 // Uniform Sampling
 
-__global__ void __sample_uniform(tensor_t<rng> buf, tensor_t<float> sample, const float min, const float max) {
+namespace detail {
+
+__global__ void sample_uniform_kernel(tensor_t<rng> buf, tensor_t<float> sample, const float min, const float max) {
   const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= buf.elem()) return;
   sample[n] = min + curand_uniform(&buf[n])*(max - min);
 }
 
+}
+
 tensor_t<float> sample_uniform(tensor_t<rng>& buf) {
   auto sample = tensor_t<float>(buf.shape(), silt::GPU);
-  __sample_uniform<<<block(buf.elem(), 512), 512>>>(buf, sample, 0.0f, 1.0f);
+  detail::sample_uniform_kernel<<<block(buf.elem(), 512), 512>>>(buf, sample, 0.0f, 1.0f);
   return sample;
 }
 
 tensor_t<float> sample_uniform(tensor_t<rng>& buf, const float min, const float max) {
   auto sample = tensor_t<float>(buf.shape(), silt::GPU);
-  __sample_uniform<<<block(buf.elem(), 512), 512>>>(buf, sample, min, max);
+  detail::sample_uniform_kernel<<<block(buf.elem(), 512), 512>>>(buf, sample, min, max);
   return sample;
 }
 
 // Normal Distribution Sampling
 
-__global__ void __sample_normal(tensor_t<rng> buf, tensor_t<float> sample, const float mean, const float std) {
+namespace detail {
+
+__global__ void sample_normal_kernel(tensor_t<rng> buf, tensor_t<float> sample, const float mean, const float std) {
   const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= buf.elem()) return;
   sample[n] = mean + std * curand_normal(&buf[n]);
 }
 
+}
+
 tensor_t<float> sample_normal(tensor_t<rng>& buf) {
   auto sample = tensor_t<float>(buf.shape(), silt::GPU);
-  __sample_normal<<<block(buf.elem(), 512), 512>>>(buf, sample, 0.0f, 1.0f);
+  detail::sample_normal_kernel<<<block(buf.elem(), 512), 512>>>(buf, sample, 0.0f, 1.0f);
   return sample;
 }
 
 tensor_t<float> sample_normal(tensor_t<rng>& buf, const float mean, const float std) {
   auto sample = tensor_t<float>(buf.shape(), silt::GPU);
-  __sample_normal<<<block(buf.elem(), 512), 512>>>(buf, sample, mean, std);
+  detail::sample_normal_kernel<<<block(buf.elem(), 512), 512>>>(buf, sample, mean, std);
   return sample;
 }
 
@@ -91,8 +103,10 @@ tensor_t<float> sample_normal(tensor_t<rng>& buf, const float mean, const float 
 // Resizing Kernels
 //
 
+namespace detail {
+
 template<typename T>
-__global__ void __resize(silt::tensor_t<T> lhs, const silt::tensor_t<T> rhs){
+__global__ void resize_kernel(silt::tensor_t<T> lhs, const silt::tensor_t<T> rhs){
 
   const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n >= lhs.elem()){
@@ -129,6 +143,8 @@ __global__ void __resize(silt::tensor_t<T> lhs, const silt::tensor_t<T> rhs){
 
 }
 
+}
+
 template<typename T>
 tensor_t<T> resize(const tensor_t<T> rhs, const shape shape){
 
@@ -137,7 +153,7 @@ tensor_t<T> resize(const tensor_t<T> rhs, const shape shape){
   }
 
   auto lhs = silt::tensor_t<T>(shape, silt::host_t::GPU);
-  __resize<<<block(lhs.elem(), 1024), 1024>>>(lhs, rhs);
+  detail::resize_kernel<<<block(lhs.elem(), 1024), 1024>>>(lhs, rhs);
   return lhs;
 
 }
@@ -151,8 +167,10 @@ template EXPORT_SHARED silt::tensor_t<double> silt::resize<double>(const silt::t
 //! \todo add interpolation here.
 
 // template<typename T, typename F>
+namespace detail {
+
 template<typename T, typename F>
-__global__ void __resample(view_t<T> target, const view_t<const T> source, F f){
+__global__ void resample_kernel(view_t<T> target, const view_t<const T> source, F f){
   const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
   if(n < target.elem()) {
     f(target, source, n);
@@ -160,20 +178,20 @@ __global__ void __resample(view_t<T> target, const view_t<const T> source, F f){
 }
 
 template<typename T, typename F>
-void resample__(view_t<T> target, const view_t<const T> source, F func) {
-  __resample<<<block(target.elem(), 512), 512>>>(target, source, func);
+void resample_launch(view_t<T> target, const view_t<const T> source, F func) {
+  resample_kernel<<<block(target.elem(), 512), 512>>>(target, source, func);
 }
 
-__device__ bool __isnanv(float val){
+__device__ bool isnanv(float val){
   return __isnanf(val);
 }
 
-__device__ bool __isnanv(vec3 val){
+__device__ bool isnanv(vec3 val){
   return __isnanf(val.x) || __isnanf(val.y) || __isnanf(val.z);
 }
 
 template<typename T>
-__device__ lerp_t<T> __gather(const silt::view_t<const T>& view, const silt::shape shape, const vec2 pos) {
+__device__ lerp_t<T> gather(const silt::view_t<const T>& view, const silt::shape shape, const vec2 pos) {
 
   const ivec2 p00 = ivec2(pos) + ivec2(0, 0);
   const ivec2 p01 = ivec2(pos) + ivec2(0, 1);
@@ -210,7 +228,7 @@ __device__ lerp_t<T> __gather(const silt::view_t<const T>& view, const silt::sha
 }
 
 template<typename T, typename S>
-void __resample_impl(
+void resample_impl(
   tensor_t<T>& target,       //!< Target Buffer
   const tensor_t<T>& source, //!< Source Buffer
   const vec3 t_scale,       //!< Target World-Space Scale (incl. z)
@@ -224,7 +242,7 @@ void __resample_impl(
   const view_t source_v = source.template view<S>();
   view_t target_v = target.template view<S>();
 
-  resample__(target_v, source_v,
+  resample_launch(target_v, source_v,
     [=] __device__ (view_t<S>& target, const view_t<const S> source, const size_t n){
 
       vec2 t_pos = shape_t.unflatten(n);
@@ -238,13 +256,15 @@ void __resample_impl(
       Gather Step...
       */
 
-      lerp_t<S> lerp = __gather(source, shape_s, s_pos);
+      lerp_t<S> lerp = gather(source, shape_s, s_pos);
       const S val = lerp.val();
-      if(__isnanv(val))
+      if(isnanv(val))
         return;
       target[n] = val;
 
   });
+
+}
 
 }
 
@@ -265,11 +285,11 @@ void resample(
   // Note: These two scenarios should involve generic vector types instead.
 
   if(target.shape()[2] == 1) {
-    __resample_impl<T, float>(target, source, t_scale, s_scale, pdiff);
+    detail::resample_impl<T, float>(target, source, t_scale, s_scale, pdiff);
   }
 
   if(target.shape()[2] == 3) {
-    __resample_impl<T, vec3>(target, source, t_scale, s_scale, pdiff);
+    detail::resample_impl<T, vec3>(target, source, t_scale, s_scale, pdiff);
   }
 
 }

@@ -5,7 +5,8 @@
 #include <silt/core/tensor.hpp>
 namespace nb = nanobind;
 
-namespace {
+namespace silt {
+namespace detail {
 
 //
 // Type Guard
@@ -21,7 +22,13 @@ inline void require_type(const silt::tensor& t, silt::dtype want) {
 // Slice Unpacking
 //
 
-void __unpack_slice(
+// A double-underscore name is reserved to the implementation at any
+// scope, namespace or not, so this stays plain and lives in `detail`
+// instead. inline because util.hpp is included into three separate
+// TUs (op.cpp, tensor.cpp, view.cpp): unlike the previous anonymous
+// namespace, a named namespace does not give this internal linkage on
+// its own.
+inline void unpack_slice(
   nb::handle& handle,
   Py_ssize_t& offset,
   Py_ssize_t& stride,
@@ -42,4 +49,5 @@ void __unpack_slice(
 
 }
 
+}
 }

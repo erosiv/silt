@@ -2,12 +2,20 @@
 
 #include <cstring>
 
+namespace silt {
+namespace detail {
+
+// Everything here is a helper behind tensor.cpp's numpy()/from_numpy()/
+// torch()/from_torch() bindings, not part of the public API, and lives
+// in `detail` instead of using a double-underscore name (which is
+// reserved to the implementation at any scope, namespace or not).
+
 //
 // Numpy Buffer from Type Buffer Generator
 //
 
 template<typename T, size_t D>
-nb::object __make_numpy(T* data, const silt::shape shape, nb::capsule owner) {
+nb::object make_numpy(T* data, const silt::shape shape, nb::capsule owner) {
 
   size_t _shape[D]{0};
   for(size_t d = 0; d < D; ++d)
@@ -24,7 +32,7 @@ nb::object __make_numpy(T* data, const silt::shape shape, nb::capsule owner) {
 }
 
 template<typename T>
-nb::object __make_numpy(const silt::tensor_t<T>& source){
+nb::object make_numpy(const silt::tensor_t<T>& source){
 
   const silt::shape shape = source.shape();
   silt::tensor_t<T>* target  = new silt::tensor_t<T>(shape, source.host()); 
@@ -41,10 +49,10 @@ nb::object __make_numpy(const silt::tensor_t<T>& source){
 
   switch(shape.dim()){
     case 0: // a single-element tensor is treated as rank-1
-    case 1: return __make_numpy<T, 1>(target->data(), shape, owner);
-    case 2: return __make_numpy<T, 2>(target->data(), shape, owner);
-    case 3: return __make_numpy<T, 3>(target->data(), shape, owner);
-    case 4: return __make_numpy<T, 4>(target->data(), shape, owner);
+    case 1: return make_numpy<T, 1>(target->data(), shape, owner);
+    case 2: return make_numpy<T, 2>(target->data(), shape, owner);
+    case 3: return make_numpy<T, 3>(target->data(), shape, owner);
+    case 4: return make_numpy<T, 4>(target->data(), shape, owner);
     default: throw std::invalid_argument("too many dimensions");
   }
 
@@ -58,7 +66,7 @@ nb::object __make_numpy(const silt::tensor_t<T>& source){
 //! nb::ndarray<nb::pytorch> -- shape()/stride()/ndim() are the same API
 //! on both.
 template<typename Array>
-inline bool __is_c_contiguous(const Array& array){
+inline bool is_c_contiguous(const Array& array){
 
   int64_t expected = 1;
   for(size_t i = array.ndim(); i-- > 0; ){
@@ -71,7 +79,7 @@ inline bool __is_c_contiguous(const Array& array){
 }
 
 template<typename T>
-silt::tensor __tensor_from_numpy(const nb::ndarray<nb::numpy>& array){
+silt::tensor tensor_from_numpy(const nb::ndarray<nb::numpy>& array){
 
   const size_t ndim = array.ndim();
   const int d0 = (ndim >= 1) ? array.shape(0) : 1;
@@ -83,7 +91,7 @@ silt::tensor __tensor_from_numpy(const nb::ndarray<nb::numpy>& array){
   auto tensor_t = silt::tensor_t<T>(shape, silt::host_t::CPU);
   const T* data = (const T*)array.data();
 
-  if(__is_c_contiguous(array)){
+  if(is_c_contiguous(array)){
 
     // Fast path: numpy's buffer is already laid out exactly the way silt
     // wants it, so a flat memcpy is correct. The source array is only
@@ -119,7 +127,7 @@ silt::tensor __tensor_from_numpy(const nb::ndarray<nb::numpy>& array){
 //
 
 template<typename T, size_t D>
-nb::object __make_torch(T* data, const silt::shape shape, nb::capsule owner, int device_type) {
+nb::object make_torch(T* data, const silt::shape shape, nb::capsule owner, int device_type) {
 
   size_t _shape[D]{0};
   for(size_t d = 0; d < D; ++d)
@@ -139,7 +147,7 @@ nb::object __make_torch(T* data, const silt::shape shape, nb::capsule owner, int
 }
 
 template<typename T>
-nb::object __make_torch(const silt::tensor_t<T>& source){
+nb::object make_torch(const silt::tensor_t<T>& source){
 
   const silt::shape shape = source.shape();
   silt::tensor_t<T>* target  = new silt::tensor_t<T>(shape, source.host()); 
@@ -157,17 +165,17 @@ nb::object __make_torch(const silt::tensor_t<T>& source){
 
   switch(shape.dim()){
     case 0: // a single-element tensor is treated as rank-1
-    case 1: return __make_torch<T, 1>(target->data(), shape, owner, device_type);
-    case 2: return __make_torch<T, 2>(target->data(), shape, owner, device_type);
-    case 3: return __make_torch<T, 3>(target->data(), shape, owner, device_type);
-    case 4: return __make_torch<T, 4>(target->data(), shape, owner, device_type);
+    case 1: return make_torch<T, 1>(target->data(), shape, owner, device_type);
+    case 2: return make_torch<T, 2>(target->data(), shape, owner, device_type);
+    case 3: return make_torch<T, 3>(target->data(), shape, owner, device_type);
+    case 4: return make_torch<T, 4>(target->data(), shape, owner, device_type);
     default: throw std::invalid_argument("too many dimensions");
   }
 
 }
 
 template<typename T>
-silt::tensor __tensor_from_torch(const nb::ndarray<nb::pytorch>& array){
+silt::tensor tensor_from_torch(const nb::ndarray<nb::pytorch>& array){
 
   const size_t ndim = array.ndim();
   const int d0 = (ndim >= 1) ? array.shape(0) : 1;
@@ -180,11 +188,11 @@ silt::tensor __tensor_from_torch(const nb::ndarray<nb::pytorch>& array){
 
     // CPU-resident torch tensor: same story as numpy -- contiguity is
     // not guaranteed (a .t() or a slice), so mirror
-    // __tensor_from_numpy's fast/slow path exactly.
+    // tensor_from_numpy's fast/slow path exactly.
     auto tensor_t = silt::tensor_t<T>(shape, silt::host_t::CPU);
     const T* data = (const T*)array.data();
 
-    if(__is_c_contiguous(array)){
+    if(is_c_contiguous(array)){
 
       std::memcpy(tensor_t.data(), data, tensor_t.size());
 
@@ -212,7 +220,7 @@ silt::tensor __tensor_from_torch(const nb::ndarray<nb::pytorch>& array){
     // and the kernels behind silt::set assume contiguous storage), so a
     // non-contiguous CUDA tensor is rejected rather than silently
     // misread -- call .contiguous() on the torch side first.
-    if(!__is_c_contiguous(array))
+    if(!is_c_contiguous(array))
       throw std::invalid_argument("from_torch: non-contiguous CUDA tensor is not supported, call .contiguous() first");
 
     T* data = (T*)array.data();
@@ -229,4 +237,7 @@ silt::tensor __tensor_from_torch(const nb::ndarray<nb::pytorch>& array){
 
   }
 
+}
+
+}
 }
