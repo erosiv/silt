@@ -19,6 +19,9 @@ maintainers = [
   {name = "Nicholas McDonald", email = "nick@erosiv.studio"},
 ]
 
+[project.optional-dependencies]
+test = ["pytest>=7", "numpy"]
+
 [project.urls]
 Homepage = "https://erosiv.studio"
 Documentation = "https://readthedocs.org"
@@ -43,3 +46,9 @@ wheel.packages = ["python/silt"]
 provider = "scikit_build_core.metadata.regex"
 input = "VERSION"
 regex = '(?P<value>[0-9][^\s]*)'
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+markers = [
+  "gpu: requires a functioning CUDA device (auto-skipped when none is detected)",
+]

@@ -134,6 +134,25 @@ The documentation is build with sphinx:
 sphinx-build doc build/html
 ```
 
+## Running Tests
+
+Python tests (the primary test suite) use `pytest`:
+
+```bash
+pip install --no-build-isolation -ve ".[test]"
+pytest test
+```
+
+Tests that need a GPU are marked and auto-skip when none is detected, so this also runs (with those tests skipped) on a machine without CUDA hardware.
+
+A small C++ test target covers ownership/lifetime behaviour that isn't reachable from Python (see `doc/extending.rst`). It's off by default; build it explicitly:
+
+```bash
+cmake -S . -B build -DSILT_BUILD_TESTS=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
 ## Why another tensor library?
 
 `silt` was spun out of the tensor component of `soillib`, as more projects became dependent on it.

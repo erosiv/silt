@@ -43,4 +43,4 @@ target_sources(${TARGET_NAME} PRIVATE
 if(NOT TARGET glm::glm)
   add_subdirectory(../ext/glm glm)
 endif()
-target_link_libraries(${TARGET_NAME} PRIVATE glm::glm)
+target_link_libraries(${TARGET_NAME} PUBLIC glm::glm)

@@ -37,7 +37,7 @@ target_compile_definitions(${MODULE_NAME} PRIVATE
 # Dependencies
 #
 
-target_link_libraries(${MODULE_NAME} PRIVATE glm::glm)
+# glm::glm transitively linked through silt
 target_link_libraries(${MODULE_NAME} PRIVATE silt::silt)
 
 #

@@ -30,5 +30,12 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr --extended-la
 
 add_subdirectory(source)    # Build Library
 if(PROJECT_IS_TOP_LEVEL)
-  add_subdirectory(python)  # Build Bindings
+add_subdirectory(python)  # Build Bindings
+endif()
+
+# Testing off by default. Opt in explicitly with -DSILT_BUILD_TESTS=ON
+option(SILT_BUILD_TESTS "Build silt's own C++ unit tests (see test/cpp)" OFF)
+if(SILT_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(test/cpp)
 endif()
