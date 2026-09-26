@@ -15,6 +15,7 @@ Contents
    usage
    api_cpp
    api_python
+   extending
    design
 
 What is silt?
@@ -53,12 +54,12 @@ Exposed through bindings with ``nanobind``, your library (and all other librarie
    import silt, mylib, otherlib
 
    shape = silt.shape(1024, 1024)
-   tensor = silt.tensor(shape, silt.float32, silt.gpu)
+   tensor = silt.tensor(silt.float32, shape, silt.gpu)
    
    mylib.my_tensor_operation(tensor)
    otherlib.their_tensor_operation(tensor)
 
-Finally, silt takes care of details around memory allocation and deallocation, move and copy semantics, as well as conversion between polymorphic python types and strict-typed C++. silt allows you to no-copy convert tensors on the CPU and GPU to popular libraries like ``numpy`` and ``pytorch``.
+Finally, silt takes care of details around memory allocation and deallocation, move and copy semantics, as well as conversion between polymorphic python types and strict-typed C++. silt converts tensors on the CPU and GPU to and from popular libraries like ``numpy`` and ``pytorch``. Note that these conversions currently **copy** the data in both directions; zero-copy conversion is planned.
 
 Why?
 ----

@@ -7,17 +7,18 @@ Python API
   python
 
   s = silt.shape(512, 512)                    # 2D Tensor Shape
-  t = silt.tensor(s, silt.float32, silt.gpu)  # Strict-Typed GPU Tensor
+  t = silt.tensor(silt.float32, s, silt.gpu)  # Strict-Typed GPU Tensor
   silt.set(t, 0.0)                            # Set Data to Zeros
 
 
-`silt` supports no-copy data wrapping to and from pytorch or numpy, as well as a simple data uploading downloading interface:
+`silt` converts data to and from pytorch and numpy, and provides a simple device
+upload / download interface. Note that these conversions currently **copy** the data:
 
 .. code ::
   python
 
   t_numpy = silt.tensor.from_numpy(np.full((512, 512), 0.0, dtype=np.float32))                          # CPU Tensor
-  t_torch = silt.tensor.from_torch(torch.full((512, 512), 0.0, dtype=torch.flota32, device=torch.cuda)) # GPU Tensor
+  t_torch = silt.tensor.from_torch(torch.full((512, 512), 0.0, dtype=torch.float32, device="cuda"))  # GPU Tensor
 
   t_numpy = t_numpy.gpu() # Move data to GPU
   t_torch = t_torch.cpu() # Move data to CPU
