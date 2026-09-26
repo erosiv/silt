@@ -191,9 +191,6 @@ void bind_tensor(nb::module_& module) {
   // External Library Interop Interface
   //  Note: these conversions COPY the data. Each one allocates a fresh tensor and
   //  copies element-by-element, then hands numpy/pytorch a capsule owning that copy.
-  //  tensor_t is already reference counted, so a genuinely zero-copy path is possible
-  //  by making the capsule own a refcount-incremented handle to the source instead.
-  //  See the 1.2 plan (E4) -- the docs previously claimed the no-copy behaviour.
   //
 
   tensor.def("numpy", silt::detail::tensor_to_numpy);

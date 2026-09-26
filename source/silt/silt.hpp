@@ -15,10 +15,10 @@
 // Suppress Unnecessary Warnings
 
 #if defined(HAS_CUDA) && defined(__CUDACC__)
-#pragma nv_diag_suppress 177
-#pragma nv_diag_suppress 445
+#pragma nv_diag_suppress 177    // variable declared but never referenced (unused template params)
+#pragma nv_diag_suppress 445    // constant not used in declaring parameter types (used only for template dispatch, e.g. []<host_t S>())
 #pragma nv_diag_suppress 20011
-#pragma nv_diag_suppress 20012
+#pragma nv_diag_suppress 20012  // __host__ ignored on defaulted special member (fires from glm's mat headers)
 #pragma nv_diag_suppress 20013
 #pragma nv_diag_suppress 20015
 #endif
