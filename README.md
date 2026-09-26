@@ -6,6 +6,7 @@ simple immediate lightweight tensors
 
 ## What is silt?
 
+<!-- silt-doc:overview-start -->
 silt is an isolated lightweight tensor library for easy inclusion in projects that use CUDA with Python bindings. silt is designed for passing around tensor data between various libraries and into kernels on the GPU for physics simulation.
 
 silt is designed to be trivially includable as a git submodule in projects that use a build-system based on ``CMake`` and CUDA (``nvcc``) with python bindings. This enables the designing of **non-monolithic tensor accelerated libraries**.
@@ -13,6 +14,7 @@ silt is designed to be trivially includable as a git submodule in projects that 
 In essence, silt represents a specific, minimal compilation setup or a kind of `minimal boilerplate glue` that improves build times while keeping interoperability without code duplication.
 
 silt is just over 2000 lines of code (with python bindings), making it extremely legible. In other words, you don't have to use silt, but if you also like to roll your own, then you can at least easily understand its structure and fork it.
+<!-- silt-doc:overview-end -->
 
 ## Features
 
@@ -44,6 +46,7 @@ import silt
 
 ### Typical Use-Case
 
+<!-- silt-doc:usecase-start -->
 A common use case is to write a small library containing a templated kernel operation:
 
 ```c++
@@ -72,6 +75,7 @@ otherlib.their_tensor_operation(tensor)
 ```
 
 Finally, silt takes care of details around memory allocation and deallocation, move and copy semantics, as well as conversion between polymorphic python types and strict-typed C++. silt converts tensors on the CPU and GPU to and from popular libraries like ``numpy`` and ``pytorch``. Note that these conversions currently **copy** the data in both directions; zero-copy conversion is planned.
+<!-- silt-doc:usecase-end -->
 
 ## Build from Scratch
 
@@ -133,6 +137,8 @@ The documentation is build with sphinx:
 ```bash
 sphinx-build doc build/html
 ```
+
+Note that building the documentation requires sphinx and doxygen.
 
 ## Running Tests
 

@@ -1,0 +1,44 @@
+#
+# Minimal Doxygen configuration for silt's C++ API reference.
+#
+#  Consumed by Breathe (see conf.py), which reads Doxygen's XML output and
+#  renders it inside Sphinx's own theme -- so only XML is produced here, not
+#  Doxygen's own HTML. conf.py runs `doxygen Doxyfile` itself as part of the
+#  Sphinx build, so `sphinx-build doc build/html` stays a one-step command;
+#  Doxygen just needs to be installed and on PATH (see the `docs` extra in
+#  pyproject.toml for the pip-installable pieces).
+#
+
+PROJECT_NAME            = "silt"
+OUTPUT_DIRECTORY        = _build/doxygen
+INPUT                   = ../source/silt
+RECURSIVE               = YES
+FILE_PATTERNS           = *.hpp *.h
+
+GENERATE_HTML           = NO
+GENERATE_LATEX          = NO
+GENERATE_XML            = YES
+XML_PROGRAMLISTING      = NO
+
+# The codebase's doc-comment convention is a `//!` banner immediately above
+# the declaration (see any header under source/silt) -- treat its first
+# sentence as the brief description automatically, same as everywhere else.
+JAVADOC_AUTOBRIEF       = YES
+JAVADOC_BANNER          = YES
+
+# silt::detail and silt::op::detail hold the private kernels/helpers behind
+# the public API (the `detail` namespace convention from the C5 hygiene
+# pass) -- implementation, not the documented surface, so keep them out of
+# the generated reference.
+EXCLUDE_SYMBOLS         = *detail* *Detail*
+
+# Strip CUDA/export-macro noise so declarations read cleanly (without this,
+# e.g. tensor_t's constructor would show up with a literal "GPU_ENABLE"
+# token where __host__ __device__ would otherwise be).
+MACRO_EXPANSION         = YES
+EXPAND_ONLY_PREDEF      = YES
+PREDEFINED              = GPU_ENABLE= EXPORT_SHARED= __host__= __device__= __global__=
+
+QUIET                   = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_AS_ERROR           = NO

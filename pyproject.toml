@@ -21,6 +21,11 @@ maintainers = [
 
 [project.optional-dependencies]
 test = ["pytest>=7", "numpy"]
+# Building doc/: `pip install -e .[docs]`, then `sphinx-build doc build/html`.
+# Doxygen itself is a separate, non-pip binary (https://doxygen.nl/download.html
+# or your package manager) -- conf.py invokes it automatically, so it just
+# needs to be on PATH.
+docs = ["sphinx", "breathe", "myst-parser"]
 
 [project.urls]
 Homepage = "https://erosiv.studio"
