@@ -1,8 +1,8 @@
 #pragma once
 
+#include <silt/silt.hpp>
 #include <curand_kernel.h>
 #include <silt/core/vector.hpp>
-#include <silt/silt.hpp>
 
 #include <format>
 #include <typeinfo>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <silt/core/types.hpp>
 #include <silt/silt.hpp>
+#include <silt/core/types.hpp>
 #include <sstream>
 
 // Custom Soillib Exceptions

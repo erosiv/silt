@@ -1,10 +1,10 @@
 #pragma once
 
+#include <silt/silt.hpp>
 #include <silt/core/error.hpp>
 #include <silt/core/shape.hpp>
 #include <silt/core/tensor.hpp>
 #include <silt/op/gather.hpp>
-#include <silt/silt.hpp>
 
 namespace silt {
 namespace op {

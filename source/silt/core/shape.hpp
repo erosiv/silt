@@ -1,8 +1,8 @@
 #pragma once
 
+#include <silt/silt.hpp>
 #include <silt/core/error.hpp>
 #include <silt/core/types.hpp>
-#include <silt/silt.hpp>
 
 namespace silt {
 

@@ -1,7 +1,7 @@
+#include <silt/silt.hpp>
 #include <cuda_runtime.h>
 #include <silt/core/error.hpp>
 #include <silt/core/memory.hpp>
-#include <silt/silt.hpp>
 
 namespace silt {
 

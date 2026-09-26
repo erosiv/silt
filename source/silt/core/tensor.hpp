@@ -1,7 +1,7 @@
 #pragma once
 
-#include <silt/core/tensor_t.hpp>
 #include <silt/silt.hpp>
+#include <silt/core/tensor_t.hpp>
 
 namespace silt {
 

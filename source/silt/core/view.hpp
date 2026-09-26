@@ -1,8 +1,8 @@
 #pragma once
 
+#include <silt/silt.hpp>
 #include <silt/core/tensor.hpp>
 #include <silt/core/view_t.hpp>
-#include <silt/silt.hpp>
 
 namespace silt {
 

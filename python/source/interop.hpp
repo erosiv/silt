@@ -1,6 +1,15 @@
 #pragma once
 
 #include <cstring>
+#include <stdexcept>
+
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
+
+#include <silt/core/tensor.hpp>
+#include <silt/op/common.hpp>
+
+namespace nb = nanobind;
 
 namespace silt {
 namespace detail {

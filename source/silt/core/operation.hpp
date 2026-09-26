@@ -1,9 +1,13 @@
 #pragma once
 
-#include <curand_kernel.h>
+#include <silt/silt.hpp>
 #include <silt/core/error.hpp>
 #include <silt/core/tensor.hpp>
 #include <silt/core/view.hpp>
+
+// curand_kernel.h relies on silt.hpp's diagnostics-suppression state,
+// which only applies to code parsed after it -- see types.hpp.
+#include <curand_kernel.h>
 
 // This file contains generic template operations for tensors.
 // These are written to function both on the GPU and the CPU,

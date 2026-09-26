@@ -1,5 +1,6 @@
 #pragma once
 
+#include <silt/silt.hpp>
 #include <silt/core/shape.hpp>
 #include <silt/core/tensor.hpp>
 #include <silt/core/types.hpp>
