@@ -48,6 +48,15 @@ target_compile_definitions(${MODULE_NAME} PRIVATE
 # Type Stubs (.pyi)
 #
 
+if(MSVC)
+add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "$<TARGET_RUNTIME_DLLS:${MODULE_NAME}>"
+    "$<TARGET_FILE_DIR:${MODULE_NAME}>"
+  COMMAND_EXPAND_LISTS
+)
+endif()
+
 nanobind_add_stub(
   ${MODULE_NAME}_stub
   MODULE ${MODULE_NAME}
