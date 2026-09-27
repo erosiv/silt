@@ -1,6 +1,3 @@
-#ifndef SILT_PYTHON
-#define SILT_PYTHON
-
 // silt Python Bindings
 // Nicholas McDonald 2025
 
@@ -15,24 +12,23 @@ void bind_tensor(nb::module_& module);
 void bind_view(nb::module_& module);
 void bind_op(nb::module_& module);
 void bind_indexed(nb::module_& module);
+void bind_rng(nb::module_& module);
 void bind_util(nb::module_& module);
 
 // Module Main Function
 
-NB_MODULE(MODULE_NAME, module){
+NB_MODULE(MODULE_NAME, module) {
 
-nb::set_leak_warnings(false);
+  nb::set_leak_warnings(false);
 
-module.doc() = "silt python bindings";
+  module.doc() = "silt python bindings";
 
-bind_shape(module);
-bind_slice(module);
-bind_tensor(module);
-bind_view(module);
-bind_op(module);
-bind_indexed(module);
-bind_util(module);
-
+  bind_shape(module);
+  bind_slice(module);
+  bind_tensor(module);
+  bind_view(module);
+  bind_op(module);
+  bind_indexed(module);
+  bind_rng(module);
+  bind_util(module);
 }
-
-#endif

@@ -1,26 +1,32 @@
-#ifndef SILT_MEMORY_CU
-#define SILT_MEMORY_CU
-
 #include <silt/silt.hpp>
-#include <silt/core/memory.hpp>
 #include <cuda_runtime.h>
+#include <silt/core/error.hpp>
+#include <silt/core/memory.hpp>
 
 namespace silt {
 
-void* device_alloc(size_t bytes) { 
+void* device_alloc(size_t bytes) {
   void* p;
-  cudaMalloc(&p, bytes);
+  gpuErrchk(cudaMalloc(&p, bytes));
   return p;
 }
 
-void device_free(void* p) { 
-  cudaFree(p);
+void device_free(void* p) {
+  gpuErrchk(cudaFree(p));
 }
 
 void device_copy(void* d, const void* s, size_t n, copy_t k) {
-  cudaMemcpy(d, s, n, cudaMemcpyKind(k));
+  if (n == 0)
+    return;
+  if (k == copy_t::HOST_TO_HOST) {
+    std::memcpy(d, s, n);
+    return;
+  }
+  gpuErrchk(cudaMemcpy(d, s, n, cudaMemcpyKind(k)));
 }
 
+void synchronize() {
+  gpuErrchk(cudaDeviceSynchronize());
 }
 
-#endif
+} // namespace silt

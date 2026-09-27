@@ -1,9 +1,8 @@
-#ifndef SILT_MEMORY
-#define SILT_MEMORY
+#pragma once
 
 #include <silt/silt.hpp>
 
-// This file contains an interface for cuda runtime memory 
+// This file contains an interface for cuda runtime memory
 // management functions to simplify linkage of dependencies.
 
 namespace silt {
@@ -18,11 +17,13 @@ enum copy_t {
 };
 
 // Runtime Memory Interface
- 
+
 EXPORT_SHARED void* device_alloc(size_t bytes);
-EXPORT_SHARED void  device_free(void* ptr);
-EXPORT_SHARED void  device_copy(void* dst, const void* src, size_t bytes, copy_t copy);
+EXPORT_SHARED void device_free(void* ptr);
+EXPORT_SHARED void device_copy(void* dst, const void* src, size_t bytes, copy_t copy);
 
-}
+//! Block until all queued GPU work completes, and raise silt::error::cuda_error
+//! if any of it (including a kernel launched earlier) failed.
+EXPORT_SHARED void synchronize();
 
-#endif
+} // namespace silt

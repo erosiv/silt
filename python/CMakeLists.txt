@@ -28,6 +28,13 @@ nanobind_add_module(${MODULE_NAME}
   source/op.cpp
   source/util.cpp
   source/indexed.cpp
+  source/rng.cpp
+)
+
+# Linux RPATH configuration
+set_target_properties(${MODULE_NAME} PROPERTIES
+  INSTALL_RPATH "$ORIGIN"
+  BUILD_WITH_INSTALL_RPATH FALSE
 )
 
 # Linux RPATH configuration
@@ -43,7 +50,28 @@ target_compile_definitions(${MODULE_NAME} PRIVATE
 # Dependencies
 #
 
-target_link_libraries(${MODULE_NAME} PRIVATE glm::glm)
+#
+# Type Stubs (.pyi)
+#
+
+if(MSVC)
+add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "$<TARGET_RUNTIME_DLLS:${MODULE_NAME}>"
+    "$<TARGET_FILE_DIR:${MODULE_NAME}>"
+  COMMAND_EXPAND_LISTS
+)
+endif()
+
+nanobind_add_stub(
+  ${MODULE_NAME}_stub
+  MODULE ${MODULE_NAME}
+  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/silt/${MODULE_NAME}.pyi
+  PYTHON_PATH $<TARGET_FILE_DIR:${MODULE_NAME}>
+  DEPENDS ${MODULE_NAME}
+)
+
+# glm::glm transitively linked through silt
 target_link_libraries(${MODULE_NAME} PRIVATE silt::silt)
 
 #

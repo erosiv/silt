@@ -1,0 +1,81 @@
+# silt CI.
+#
+# This is a compile-and-import smoke test, not a GPU test suite: hosted
+# GitHub runners have no GPU at all (no device, no driver). It verifies
+# that silt configures and builds on Linux and Windows, that the wheel
+# installs and imports cleanly, and that every CPU-reachable pytest
+# passes. Every test marked `@pytest.mark.gpu` is auto-skipped here
+# (see test/conftest.py's gpu_available fixture), since there is no
+# `nvidia-smi` to find.
+#
+# Cost note: silt is a public repository, so standard GitHub-hosted
+# runners (ubuntu-latest, windows-latest) are free with no minute limit
+# for public repos -- see
+# https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions.
+# Only "larger" (paid-tier) runners are ever billed, and this workflow
+# does not use any.
+
+name: CI
+
+on:
+  push:
+    branches: [main, working]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      # ext/glm is declared in .gitmodules with a git@github.com: SSH URL.
+      # Runners have no SSH deploy key for it, so a plain submodule
+      # checkout would fail; rewrite SSH GitHub URLs to HTTPS first, which
+      # needs no credentials for a public repo. Must run before checkout.
+      - name: Rewrite SSH submodule URLs to HTTPS
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Compile-only: no GPU is present on this runner, so the toolkit's
+      # own default version (currently 13.2.0, which supports the
+      # sm_100/sm_120 architectures listed in CMakeLists.txt) is used
+      # rather than pinning one, so CI drifts forward with new releases
+      # rather than needing a manual bump.
+      - name: Install the CUDA toolkit
+        uses: Jimver/cuda-toolkit@v0.2.36
+        id: cuda-toolkit
+        with:
+          method: network
+
+      - name: Report CUDA toolkit version
+        run: echo "Installed CUDA ${{ steps.cuda-toolkit.outputs.cuda }}"
+
+      - name: Build and install silt
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[test]" -v
+
+      - name: Import smoke test
+        run: python -c "import silt; print('silt', silt.__version__, 'imported OK')"
+
+      - name: Run pytest (CPU-reachable tests only; GPU tests auto-skip)
+        run: python -m pytest test -v
+
+      - name: Configure and build the C++ unit test target
+        run: |
+          cmake -S . -B build-cpp-test -DSILT_BUILD_TESTS=ON
+          cmake --build build-cpp-test --config Release
+
+      - name: Run the C++ unit tests
+        working-directory: build-cpp-test
+        run: ctest --output-on-failure -C Release

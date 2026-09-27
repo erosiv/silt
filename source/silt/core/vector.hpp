@@ -1,5 +1,4 @@
-#ifndef SILT_VECTOR
-#define SILT_VECTOR
+#pragma once
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -8,7 +7,7 @@
 // silt vector type definitions / aliases
 //  silt uses glm as its small vector type implementation.
 //  this is causing some portability issues and might be replaced.
-//  
+//
 
 namespace silt {
 
@@ -53,5 +52,3 @@ using vec3 = vec<3>;
 using vec4 = vec<4>;
 
 } // end of namespace silt
-
-#endif

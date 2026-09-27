@@ -1,10 +1,9 @@
-#ifndef SILT_SLICE
-#define SILT_SLICE
+#pragma once
 
 #include <silt/silt.hpp>
-#include <silt/core/types.hpp>
 #include <silt/core/error.hpp>
 #include <silt/core/shape.hpp>
+#include <silt/core/types.hpp>
 
 namespace silt {
 
@@ -19,47 +18,41 @@ namespace silt {
 struct slice {
 
   using vec_t = glm::vec<4, int>;
-  
+
   // Constructors
 
-  GPU_ENABLE slice(int d0, int d1, int d2, int d3):
-    _shape{d0, d1, d2, d3}{
-      this->reset();
-    }
+  GPU_ENABLE slice(int d0, int d1, int d2, int d3): _shape{d0, d1, d2, d3} {
+    this->reset();
+  }
 
-  GPU_ENABLE slice(int d0, int d1, int d2):
-    _shape{d0, d1, d2, 1}{
-      this->reset();
-    }
+  GPU_ENABLE slice(int d0, int d1, int d2): _shape{d0, d1, d2, 1} {
+    this->reset();
+  }
 
-  GPU_ENABLE slice(int d0, int d1):
-    _shape{d0, d1, 1, 1}{
-      this->reset();
-    }
+  GPU_ENABLE slice(int d0, int d1): _shape{d0, d1, 1, 1} {
+    this->reset();
+  }
 
-  GPU_ENABLE slice(int d0):
-    _shape{d0, 1, 1, 1}{
-      this->reset();
-    }
+  GPU_ENABLE slice(int d0): _shape{d0, 1, 1, 1} {
+    this->reset();
+  }
 
-  GPU_ENABLE slice():
-    _shape{1, 1, 1, 1}{
-      this->reset();
-    }
+  GPU_ENABLE slice(): _shape{1, 1, 1, 1} {
+    this->reset();
+  }
 
-  GPU_ENABLE slice(const silt::shape shape):
-    slice(shape[0], shape[1], shape[2], shape[3]){}
+  GPU_ENABLE slice(const silt::shape shape): slice(shape[0], shape[1], shape[2], shape[3]) {}
 
   // Member Data Lookup
 
   GPU_ENABLE inline silt::shape shape() const { return this->_shape; }
-  GPU_ENABLE inline int dim()           const { return this->_shape.dim(); }
-  GPU_ENABLE inline int maxelem()       const { return this->_shape.elem(); }
+  GPU_ENABLE inline int dim() const { return this->_shape.dim(); }
+  GPU_ENABLE inline int64_t maxelem() const { return this->_shape.elem(); }
 
-  GPU_ENABLE inline vec_t offset()      const { return this->_offset; }
-  GPU_ENABLE inline vec_t stride()      const { return this->_stride; }
-  GPU_ENABLE inline vec_t extent()      const { return this->_extent; }
-  GPU_ENABLE inline int elem()          const {
+  GPU_ENABLE inline vec_t offset() const { return this->_offset; }
+  GPU_ENABLE inline vec_t stride() const { return this->_stride; }
+  GPU_ENABLE inline vec_t extent() const { return this->_extent; }
+  GPU_ENABLE inline int64_t elem() const {
     return silt::shape::count_elem(this->_extent);
   }
 
@@ -77,22 +70,34 @@ struct slice {
     this->reset();
   }
 
-  //! Slice Index along individual Dimension
+  //! Slice Index along individual Dimension.
+  //! This is the single place slicing is validated and clamped -- callers
+  //! (e.g. the Python __getitem__ binding) should unpack raw offset/stride/
+  //! extent and forward here rather than re-implementing this logic.
   void index(const int dim, int offset, int stride, int extent) {
+
+    if (dim < 0 || dim >= 4)
+      throw silt::error::out_of_bounds(dim, 4);
+
+    if (stride <= 0)
+      throw std::invalid_argument("slice stride must be positive");
 
     // Offset must be within shape bound
     const int bound = this->_shape.ext()[dim];
-    if(offset >= bound)
+    if (offset >= bound)
       throw silt::error::out_of_bounds(offset, bound);
 
-    // Extent is clamped to maximum extent
-    //! todo: Throw an error instead?
-    extent = std::min(extent, (bound - offset) / stride);
+    if (extent <= 0)
+      throw std::invalid_argument("slice extent must be positive");
+
+    // Extent is clamped to maximum extent.
+    // Ceiling division: a partial final stride step still counts as
+    // an element (e.g. bound=5, offset=0, stride=2 has 3 elements: 0,2,4).
+    extent = std::min(extent, (bound - offset + stride - 1) / stride);
 
     this->_offset[dim] = offset;
     this->_stride[dim] = stride;
     this->_extent[dim] = extent;
-
   }
 
   GPU_ENABLE void reset() {
@@ -105,19 +110,18 @@ struct slice {
   // Coordinate Transform Methods
   //
 
-  GPU_ENABLE int transform(const int index) const {
+  GPU_ENABLE int64_t transform(const int64_t index) const {
     vec_t value = this->_unflatten(index);
     return this->_shape.flatten(this->offset() + this->stride() * value);
   }
 
 private:
-
   //! Compute the Position in Slice-Space
-  GPU_ENABLE vec_t _unflatten(const int index) const {
+  GPU_ENABLE vec_t _unflatten(const int64_t index) const {
     vec_t value{0};
-    int scale = 1;
+    int64_t scale = 1;
     for (int d = this->dim() - 1; d >= 0; --d) {
-      value[d] = (index / scale) % this->_extent[d];
+      value[d] = (int)((index / scale) % this->_extent[d]);
       scale *= this->_extent[d];
     }
     return value;
@@ -127,9 +131,6 @@ private:
   vec_t _offset;      //!< Per-Dimension Offset
   vec_t _stride;      //!< Per-Dimension Stride
   vec_t _extent;      //!< Per-Dimension Extent
-
 };
 
 } // end of namespace silt
-
-#endif

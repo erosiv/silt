@@ -72,3 +72,26 @@ When building python bindings that expose functions which accept silt types, you
 The silt repository itself generates the python bindings for silt, you can inspect ``CMakeLists.txt`` to see an example linking structure.
 
 Note that when you use `silt` as a dependency in a separate project's python bindings, it is interoperable with other libraries that use `silt`. This is possible because of ``dllexport`` directives on the primary exposed type: the tensor.
+
+Running Tests
+-------------
+
+Python tests (the primary test suite) use ``pytest``:
+
+.. code::
+  bash
+
+  pip install --no-build-isolation -ve ".[test]"
+  pytest test
+
+Tests that need a GPU are marked and auto-skip when none is detected.
+
+A small C++ test target covers ownership/lifetime behaviour that is not reachable
+from Python (see :doc:`extending`). It is off by default; build it explicitly:
+
+.. code::
+  bash
+
+  cmake -S . -B build -DSILT_BUILD_TESTS=ON
+  cmake --build build
+  ctest --test-dir build --output-on-failure
