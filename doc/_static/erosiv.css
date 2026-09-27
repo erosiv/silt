@@ -19,6 +19,7 @@ body {
   font-family: 'Open Sans', sans-serif;
 }
 
+div.body,
 div.document,
 div.related,
 div.footer {
@@ -30,7 +31,7 @@ h1, h2, h3, h4, h5, h6,
 p.logo a,
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
-  font-family: 'Parkinsans', sans-serif;
+  font-family: 'Parkinsans', sans-serif !important;
   font-weight: 400;
   color: var(--erosiv-text);
 }
@@ -47,11 +48,13 @@ a:hover {
 }
 
 div.sphinxsidebar {
-  background: var(--erosiv-muted);
+  background: var(--erosiv-bg);
 }
 
 div.sphinxsidebar a {
   color: var(--erosiv-accent-dark);
+  border-bottom: 1px solid var(--erosiv-accent);
+  text-decoration: none;
 }
 
 div.sphinxsidebar h3,

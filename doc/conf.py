@@ -77,7 +77,6 @@ suppress_warnings = ['duplicate_declaration.cpp']
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
 html_static_path = ['_static']
 
 # Matches https://erosiv.studio's palette/type (see doc/_static/erosiv.css);
