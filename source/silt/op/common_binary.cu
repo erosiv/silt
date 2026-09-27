@@ -22,6 +22,9 @@ void set(tensor_t<T> lhs, const tensor_t<T> rhs) {
 template EXPORT_SHARED void silt::set<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs);
 template EXPORT_SHARED void silt::set<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs);
 template EXPORT_SHARED void silt::set<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs);
+// int64_t: needed by make_numpy/make_torch (interop.hpp) for index_t, not
+// part of the primitive-gated elementwise ops above.
+template EXPORT_SHARED void silt::set<int64_t>(silt::tensor_t<int64_t> lhs, const silt::tensor_t<int64_t> rhs);
 
 // Add
 

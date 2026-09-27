@@ -72,26 +72,51 @@ __host__ void binop_inplace_cpu(T lhs, const T rhs, F func) {
 }
 
 // In-Place Indexed Unary Operation
+//
+// `ind` holds the flat tensor indices to visit.
 
 template<typename T, typename F>
-__global__ void uniop_inplace_indexed_gpu(tensor_t<T> lhs, const tensor_t<int> ind, F func) {
-  const size_t n = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void indexed_apply_gpu(tensor_t<T> lhs, const tensor_t<int64_t> ind, F func) {
+  const int64_t n = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
   if (n < ind.elem()) {
-    // ind stores plain `int` indices -- unrelated to this widening pass;
-    // deferred to the generic-indexed-operations redesign (see B5).
-    const int i = ind[n];
-    if (i < lhs.elem()) {
+    const int64_t i = ind[n];
+    if (i >= 0 && i < (int64_t)lhs.elem()) {
       lhs[i] = func(lhs[i]);
     }
   }
 }
 
 template<typename T, typename F>
-__host__ void uniop_inplace_indexed_cpu(tensor_t<T> lhs, const tensor_t<int> ind, F func) {
-  for (size_t n = 0; n < ind.elem(); ++n) {
-    const int i = ind[n];
-    if (i < lhs.elem()) {
+__host__ void indexed_apply_cpu(tensor_t<T> lhs, const tensor_t<int64_t> ind, F func) {
+  for (int64_t n = 0; n < (int64_t)ind.elem(); ++n) {
+    const int64_t i = ind[n];
+    if (i >= 0 && i < (int64_t)lhs.elem()) {
       lhs[i] = func(lhs[i]);
+    }
+  }
+}
+
+// In-Place Indexed Binary Operation
+//
+// rhs is read at the same flat index i as lhs.
+
+template<typename T, typename F>
+__global__ void indexed_binop_apply_gpu(tensor_t<T> lhs, const tensor_t<T> rhs, const tensor_t<int64_t> ind, F func) {
+  const int64_t n = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (n < ind.elem()) {
+    const int64_t i = ind[n];
+    if (i >= 0 && i < (int64_t)lhs.elem()) {
+      lhs[i] = func(lhs[i], rhs[i]);
+    }
+  }
+}
+
+template<typename T, typename F>
+__host__ void indexed_binop_apply_cpu(tensor_t<T> lhs, const tensor_t<T> rhs, const tensor_t<int64_t> ind, F func) {
+  for (int64_t n = 0; n < (int64_t)ind.elem(); ++n) {
+    const int64_t i = ind[n];
+    if (i >= 0 && i < (int64_t)lhs.elem()) {
+      lhs[i] = func(lhs[i], rhs[i]);
     }
   }
 }
@@ -131,14 +156,36 @@ void binop_inplace(T lhs, const T rhs, F func) {
 }
 
 template<typename T, typename F>
-void uniop_inplace_indexed(tensor_t<T> lhs, const tensor_t<int> ind, F func) {
+void indexed_apply(tensor_t<T> lhs, const tensor_t<int64_t> ind, F func) {
+
+  if (lhs.host() != ind.host())
+    throw silt::error::mismatch_host(lhs.host(), ind.host());
 
   if (lhs.host() == silt::host_t::CPU) {
-    detail::uniop_inplace_indexed_cpu(lhs, ind, func);
+    detail::indexed_apply_cpu(lhs, ind, func);
   }
 
   else if (lhs.host() == silt::host_t::GPU) {
-    detail::uniop_inplace_indexed_gpu<<<block(ind.elem(), 512), 512>>>(lhs, ind, func);
+    detail::indexed_apply_gpu<<<block(ind.elem(), 512), 512>>>(lhs, ind, func);
+    gpuErrchk(cudaGetLastError());
+  }
+}
+
+template<typename T, typename F>
+void indexed_binop_apply(tensor_t<T> lhs, const tensor_t<T> rhs, const tensor_t<int64_t> ind, F func) {
+
+  if (lhs.host() != rhs.host())
+    throw silt::error::mismatch_host(lhs.host(), rhs.host());
+
+  if (lhs.elem() != rhs.elem())
+    throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+
+  if (lhs.host() == silt::host_t::CPU) {
+    detail::indexed_binop_apply_cpu(lhs, rhs, ind, func);
+  }
+
+  else if (lhs.host() == silt::host_t::GPU) {
+    detail::indexed_binop_apply_gpu<<<block(ind.elem(), 512), 512>>>(lhs, rhs, ind, func);
     gpuErrchk(cudaGetLastError());
   }
 }
