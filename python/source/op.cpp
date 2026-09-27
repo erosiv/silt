@@ -10,6 +10,7 @@ namespace nb = nanobind;
 #include <silt/core/types.hpp>
 #include <silt/core/view.hpp>
 #include <silt/op/common.hpp>
+#include <silt/op/reduce.hpp>
 
 #include "util.hpp"
 
@@ -189,18 +190,54 @@ void bind_op(nb::module_& module) {
   });
 
   //
-  // Generic Buffer Reductions
+  // Dense Reductions
   //
 
+  module.def("sum", [](const silt::tensor& tensor) {
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::sum(tensor.as<S>()));
+    });
+  });
+
+  module.def("mean", [](const silt::tensor& tensor) {
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::mean(tensor.as<S>()));
+    });
+  });
+
   module.def("min", [](const silt::tensor& tensor) {
-    return silt::select(tensor.type(), [&tensor]<std::floating_point S>() -> nb::object {
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
       return nb::cast(silt::min(tensor.as<S>()));
     });
   });
 
   module.def("max", [](const silt::tensor& tensor) {
-    return silt::select(tensor.type(), [&tensor]<std::floating_point S>() -> nb::object {
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
       return nb::cast(silt::max(tensor.as<S>()));
+    });
+  });
+
+  module.def("var", [](const silt::tensor& tensor) {
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::variance(tensor.as<S>()));
+    });
+  });
+
+  module.def("std", [](const silt::tensor& tensor) {
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::stddev(tensor.as<S>()));
+    });
+  });
+
+  module.def("argmin", [](const silt::tensor& tensor) {
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::argmin(tensor.as<S>()));
+    });
+  });
+
+  module.def("argmax", [](const silt::tensor& tensor) {
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::argmax(tensor.as<S>()));
     });
   });
 

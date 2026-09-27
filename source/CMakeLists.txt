@@ -37,7 +37,9 @@ target_sources(${TARGET_NAME} PRIVATE
   silt/core/memory.cu
   silt/op/common_unary.cu
   silt/op/common_binary.cu
+  silt/op/reduce.cu
   silt/op/indexed.cu
+  silt/op/indexed_reduce.cu
   silt/op/rng.cu
 )
 

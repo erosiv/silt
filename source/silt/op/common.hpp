@@ -88,40 +88,4 @@ silt::tensor_t<To> cast(const silt::tensor_t<From>& tensor) {
   return tensor_to;
 }
 
-//
-// Reductions
-//
-
-template<typename T>
-T min(const silt::tensor_t<T>& tensor) {
-
-  if (tensor.host() != silt::host_t::CPU)
-    throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
-
-  T val = std::numeric_limits<T>::max();
-  for (size_t i = 0; i < tensor.elem(); ++i) {
-    const T b = tensor[i];
-    if (!std::isnan(b)) {
-      val = std::min(val, b);
-    }
-  }
-  return val;
-}
-
-template<typename T>
-T max(const silt::tensor_t<T>& tensor) {
-
-  if (tensor.host() != silt::host_t::CPU)
-    throw silt::error::mismatch_host(silt::host_t::CPU, tensor.host());
-
-  T val = std::numeric_limits<T>::lowest();
-  for (size_t i = 0; i < tensor.elem(); ++i) {
-    const T b = tensor[i];
-    if (!std::isnan(b)) {
-      val = std::max(val, b);
-    }
-  }
-  return val;
-}
-
 } // end of namespace silt

@@ -182,6 +182,76 @@ def test_max_of_mixed_sign_tensor():
     assert silt.max(t) == pytest.approx(5.0)
 
 
+def test_min_max_skip_nan():
+    t = silt.tensor.from_numpy(np.array([3.0, float("nan"), -2.0], dtype=np.float32))
+    assert silt.min(t) == pytest.approx(-2.0)
+    assert silt.max(t) == pytest.approx(3.0)
+
+
+@pytest.mark.gpu
+def test_min_max_skip_nan_gpu():
+    t = silt.tensor.from_numpy(np.array([3.0, float("nan"), -2.0], dtype=np.float32))
+    t.to_gpu()
+    assert silt.min(t) == pytest.approx(-2.0)
+    assert silt.max(t) == pytest.approx(3.0)
+
+
+@pytest.mark.gpu
+def test_sum_mean_var_std_on_gpu():
+    t = silt.tensor.from_numpy(np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32))
+    t.to_gpu()
+    assert silt.sum(t) == pytest.approx(10.0)
+    assert silt.mean(t) == pytest.approx(2.5)
+    assert silt.var(t) == pytest.approx(1.25)
+    assert silt.std(t) == pytest.approx(1.25 ** 0.5)
+
+
+@pytest.mark.gpu
+def test_argmin_argmax_on_gpu():
+    t = silt.tensor.from_numpy(np.array([3.0, -2.0, 5.0, -2.0], dtype=np.float32))
+    t.to_gpu()
+    assert silt.argmin(t) == 1
+    assert silt.argmax(t) == 2
+
+
+# -- sum / mean / var / std / argmin / argmax -----------------------------
+
+
+def test_sum_basic():
+    t = silt.tensor.from_numpy(np.array([1.0, 2.0, 3.0], dtype=np.float32))
+    assert silt.sum(t) == pytest.approx(6.0)
+
+
+def test_mean_basic():
+    t = silt.tensor.from_numpy(np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32))
+    assert silt.mean(t) == pytest.approx(2.5)
+
+
+def test_var_and_std_basic():
+    data = np.array([2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0], dtype=np.float32)
+    t = silt.tensor.from_numpy(data)
+    assert silt.var(t) == pytest.approx(float(np.var(data)))
+    assert silt.std(t) == pytest.approx(float(np.std(data)))
+
+
+def test_argmin_basic():
+    t = silt.tensor.from_numpy(np.array([3.0, -2.0, 5.0, -2.0], dtype=np.float32))
+    assert silt.argmin(t) == 1  # first occurrence of the minimum
+
+
+def test_argmax_basic():
+    t = silt.tensor.from_numpy(np.array([3.0, -2.0, 5.0, 5.0], dtype=np.float32))
+    assert silt.argmax(t) == 2  # first occurrence of the maximum
+
+
+def test_sum_mean_on_int32():
+    """mean() on an int32 tensor divides as int (T / T), matching T's own
+    arithmetic rather than promoting to float -- 10 / 4 truncates to 2."""
+    t = silt.tensor.from_numpy(np.array([1, 2, 3, 4], dtype=np.int32))
+    assert silt.sum(t) == 10
+    assert silt.mean(t) == 2
+
+
 # -- copy_to / cast ---------------------------------------------------------
 
 
@@ -374,6 +444,58 @@ def test_indexed_ops_leave_cells_outside_the_index_set_untouched():
 
     expected = np.where(mask, 10.0, 1.0)
     np.testing.assert_array_equal(data, expected)
+
+
+# -- indexed reductions (GPU only) -----------------------------------------
+
+
+def _radius_mask(s=8, center=(4.0, 4.0), radius=2.5):
+    yy, xx = np.mgrid[0:s, 0:s]
+    return (xx.astype(np.float32) - center[0]) ** 2 + (yy.astype(np.float32) - center[1]) ** 2 < radius ** 2
+
+
+@pytest.mark.gpu
+def test_indexed_sum_and_mean():
+    s = silt.shape(8, 8)
+    idx = silt.index_radius(s, [4.0, 4.0], 2.5)
+    t = silt.tensor(silt.float32, s, silt.gpu)
+    silt.set_(t, 2.0)
+    assert silt.indexed_sum(t, idx) == pytest.approx(2.0 * idx.elem)
+    assert silt.indexed_mean(t, idx) == pytest.approx(2.0)
+
+
+@pytest.mark.gpu
+def test_indexed_min_max_match_dense_mask():
+    data = np.arange(64, dtype=np.float32).reshape(8, 8)
+    t = silt.tensor.from_numpy(data.copy())
+    t.to_gpu()
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    expected = data[_radius_mask()]
+    assert silt.indexed_min(t, idx) == pytest.approx(float(expected.min()))
+    assert silt.indexed_max(t, idx) == pytest.approx(float(expected.max()))
+
+
+@pytest.mark.gpu
+def test_indexed_argmin_argmax_return_flat_index_into_lhs():
+    """indexed_argmin/argmax return the flat index into `lhs` (so
+    lhs[argmin] recovers the value), not the position within `ind`."""
+    data = np.arange(64, dtype=np.float32).reshape(8, 8)
+    t = silt.tensor.from_numpy(data.copy())
+    t.to_gpu()
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    mask = _radius_mask()
+    flat = data.flatten()
+    masked_indices = np.flatnonzero(mask.flatten())
+
+    argmin = silt.indexed_argmin(t, idx)
+    argmax = silt.indexed_argmax(t, idx)
+
+    assert argmin in masked_indices
+    assert argmax in masked_indices
+    assert flat[argmin] == flat[masked_indices].min()
+    assert flat[argmax] == flat[masked_indices].max()
 
 
 # -- value-based selectors (index_range/index_greater/index_lesser/index_match, GPU only) ---

@@ -166,4 +166,32 @@ void indexed_divide(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind);
 template<typename T>
 void indexed_mix(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind, const float w);
 
+//
+// Indexed Reductions
+//
+
+//! Sum of lhs[i], for i in ind.
+template<typename T>
+T indexed_sum(const tensor_t<T> lhs, const index_t ind);
+
+//! Mean of lhs[i], for i in ind.
+template<typename T>
+T indexed_mean(const tensor_t<T> lhs, const index_t ind);
+
+//! Min of lhs[i], for i in ind. NaN-skipping, like the dense min().
+template<typename T>
+T indexed_min(const tensor_t<T> lhs, const index_t ind);
+
+//! Max of lhs[i], for i in ind. NaN-skipping, like the dense max().
+template<typename T>
+T indexed_max(const tensor_t<T> lhs, const index_t ind);
+
+//! Flat index into lhs of the minimal element among lhs[i], i in ind.
+template<typename T>
+int64_t indexed_argmin(const tensor_t<T> lhs, const index_t ind);
+
+//! Flat index into lhs of the maximal element among lhs[i], i in ind.
+template<typename T>
+int64_t indexed_argmax(const tensor_t<T> lhs, const index_t ind);
+
 } // namespace silt
