@@ -31,6 +31,12 @@ nanobind_add_module(${MODULE_NAME}
   source/rng.cpp
 )
 
+# Linux RPATH configuration
+set_target_properties(${MODULE_NAME} PROPERTIES
+  INSTALL_RPATH "$ORIGIN"
+  BUILD_WITH_INSTALL_RPATH FALSE
+)
+
 target_compile_definitions(${MODULE_NAME} PRIVATE
   MODULE_NAME=${MODULE_NAME})
 
