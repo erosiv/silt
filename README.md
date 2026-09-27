@@ -112,7 +112,7 @@ cmake -S . -B build
 cmake --build build
 ```
 
-### Adding as a C++ Dependency
+### Build as a C++ Dependency
 
 Add silt as a submodule dependency to your repository:
 
@@ -140,7 +140,7 @@ sphinx-build doc build/html
 
 Note that building the documentation requires sphinx, doxygen, breathe and myst_parser. All except doxygen are available through `pip`.
 
-## Running Tests
+### Running Tests
 
 Python tests (the primary test suite) use `pytest`:
 
@@ -159,7 +159,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-## Formatting
+### Formatting
 
 #### On Windows
 

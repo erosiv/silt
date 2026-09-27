@@ -15,6 +15,7 @@ Contents
    :maxdepth: 1
 
    usage
+   examples
    api_cpp
    api_python
    extending

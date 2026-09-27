@@ -79,3 +79,7 @@ suppress_warnings = ['duplicate_declaration.cpp']
 
 html_theme = 'alabaster'
 html_static_path = ['_static']
+
+# Matches https://erosiv.studio's palette/type (see doc/_static/erosiv.css);
+# loaded after the theme's own stylesheet so its rules win on equal specificity.
+html_css_files = ['erosiv.css']
