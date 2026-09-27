@@ -40,6 +40,30 @@ void bind_indexed(nb::module_& module) {
     return silt::tensor(silt::index_polygon(shape, verts));
   });
 
+  module.def("index_range", [](const silt::tensor& data, const nb::object lo, const nb::object hi) {
+    return silt::select(data.type(), [&data, &lo, &hi]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(silt::index_range<S>(data.as<S>(), nb::cast<S>(lo), nb::cast<S>(hi)));
+    });
+  });
+
+  module.def("index_greater", [](const silt::tensor& data, const nb::object value) {
+    return silt::select(data.type(), [&data, &value]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(silt::index_greater<S>(data.as<S>(), nb::cast<S>(value)));
+    });
+  });
+
+  module.def("index_lesser", [](const silt::tensor& data, const nb::object value) {
+    return silt::select(data.type(), [&data, &value]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(silt::index_lesser<S>(data.as<S>(), nb::cast<S>(value)));
+    });
+  });
+
+  module.def("index_match", [](const silt::tensor& data, const nb::object value) {
+    return silt::select(data.type(), [&data, &value]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(silt::index_match<S>(data.as<S>(), nb::cast<S>(value)));
+    });
+  });
+
   //
   // Indexed Operations
   //

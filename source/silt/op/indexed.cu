@@ -143,6 +143,9 @@ index_t make_index_set(const silt::shape shape, F predicate) {
 template index_t silt::make_index_set<silt::radius_predicate>(const silt::shape shape, silt::radius_predicate predicate);
 template index_t silt::make_index_set<silt::box_predicate>(const silt::shape shape, silt::box_predicate predicate);
 template index_t silt::make_index_set<silt::polygon_predicate>(const silt::shape shape, silt::polygon_predicate predicate);
+template index_t silt::make_index_set<silt::range_predicate<int>>(const silt::shape shape, silt::range_predicate<int> predicate);
+template index_t silt::make_index_set<silt::range_predicate<float>>(const silt::shape shape, silt::range_predicate<float> predicate);
+template index_t silt::make_index_set<silt::range_predicate<double>>(const silt::shape shape, silt::range_predicate<double> predicate);
 
 //
 // Selector Convenience Functions
@@ -161,5 +164,43 @@ index_t index_polygon(const silt::shape shape, const tensor_t<silt::vec2>& verti
     throw silt::error::mismatch_host(silt::host_t::GPU, vertices.host());
   return make_index_set(shape, polygon_predicate{shape, vertices.data(), (int)vertices.elem()});
 }
+
+template<typename T>
+index_t index_range(const tensor_t<T>& data, const T lo, const T hi) {
+  if (data.host() != silt::host_t::GPU)
+    throw silt::error::mismatch_host(silt::host_t::GPU, data.host());
+  return make_index_set(data.shape(), range_predicate<T>{data.data(), lo, hi});
+}
+
+template<typename T>
+index_t index_greater(const tensor_t<T>& data, const T value) {
+  return index_range<T>(data, value, positive_infinity<T>());
+}
+
+template<typename T>
+index_t index_lesser(const tensor_t<T>& data, const T value) {
+  return index_range<T>(data, negative_infinity<T>(), value);
+}
+
+template<typename T>
+index_t index_match(const tensor_t<T>& data, const T value) {
+  return index_range<T>(data, value, value);
+}
+
+template EXPORT_SHARED index_t silt::index_range<int>(const silt::tensor_t<int>& data, const int lo, const int hi);
+template EXPORT_SHARED index_t silt::index_range<float>(const silt::tensor_t<float>& data, const float lo, const float hi);
+template EXPORT_SHARED index_t silt::index_range<double>(const silt::tensor_t<double>& data, const double lo, const double hi);
+
+template EXPORT_SHARED index_t silt::index_greater<int>(const silt::tensor_t<int>& data, const int value);
+template EXPORT_SHARED index_t silt::index_greater<float>(const silt::tensor_t<float>& data, const float value);
+template EXPORT_SHARED index_t silt::index_greater<double>(const silt::tensor_t<double>& data, const double value);
+
+template EXPORT_SHARED index_t silt::index_lesser<int>(const silt::tensor_t<int>& data, const int value);
+template EXPORT_SHARED index_t silt::index_lesser<float>(const silt::tensor_t<float>& data, const float value);
+template EXPORT_SHARED index_t silt::index_lesser<double>(const silt::tensor_t<double>& data, const double value);
+
+template EXPORT_SHARED index_t silt::index_match<int>(const silt::tensor_t<int>& data, const int value);
+template EXPORT_SHARED index_t silt::index_match<float>(const silt::tensor_t<float>& data, const float value);
+template EXPORT_SHARED index_t silt::index_match<double>(const silt::tensor_t<double>& data, const double value);
 
 } // end of namespace silt

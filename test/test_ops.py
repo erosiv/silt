@@ -326,3 +326,82 @@ def test_indexed_ops_leave_cells_outside_the_index_set_untouched():
 
     expected = np.where(mask, 10.0, 1.0)
     np.testing.assert_array_equal(data, expected)
+
+
+# -- value-based selectors (index_range/index_greater/index_lesser/index_match, GPU only) ---
+
+
+@pytest.mark.gpu
+def test_index_range_selects_closed_interval():
+    data = silt.tensor.from_numpy(np.array([0.0, 1.0, 2.0, 3.0, 4.0], dtype=np.float32))
+    data.to_gpu()
+    idx = silt.index_range(data, 1.0, 3.0)
+    got = sorted(idx.to_cpu().numpy().tolist())
+    assert got == [1, 2, 3]  # both endpoints included
+
+
+@pytest.mark.gpu
+def test_index_greater_is_range_with_positive_infinity():
+    data = silt.tensor.from_numpy(np.array([0.0, 1.0, 2.0, 3.0, 4.0], dtype=np.float32))
+    data.to_gpu()
+    greater = silt.index_greater(data, 2.0)
+    equivalent_range = silt.index_range(data, 2.0, float("inf"))
+    np.testing.assert_array_equal(
+        sorted(greater.to_cpu().numpy().tolist()),
+        sorted(equivalent_range.to_cpu().numpy().tolist()),
+    )
+    assert sorted(greater.to_cpu().numpy().tolist()) == [2, 3, 4]
+
+
+@pytest.mark.gpu
+def test_index_lesser_is_range_with_negative_infinity():
+    data = silt.tensor.from_numpy(np.array([0.0, 1.0, 2.0, 3.0, 4.0], dtype=np.float32))
+    data.to_gpu()
+    lesser = silt.index_lesser(data, 2.0)
+    equivalent_range = silt.index_range(data, float("-inf"), 2.0)
+    np.testing.assert_array_equal(
+        sorted(lesser.to_cpu().numpy().tolist()),
+        sorted(equivalent_range.to_cpu().numpy().tolist()),
+    )
+    assert sorted(lesser.to_cpu().numpy().tolist()) == [0, 1, 2]
+
+
+@pytest.mark.gpu
+def test_index_match_is_range_with_lo_equal_hi():
+    data = silt.tensor.from_numpy(np.array([1.0, 2.0, 2.0, 3.0], dtype=np.float32))
+    data.to_gpu()
+    matched = silt.index_match(data, 2.0)
+    got = sorted(matched.to_cpu().numpy().tolist())
+    assert got == [1, 2]  # both cells equal to 2.0, none of the others
+
+
+@pytest.mark.gpu
+def test_index_range_empty_when_no_cell_qualifies():
+    data = silt.tensor.from_numpy(np.array([0.0, 1.0, 2.0], dtype=np.float32))
+    data.to_gpu()
+    idx = silt.index_range(data, 10.0, 20.0)
+    assert idx.elem == 0
+
+
+@pytest.mark.gpu
+def test_index_greater_on_int32_uses_int_max_not_float_infinity():
+    """int has no representable infinity, so index_greater's alias must
+    fall back to numeric_limits<int>::max() as the upper bound rather
+    than failing to cast float('inf') into an int."""
+    data = silt.tensor.from_numpy(np.array([1, 2, 3, 4], dtype=np.int32))
+    data.to_gpu()
+    idx = silt.index_greater(data, 3)
+    got = sorted(idx.to_cpu().numpy().tolist())
+    assert got == [2, 3]
+
+
+@pytest.mark.gpu
+def test_index_lesser_on_int32_uses_int_min_not_float_infinity():
+    """int has no representable -infinity, so index_lesser's alias must
+    fall back to numeric_limits<int>::min() as the lower bound rather
+    than failing to cast float('-inf') into an int."""
+    data = silt.tensor.from_numpy(np.array([1, 2, 3, 4], dtype=np.int32))
+    data.to_gpu()
+    idx = silt.index_lesser(data, 2)
+    got = sorted(idx.to_cpu().numpy().tolist())
+    assert got == [0, 1]

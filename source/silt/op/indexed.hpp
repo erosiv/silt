@@ -5,6 +5,9 @@
 #include <silt/core/tensor.hpp>
 #include <silt/core/types.hpp>
 
+#include <limits>
+#include <type_traits>
+
 namespace silt {
 
 //
@@ -74,6 +77,52 @@ struct polygon_predicate {
 EXPORT_SHARED index_t index_radius(const silt::shape shape, const silt::vec2 center, const float radius);
 EXPORT_SHARED index_t index_box(const silt::shape shape, const silt::vec2 lo, const silt::vec2 hi);
 EXPORT_SHARED index_t index_polygon(const silt::shape shape, const tensor_t<silt::vec2>& vertices);
+
+//! +infinity for T (numeric_limits::max() for an integral T, which has no infinity).
+template<typename T>
+constexpr T positive_infinity() {
+  if constexpr (std::is_floating_point_v<T>)
+    return std::numeric_limits<T>::infinity();
+  else
+    return std::numeric_limits<T>::max();
+}
+
+//! -infinity for T (numeric_limits::min() for an integral T, which has no infinity).
+template<typename T>
+constexpr T negative_infinity() {
+  if constexpr (std::is_floating_point_v<T>)
+    return -std::numeric_limits<T>::infinity();
+  else
+    return std::numeric_limits<T>::min();
+}
+
+//! All cells where lo <= data[n] <= hi (closed interval).
+template<typename T>
+struct range_predicate {
+  const T* data;
+  T lo;
+  T hi;
+  GPU_ENABLE bool operator()(const int64_t n) const {
+    const T v = data[n];
+    return v >= lo && v <= hi;
+  }
+};
+
+//! Selects by value rather than position: lo <= data[n] <= hi.
+template<typename T>
+index_t index_range(const tensor_t<T>& data, const T lo, const T hi);
+
+//! Alias for index_range(data, value, +infinity) -- data[n] >= value.
+template<typename T>
+index_t index_greater(const tensor_t<T>& data, const T value);
+
+//! Alias for index_range(data, -infinity, value) -- data[n] <= value.
+template<typename T>
+index_t index_lesser(const tensor_t<T>& data, const T value);
+
+//! Alias for index_range(data, value, value) -- data[n] == value.
+template<typename T>
+index_t index_match(const tensor_t<T>& data, const T value);
 
 //
 // Indexed Operations
