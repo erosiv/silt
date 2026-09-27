@@ -16,6 +16,12 @@ void device_free(void* p) {
 }
 
 void device_copy(void* d, const void* s, size_t n, copy_t k) {
+  if (n == 0)
+    return;
+  if (k == copy_t::HOST_TO_HOST) {
+    std::memcpy(d, s, n);
+    return;
+  }
   gpuErrchk(cudaMemcpy(d, s, n, cudaMemcpyKind(k)));
 }
 

@@ -24,6 +24,13 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_ARCHITECTURES 80 86 87 89 90 100 120)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr --extended-lambda")
 
+if(MSVC)
+  # cccl (bundled from CUDA 13.2 on) requires MSVC's conforming preprocessor;
+  # the traditional one is only a warning under 13.1 but a hard error
+  # (C1189) under 13.2. Switch globally rather than suppress the warning.
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=\"/Zc:preprocessor\"")
+endif()
+
 #
 # Project Components
 #
