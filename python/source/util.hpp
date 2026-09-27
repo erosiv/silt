@@ -35,6 +35,8 @@ inline const char* dtype_name(const silt::dtype type) {
     return "float64";
   case silt::RNG:
     return "rng";
+  case silt::INT64:
+    return "int64";
   default:
     return "unknown";
   }

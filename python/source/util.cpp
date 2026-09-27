@@ -29,6 +29,7 @@ void bind_util(nb::module_& module) {
       .value("float32", silt::dtype::FLOAT32)
       .value("float64", silt::dtype::FLOAT64)
       .value("rng", silt::dtype::RNG)
+      .value("int64", silt::dtype::INT64)
       .export_values();
 
   //

@@ -186,9 +186,15 @@ private:
 template<typename T>
 void silt::tensor_t<T>::allocate(const silt::shape shape, const host_t host) {
 
-  if (shape.elem() == 0)
-    throw std::invalid_argument("size must be greater than 0");
   this->_shape = shape;
+
+  // Zero-Element Tensor
+  if (shape.elem() == 0) {
+    this->_data = NULL;
+    this->_host = host;
+    this->_refs = new size_t(1);
+    return;
+  }
 
   if (host == CPU) {
     this->_data = new T[shape.elem()];

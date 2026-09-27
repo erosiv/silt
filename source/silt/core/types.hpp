@@ -55,7 +55,9 @@ enum dtype {
   INT32,
   FLOAT32,
   FLOAT64,
-  RNG
+  RNG,
+  // Index-set storage (op/indexed.hpp). Not part of `primitive`.
+  INT64
 };
 
 typedef curandState rng;
@@ -108,6 +110,13 @@ struct typedesc<rng> {
   static constexpr const char* name = "rng";
   static constexpr dtype type = RNG;
   typedef rng value_t;
+};
+
+template<>
+struct typedesc<int64_t> {
+  static constexpr const char* name = "int64";
+  static constexpr dtype type = INT64;
+  typedef int64_t value_t;
 };
 
 // Enum-Based Runtime Polymorphic Visitor Pattern:
@@ -221,6 +230,13 @@ auto select(const silt::dtype type, F lambda, Args&&... args) {
       return lambda.template operator()<rng>(std::forward<Args>(args)...);
     } else {
       throw silt::type_op_error<rng, F>(lambda);
+    }
+    break;
+  case silt::INT64:
+    if constexpr (matches_lambda<int64_t, F, Args...>) {
+      return lambda.template operator()<int64_t>(std::forward<Args>(args)...);
+    } else {
+      throw silt::type_op_error<int64_t, F>(lambda);
     }
     break;
   default:
