@@ -13,7 +13,6 @@ set_target_properties(${TARGET_NAME} PROPERTIES
 
 target_compile_definitions(${TARGET_NAME} PRIVATE SILT_SHARED_BUILD)
 target_include_directories(${TARGET_NAME} PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/silt>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
@@ -30,3 +29,6 @@ if(NOT TARGET glm::glm)
   add_subdirectory(../ext/glm glm)
 endif()
 target_link_libraries(${TARGET_NAME} PRIVATE glm::glm)
+
+find_package(CUDAToolkit)
+target_link_libraries(${TARGET_NAME} PUBLIC CUDA::curand)
