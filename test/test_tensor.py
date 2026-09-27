@@ -45,6 +45,33 @@ def test_reshape_rejects_mismatched_element_count():
         t.reshape(5, 5)
 
 
+def test_zero_element_tensor_constructs_without_raising():
+    t = silt.tensor(silt.float32, silt.shape(0))
+    assert t.elem == 0
+    assert t.size == 0
+
+
+def test_zero_element_tensor_numpy_round_trip():
+    t = silt.tensor(silt.float32, silt.shape(0))
+    arr = t.numpy()
+    assert arr.size == 0
+
+
+def test_zero_element_tensor_repr_does_not_crash():
+    """__repr__ reads refs(), which is only meaningful once allocate()
+    has set up an owning refcount -- a zero-element tensor must have
+    one (see tensor_t<T>::allocate())."""
+    t = silt.tensor(silt.float32, silt.shape(0))
+    assert "silt.tensor" in repr(t)
+
+
+def test_zero_element_tensor_copy_to_round_trips():
+    t = silt.tensor(silt.float32, silt.shape(0))
+    c = t.copy_to()
+    assert c.elem == 0
+    assert c.host == silt.cpu
+
+
 def test_default_constructed_tensor_raises_cleanly_rather_than_crashing():
     """`silt.tensor()` (the bare default constructor) leaves its
     polymorphic `impl` pointer null, and every accessor dereferences it

@@ -228,3 +228,101 @@ def test_index_radius_and_indexed_set():
     data = t.to_cpu().numpy()
     assert data.max() == pytest.approx(1.0)
     assert data.min() == pytest.approx(0.0)  # cells outside the radius are untouched
+
+
+@pytest.mark.gpu
+def test_indexed_add_scalar():
+    s = silt.shape(8, 8)
+    idx = silt.index_radius(s, [4.0, 4.0], 2.5)
+    t = silt.tensor(silt.float32, s, silt.gpu)
+    silt.set_(t, 1.0)
+    silt.indexed_add_(t, 10.0, idx)
+    data = t.to_cpu().numpy()
+    assert data.max() == pytest.approx(11.0)
+    assert data.min() == pytest.approx(1.0)  # cells outside the radius are untouched
+
+
+@pytest.mark.gpu
+def test_indexed_add_tensor_tensor():
+    s = silt.shape(8, 8)
+    idx = silt.index_radius(s, [4.0, 4.0], 2.5)
+    a = silt.tensor(silt.float32, s, silt.gpu)
+    b = silt.tensor(silt.float32, s, silt.gpu)
+    silt.set_(a, 1.0)
+    silt.set_(b, 10.0)
+    silt.indexed_add_(a, b, idx)
+    data = a.to_cpu().numpy()
+    assert data.max() == pytest.approx(11.0)
+    assert data.min() == pytest.approx(1.0)
+
+
+@pytest.mark.gpu
+def test_indexed_multiply_scalar():
+    s = silt.shape(8, 8)
+    idx = silt.index_radius(s, [4.0, 4.0], 2.5)
+    t = silt.tensor(silt.float32, s, silt.gpu)
+    silt.set_(t, 2.0)
+    silt.indexed_multiply_(t, 3.0, idx)
+    data = t.to_cpu().numpy()
+    assert data.max() == pytest.approx(6.0)
+    assert data.min() == pytest.approx(2.0)
+
+
+@pytest.mark.gpu
+def test_indexed_divide_scalar():
+    s = silt.shape(8, 8)
+    idx = silt.index_radius(s, [4.0, 4.0], 2.5)
+    t = silt.tensor(silt.float32, s, silt.gpu)
+    silt.set_(t, 6.0)
+    silt.indexed_divide_(t, 3.0, idx)
+    data = t.to_cpu().numpy()
+    assert data.min() == pytest.approx(2.0)
+    assert data.max() == pytest.approx(6.0)
+
+
+@pytest.mark.gpu
+def test_indexed_divide_tensor_tensor():
+    s = silt.shape(8, 8)
+    idx = silt.index_radius(s, [4.0, 4.0], 2.5)
+    a = silt.tensor(silt.float32, s, silt.gpu)
+    b = silt.tensor(silt.float32, s, silt.gpu)
+    silt.set_(a, 6.0)
+    silt.set_(b, 3.0)
+    silt.indexed_divide_(a, b, idx)
+    data = a.to_cpu().numpy()
+    assert data.min() == pytest.approx(2.0)
+    assert data.max() == pytest.approx(6.0)
+
+
+@pytest.mark.gpu
+def test_indexed_mix_interpolates_only_within_mask():
+    s = silt.shape(8, 8)
+    idx = silt.index_radius(s, [4.0, 4.0], 2.5)
+    a = silt.tensor(silt.float32, s, silt.gpu)
+    b = silt.tensor(silt.float32, s, silt.gpu)
+    silt.set_(a, 0.0)
+    silt.set_(b, 10.0)
+    silt.indexed_mix_(a, b, idx, 0.25)
+    data = a.to_cpu().numpy()
+    assert data.max() == pytest.approx(2.5)
+    assert data.min() == pytest.approx(0.0)  # cells outside the mask are untouched
+
+
+@pytest.mark.gpu
+def test_indexed_ops_leave_cells_outside_the_index_set_untouched():
+    """Cross-check against a dense numpy mask built from the same
+    radius predicate, rather than just checking min/max, so a bug that
+    happened to preserve the extremes wouldn't slip through."""
+    s = silt.shape(8, 8)
+    idx = silt.index_radius(s, [4.0, 4.0], 2.5)
+
+    yy, xx = np.mgrid[0:8, 0:8]
+    mask = (xx.astype(np.float32) - 4.0) ** 2 + (yy.astype(np.float32) - 4.0) ** 2 < 2.5 ** 2
+
+    t = silt.tensor(silt.float32, s, silt.gpu)
+    silt.set_(t, 1.0)
+    silt.indexed_add_(t, 9.0, idx)
+    data = t.to_cpu().numpy().reshape(8, 8)
+
+    expected = np.where(mask, 10.0, 1.0)
+    np.testing.assert_array_equal(data, expected)

@@ -53,10 +53,8 @@ struct tensor_t: typedbase {
     this->_refs = other._refs;
     this->_shape = other._shape;
     this->_host = other._host;
-    if (this->_data != NULL) {
-      if (this->_refs != NULL) {
-        ++(*this->_refs);
-      }
+    if (this->_refs != NULL) {
+      ++(*this->_refs);
     }
   }
 
@@ -68,10 +66,8 @@ struct tensor_t: typedbase {
     this->_refs = other._refs;
     this->_shape = other._shape;
     this->_host = other._host;
-    if (this->_data != NULL) {
-      if (this->_refs != NULL) {
-        ++(*this->_refs);
-      }
+    if (this->_refs != NULL) {
+      ++(*this->_refs);
     }
     return *this;
   }

@@ -62,6 +62,13 @@ void bind_indexed(nb::module_& module) {
     });
   });
 
+  module.def("indexed_add_", [](silt::tensor& lhs, const nb::object rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_add<S>(lhs.as<S>(), nb::cast<S>(rhs), ind.as<int64_t>());
+    });
+  });
+
   module.def("indexed_multiply_", [](silt::tensor& lhs, const silt::tensor& rhs, const silt::tensor& ind) {
     require_index_set(lhs, ind);
     if (lhs.type() != rhs.type())
@@ -70,6 +77,42 @@ void bind_indexed(nb::module_& module) {
       throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
     silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
       silt::indexed_multiply<S>(lhs.as<S>(), rhs.as<S>(), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_multiply_", [](silt::tensor& lhs, const nb::object rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_multiply<S>(lhs.as<S>(), nb::cast<S>(rhs), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_divide_", [](silt::tensor& lhs, const silt::tensor& rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    if (lhs.type() != rhs.type())
+      throw silt::error::mismatch_type(lhs.type(), rhs.type());
+    if (lhs.elem() != rhs.elem())
+      throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_divide<S>(lhs.as<S>(), rhs.as<S>(), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_divide_", [](silt::tensor& lhs, const nb::object rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_divide<S>(lhs.as<S>(), nb::cast<S>(rhs), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_mix_", [](silt::tensor& lhs, const silt::tensor& rhs, const silt::tensor& ind, const float w) {
+    require_index_set(lhs, ind);
+    if (lhs.type() != rhs.type())
+      throw silt::error::mismatch_type(lhs.type(), rhs.type());
+    if (lhs.elem() != rhs.elem())
+      throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+    silt::select(lhs.type(), [&lhs, &rhs, &ind, w]<silt::primitive S>() {
+      silt::indexed_mix<S>(lhs.as<S>(), rhs.as<S>(), ind.as<int64_t>(), w);
     });
   });
 }

@@ -81,6 +81,40 @@ TEST_SUITE("tensor_t<T> ownership") {
     CHECK(t._refs == nullptr);
   }
 
+  TEST_CASE("a zero-element tensor is a valid owning, empty tensor") {
+    // Contrast with the case above: allocate(shape) with shape.elem()
+    // == 0 must still produce an *owning* tensor (non-null _refs), just
+    // with a null data pointer -- not the never-assigned default state.
+    tensor_t<float> t(silt::shape(0), silt::CPU);
+    CHECK(t.data() == nullptr);
+    CHECK(t._refs != nullptr);
+    CHECK(t.refs() == 1);
+    CHECK(t.elem() == 0);
+  }
+
+  TEST_CASE("a zero-element tensor is distinct from a default-constructed one") {
+    tensor_t<float> zero(silt::shape(0), silt::CPU);
+    tensor_t<float> def;
+    CHECK(zero._refs != nullptr);
+    CHECK(def._refs == nullptr);
+  }
+
+  TEST_CASE("copying a zero-element tensor shares its refcount") {
+    tensor_t<float> a(silt::shape(0), silt::CPU);
+    tensor_t<float> b = a;
+    CHECK(a.refs() == 2);
+    CHECK(b.refs() == 2);
+  }
+
+  TEST_CASE("a zero-element tensor can be constructed on either host") {
+    tensor_t<float> cpu(silt::shape(0), silt::CPU);
+    tensor_t<float> gpu(silt::shape(0), silt::GPU);
+    CHECK(cpu.host() == silt::CPU);
+    CHECK(gpu.host() == silt::GPU);
+    CHECK(cpu.data() == nullptr);
+    CHECK(gpu.data() == nullptr);
+  }
+
 }
 
 TEST_SUITE("tensor (polymorphic wrapper)") {

@@ -83,12 +83,32 @@ EXPORT_SHARED index_t index_polygon(const silt::shape shape, const tensor_t<silt
 template<typename T>
 void indexed_set(tensor_t<T> lhs, const T rhs, const index_t ind);
 
+//! lhs[i] += rhs, for i in ind.
+template<typename T>
+void indexed_add(tensor_t<T> lhs, const T rhs, const index_t ind);
+
 //! lhs[i] += rhs[i], for i in ind.
 template<typename T>
 void indexed_add(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind);
 
+//! lhs[i] *= rhs, for i in ind.
+template<typename T>
+void indexed_multiply(tensor_t<T> lhs, const T rhs, const index_t ind);
+
 //! lhs[i] *= rhs[i], for i in ind.
 template<typename T>
 void indexed_multiply(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind);
+
+//! lhs[i] /= rhs, for i in ind.
+template<typename T>
+void indexed_divide(tensor_t<T> lhs, const T rhs, const index_t ind);
+
+//! lhs[i] /= rhs[i], for i in ind.
+template<typename T>
+void indexed_divide(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind);
+
+//! lhs[i] = mix(lhs[i], rhs[i], w), for i in ind.
+template<typename T>
+void indexed_mix(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind, const float w);
 
 } // namespace silt

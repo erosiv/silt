@@ -18,9 +18,23 @@ void indexed_set(tensor_t<T> lhs, const T rhs, const index_t ind) {
 }
 
 template<typename T>
+void indexed_add(tensor_t<T> lhs, const T rhs, const index_t ind) {
+  op::indexed_apply(lhs, ind, [rhs] GPU_ENABLE(const T a) {
+    return a + rhs;
+  });
+}
+
+template<typename T>
 void indexed_add(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind) {
   op::indexed_binop_apply(lhs, rhs, ind, [] GPU_ENABLE(const T a, const T b) {
     return a + b;
+  });
+}
+
+template<typename T>
+void indexed_multiply(tensor_t<T> lhs, const T rhs, const index_t ind) {
+  op::indexed_apply(lhs, ind, [rhs] GPU_ENABLE(const T a) {
+    return a * rhs;
   });
 }
 
@@ -31,17 +45,58 @@ void indexed_multiply(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind)
   });
 }
 
+template<typename T>
+void indexed_divide(tensor_t<T> lhs, const T rhs, const index_t ind) {
+  op::indexed_apply(lhs, ind, [rhs] GPU_ENABLE(const T a) {
+    return a / rhs;
+  });
+}
+
+template<typename T>
+void indexed_divide(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind) {
+  op::indexed_binop_apply(lhs, rhs, ind, [] GPU_ENABLE(const T a, const T b) {
+    return a / b;
+  });
+}
+
+template<typename T>
+void indexed_mix(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind, const float w) {
+  op::indexed_binop_apply(lhs, rhs, ind, [w] GPU_ENABLE(const T a, const T b) {
+    return (1.0f - w) * a + w * b;
+  });
+}
+
 template EXPORT_SHARED void silt::indexed_set<int>(silt::tensor_t<int> lhs, const int rhs, const index_t ind);
 template EXPORT_SHARED void silt::indexed_set<float>(silt::tensor_t<float> lhs, const float rhs, const index_t ind);
 template EXPORT_SHARED void silt::indexed_set<double>(silt::tensor_t<double> lhs, const double rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_add<int>(silt::tensor_t<int> lhs, const int rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_add<float>(silt::tensor_t<float> lhs, const float rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_add<double>(silt::tensor_t<double> lhs, const double rhs, const index_t ind);
 
 template EXPORT_SHARED void silt::indexed_add<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs, const index_t ind);
 template EXPORT_SHARED void silt::indexed_add<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs, const index_t ind);
 template EXPORT_SHARED void silt::indexed_add<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs, const index_t ind);
 
+template EXPORT_SHARED void silt::indexed_multiply<int>(silt::tensor_t<int> lhs, const int rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_multiply<float>(silt::tensor_t<float> lhs, const float rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_multiply<double>(silt::tensor_t<double> lhs, const double rhs, const index_t ind);
+
 template EXPORT_SHARED void silt::indexed_multiply<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs, const index_t ind);
 template EXPORT_SHARED void silt::indexed_multiply<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs, const index_t ind);
 template EXPORT_SHARED void silt::indexed_multiply<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_divide<int>(silt::tensor_t<int> lhs, const int rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_divide<float>(silt::tensor_t<float> lhs, const float rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_divide<double>(silt::tensor_t<double> lhs, const double rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_divide<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_divide<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_divide<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_mix<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs, const index_t ind, const float w);
+template EXPORT_SHARED void silt::indexed_mix<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs, const index_t ind, const float w);
+template EXPORT_SHARED void silt::indexed_mix<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs, const index_t ind, const float w);
 
 //
 // Generic Compaction: Predicate -> Index Set
