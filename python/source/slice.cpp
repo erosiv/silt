@@ -32,6 +32,7 @@ void bind_slice(nb::module_& module) {
   slice.def_prop_ro("extent", &silt::slice::extent);
 
   slice.def("reset", &silt::slice::reset);
+  slice.def("index", &silt::slice::index);
   slice.def("transform", &silt::slice::transform);
 
   slice.def("__repr__", [](const silt::slice& slice) -> std::string {
