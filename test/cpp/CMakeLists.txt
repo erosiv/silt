@@ -56,12 +56,14 @@ target_link_libraries(silt_test_cpp PRIVATE silt::silt doctest::doctest)
 # Copy every DLL silt_test_cpp actually depends on next to it after each
 # build; TARGET_RUNTIME_DLLS resolves transitively and is a no-op
 # (empty list) on platforms that don't need it.
+if(MSVC)
 add_custom_command(TARGET silt_test_cpp POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "$<TARGET_RUNTIME_DLLS:silt_test_cpp>"
     "$<TARGET_FILE_DIR:silt_test_cpp>"
   COMMAND_EXPAND_LISTS
 )
+endif()
 
 include(CTest)
 include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
