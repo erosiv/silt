@@ -10,7 +10,6 @@ namespace nb = nanobind;
 #include <silt/core/types.hpp>
 #include <silt/core/view.hpp>
 #include <silt/op/common.hpp>
-#include <silt/op/normal.hpp>
 
 #include "util.hpp"
 
@@ -139,6 +138,44 @@ void bind_op(nb::module_& module) {
     });
   });
 
+  module.def("minimum_", [](silt::tensor& lhs, const silt::tensor& rhs) {
+    assert_match(lhs, rhs);
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::minimum<S>(lhs.as<S>(), rhs.as<S>());
+    });
+  });
+
+  module.def("minimum_", [](silt::tensor& lhs, const nb::object rhs) {
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::minimum<S>(lhs.as<S>(), nb::cast<S>(rhs));
+    });
+  });
+
+  module.def("minimum_", [](silt::view& lhs, const nb::object rhs) {
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::minimum<S>(lhs.as<S>(), nb::cast<S>(rhs));
+    });
+  });
+
+  module.def("maximum_", [](silt::tensor& lhs, const silt::tensor& rhs) {
+    assert_match(lhs, rhs);
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::maximum<S>(lhs.as<S>(), rhs.as<S>());
+    });
+  });
+
+  module.def("maximum_", [](silt::tensor& lhs, const nb::object rhs) {
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::maximum<S>(lhs.as<S>(), nb::cast<S>(rhs));
+    });
+  });
+
+  module.def("maximum_", [](silt::view& lhs, const nb::object rhs) {
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::maximum<S>(lhs.as<S>(), nb::cast<S>(rhs));
+    });
+  });
+
   module.def("cast", [](const silt::tensor& tensor, const silt::dtype type) {
     if (tensor.type() == type) {
       return nb::cast(tensor);
@@ -165,68 +202,6 @@ void bind_op(nb::module_& module) {
     return silt::select(tensor.type(), [&tensor]<std::floating_point S>() -> nb::object {
       return nb::cast(silt::max(tensor.as<S>()));
     });
-  });
-
-  //
-  // Generic Buffer Functions
-  //
-
-  module.def("resize", [](const silt::tensor& rhs, const silt::shape shape) {
-    return silt::select(rhs.type(), [&rhs, shape]<silt::primitive S>() -> silt::tensor {
-      return silt::tensor(silt::resize<S>(rhs.as<S>(), shape));
-    });
-  });
-
-  // resample only supports float today (see uncommon.cu) and is a
-  // candidate for future deprecation.
-  module.def("resample", [](silt::tensor& target, const silt::tensor& source, const silt::vec3 t_scale, const silt::vec3 s_scale, const silt::vec2 pdiff) {
-    silt::detail::require_type(target, silt::FLOAT32);
-    silt::detail::require_type(source, silt::FLOAT32);
-    silt::select(target.type(), [&]<std::same_as<float> S>() {
-      silt::resample<S>(target.as<S>(), source.as<S>(), t_scale, s_scale, pdiff);
-    });
-  });
-
-  //
-  // Normal Map ?
-  //
-
-  module.def("normal", [](const silt::tensor& tensor, const silt::vec3 scale) {
-    if (tensor.host() != silt::CPU)
-      throw silt::error::mismatch_host(silt::CPU, tensor.host());
-
-    return silt::select(tensor.type(), [&]<std::floating_point T>() {
-      return silt::op::normal(tensor.as<T>(), scale);
-    });
-  });
-
-  //
-  // RNG Operations
-  //
-
-  module.def("seed", [](silt::tensor& tensor, const size_t seed, const size_t offset) {
-    silt::detail::require_type(tensor, silt::RNG);
-    return silt::seed(tensor.as<silt::rng>(), seed, offset);
-  });
-
-  module.def("sample_uniform", [](silt::tensor& tensor) {
-    silt::detail::require_type(tensor, silt::RNG);
-    return silt::tensor(silt::sample_uniform(tensor.as<silt::rng>()));
-  });
-
-  module.def("sample_uniform", [](silt::tensor& tensor, const float min, const float max) {
-    silt::detail::require_type(tensor, silt::RNG);
-    return silt::tensor(silt::sample_uniform(tensor.as<silt::rng>(), min, max));
-  });
-
-  module.def("sample_normal", [](silt::tensor& tensor) {
-    silt::detail::require_type(tensor, silt::RNG);
-    return silt::tensor(silt::sample_normal(tensor.as<silt::rng>()));
-  });
-
-  module.def("sample_normal", [](silt::tensor& tensor, const float mean, const float std) {
-    silt::detail::require_type(tensor, silt::RNG);
-    return silt::tensor(silt::sample_normal(tensor.as<silt::rng>(), mean, std));
   });
 
   //

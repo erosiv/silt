@@ -64,6 +64,10 @@ void bind_indexed(nb::module_& module) {
     });
   });
 
+  module.def("index_slice", [](const silt::slice& s) {
+    return silt::tensor(silt::index_slice(s));
+  });
+
   //
   // Indexed Operations
   //

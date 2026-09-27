@@ -165,6 +165,23 @@ index_t index_polygon(const silt::shape shape, const tensor_t<silt::vec2>& verti
   return make_index_set(shape, polygon_predicate{shape, vertices.data(), (int)vertices.elem()});
 }
 
+namespace detail {
+
+__global__ void index_slice_kernel(index_t out, const silt::slice s) {
+  const int64_t n = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (n < out.elem())
+    out[n] = s.transform(n);
+}
+
+} // namespace detail
+
+index_t index_slice(const silt::slice& s) {
+  index_t result(silt::shape((int)s.elem()), silt::host_t::GPU);
+  detail::index_slice_kernel<<<block(result.elem(), 512), 512>>>(result, s);
+  gpuErrchk(cudaGetLastError());
+  return result;
+}
+
 template<typename T>
 index_t index_range(const tensor_t<T>& data, const T lo, const T hi) {
   if (data.host() != silt::host_t::GPU)

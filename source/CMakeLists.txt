@@ -37,8 +37,8 @@ target_sources(${TARGET_NAME} PRIVATE
   silt/core/memory.cu
   silt/op/common_unary.cu
   silt/op/common_binary.cu
-  silt/op/uncommon.cu
   silt/op/indexed.cu
+  silt/op/rng.cu
 )
 
 if(NOT TARGET glm::glm)

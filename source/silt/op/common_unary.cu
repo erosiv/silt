@@ -2,7 +2,6 @@
 #include <silt/core/error.hpp>
 #include <silt/core/operation.hpp>
 #include <silt/op/common.hpp>
-#include <silt/op/gather.hpp>
 
 namespace silt {
 
@@ -129,5 +128,53 @@ void clamp(silt::view_t<T> lhs, const T min, const T max) {
 template EXPORT_SHARED void silt::clamp<int>(silt::view_t<int> buffer, const int min, const int max);
 template EXPORT_SHARED void silt::clamp<float>(silt::view_t<float> buffer, const float min, const float max);
 template EXPORT_SHARED void silt::clamp<double>(silt::view_t<double> buffer, const double min, const double max);
+
+// Minimum
+
+template<typename T>
+void minimum(tensor_t<T> lhs, const T value) {
+  op::uniop_inplace(lhs, [value] GPU_ENABLE(const T a) {
+    return glm::min(a, value);
+  });
+}
+
+template EXPORT_SHARED void silt::minimum<int>(silt::tensor_t<int> lhs, const int value);
+template EXPORT_SHARED void silt::minimum<float>(silt::tensor_t<float> lhs, const float value);
+template EXPORT_SHARED void silt::minimum<double>(silt::tensor_t<double> lhs, const double value);
+
+template<typename T>
+void minimum(view_t<T> lhs, const T value) {
+  op::uniop_inplace(lhs, [value] GPU_ENABLE(const T a) {
+    return glm::min(a, value);
+  });
+}
+
+template EXPORT_SHARED void silt::minimum<int>(silt::view_t<int> lhs, const int value);
+template EXPORT_SHARED void silt::minimum<float>(silt::view_t<float> lhs, const float value);
+template EXPORT_SHARED void silt::minimum<double>(silt::view_t<double> lhs, const double value);
+
+// Maximum
+
+template<typename T>
+void maximum(tensor_t<T> lhs, const T value) {
+  op::uniop_inplace(lhs, [value] GPU_ENABLE(const T a) {
+    return glm::max(a, value);
+  });
+}
+
+template EXPORT_SHARED void silt::maximum<int>(silt::tensor_t<int> lhs, const int value);
+template EXPORT_SHARED void silt::maximum<float>(silt::tensor_t<float> lhs, const float value);
+template EXPORT_SHARED void silt::maximum<double>(silt::tensor_t<double> lhs, const double value);
+
+template<typename T>
+void maximum(view_t<T> lhs, const T value) {
+  op::uniop_inplace(lhs, [value] GPU_ENABLE(const T a) {
+    return glm::max(a, value);
+  });
+}
+
+template EXPORT_SHARED void silt::maximum<int>(silt::view_t<int> lhs, const int value);
+template EXPORT_SHARED void silt::maximum<float>(silt::view_t<float> lhs, const float value);
+template EXPORT_SHARED void silt::maximum<double>(silt::view_t<double> lhs, const double value);
 
 } // end of namespace silt

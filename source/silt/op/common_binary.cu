@@ -2,7 +2,6 @@
 #include <silt/core/error.hpp>
 #include <silt/core/operation.hpp>
 #include <silt/op/common.hpp>
-#include <silt/op/gather.hpp>
 
 namespace silt {
 
@@ -77,5 +76,31 @@ void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w) {
 template EXPORT_SHARED void silt::mix<int>(silt::tensor_t<int> buffer, const silt::tensor_t<int> rhs, const float w);
 template EXPORT_SHARED void silt::mix<float>(silt::tensor_t<float> buffer, const silt::tensor_t<float> rhs, const float w);
 template EXPORT_SHARED void silt::mix<double>(silt::tensor_t<double> buffer, const silt::tensor_t<double> rhs, const float w);
+
+// Minimum
+
+template<typename T>
+void minimum(tensor_t<T> lhs, const tensor_t<T> rhs) {
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE(const T a, const T b) {
+    return glm::min(a, b);
+  });
+}
+
+template EXPORT_SHARED void silt::minimum<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs);
+template EXPORT_SHARED void silt::minimum<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs);
+template EXPORT_SHARED void silt::minimum<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs);
+
+// Maximum
+
+template<typename T>
+void maximum(tensor_t<T> lhs, const tensor_t<T> rhs) {
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE(const T a, const T b) {
+    return glm::max(a, b);
+  });
+}
+
+template EXPORT_SHARED void silt::maximum<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs);
+template EXPORT_SHARED void silt::maximum<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs);
+template EXPORT_SHARED void silt::maximum<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs);
 
 } // end of namespace silt

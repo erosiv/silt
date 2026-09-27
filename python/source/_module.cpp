@@ -12,6 +12,7 @@ void bind_tensor(nb::module_& module);
 void bind_view(nb::module_& module);
 void bind_op(nb::module_& module);
 void bind_indexed(nb::module_& module);
+void bind_rng(nb::module_& module);
 void bind_util(nb::module_& module);
 
 // Module Main Function
@@ -28,5 +29,6 @@ NB_MODULE(MODULE_NAME, module) {
   bind_view(module);
   bind_op(module);
   bind_indexed(module);
+  bind_rng(module);
   bind_util(module);
 }

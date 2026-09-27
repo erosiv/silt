@@ -2,6 +2,7 @@
 
 #include <silt/silt.hpp>
 #include <silt/core/shape.hpp>
+#include <silt/core/slice.hpp>
 #include <silt/core/tensor.hpp>
 #include <silt/core/types.hpp>
 
@@ -77,6 +78,11 @@ struct polygon_predicate {
 EXPORT_SHARED index_t index_radius(const silt::shape shape, const silt::vec2 center, const float radius);
 EXPORT_SHARED index_t index_box(const silt::shape shape, const silt::vec2 lo, const silt::vec2 hi);
 EXPORT_SHARED index_t index_polygon(const silt::shape shape, const tensor_t<silt::vec2>& vertices);
+
+//! Flat indices of every cell a slice (offset/stride/extent per dimension)
+//! visits, in slice order. Enumeration, not compaction -- every candidate
+//! is included, so this needs no predicate.
+EXPORT_SHARED index_t index_slice(const silt::slice& slice);
 
 //! +infinity for T (numeric_limits::max() for an integral T, which has no infinity).
 template<typename T>

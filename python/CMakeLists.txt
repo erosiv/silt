@@ -28,6 +28,7 @@ nanobind_add_module(${MODULE_NAME}
   source/op.cpp
   source/util.cpp
   source/indexed.cpp
+  source/rng.cpp
 )
 
 target_compile_definitions(${MODULE_NAME} PRIVATE

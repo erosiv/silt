@@ -41,6 +41,18 @@ void clamp(tensor_t<T> lhs, const T min, const T max);
 template<typename T>
 void clamp(view_t<T> lhs, const T min, const T max);
 
+template<typename T>
+void minimum(tensor_t<T> lhs, const T value);
+
+template<typename T>
+void minimum(view_t<T> lhs, const T value);
+
+template<typename T>
+void maximum(tensor_t<T> lhs, const T value);
+
+template<typename T>
+void maximum(view_t<T> lhs, const T value);
+
 // Binary Operations
 
 template<typename T>
@@ -58,36 +70,11 @@ void divide(tensor_t<T> lhs, const tensor_t<T> rhs);
 template<typename T>
 void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w);
 
-//
-// RNG Functions
-//
-
-//! Seed a Random Number Generator Tensor
-EXPORT_SHARED void seed(tensor_t<rng>& buf, const size_t seed, const size_t offset);
-
-//! Generate Uniform Samples from a Random Number Generator Tensor
-EXPORT_SHARED tensor_t<float> sample_uniform(tensor_t<rng>& buf);
-EXPORT_SHARED tensor_t<float> sample_uniform(tensor_t<rng>& buf, const float min, const float max);
-
-//! Generate Normal Distributed Samples from a Random Number Generator Tensor
-EXPORT_SHARED tensor_t<float> sample_normal(tensor_t<rng>& buf);
-EXPORT_SHARED tensor_t<float> sample_normal(tensor_t<rng>& buf, const float mean, const float std);
-
-//
-// Advanced Operations
-//
+template<typename T>
+void minimum(tensor_t<T> lhs, const tensor_t<T> rhs);
 
 template<typename T>
-tensor_t<T> resize(const tensor_t<T> rhs, const shape shape);
-
-template<typename T>
-void resample(
-    tensor_t<T> target,       //!< Target Buffer
-    const tensor_t<T> source, //!< Source Buffer
-    const vec3 t_scale,       //!< Target World-Space Scale (incl. z)
-    const vec3 s_scale,       //!< Source World-Space Scale (incl. z)
-    const vec2 posdiff        //!< World-Space Positional Difference
-);
+void maximum(tensor_t<T> lhs, const tensor_t<T> rhs);
 
 template<typename To, typename From>
 silt::tensor_t<To> cast(const silt::tensor_t<From>& tensor) {
@@ -99,28 +86,6 @@ silt::tensor_t<To> cast(const silt::tensor_t<From>& tensor) {
     tensor_to[i] = (To)tensor[i];
   }
   return tensor_to;
-}
-
-//
-// Legacy Functions
-//
-// Set Buffer from Value and Buffer
-//
-
-template<typename T>
-void set_impl(silt::tensor_t<T> tensor, const T val, size_t start, size_t stop, size_t step);
-
-template<typename T>
-void set(silt::tensor_t<T> tensor, const T val, size_t start, size_t stop, size_t step) {
-
-  if (tensor.host() == silt::host_t::CPU) {
-    for (int i = start; i < stop; i += step)
-      tensor[i] = val;
-  }
-
-  else if (tensor.host() == silt::host_t::GPU) {
-    set_impl(tensor, val, start, stop, step);
-  }
 }
 
 //

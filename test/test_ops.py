@@ -1,7 +1,8 @@
 """Tests for the free-function tensor operations in the `silt` module
-(set_/add_/multiply_/divide_/mix_/clamp_, their out-of-place counterparts
-add/multiply/divide/mix/clamp, tensor.copy_to/cast/min/max) and the indexed
-operations (indexed_set/index_radius).
+(set_/add_/multiply_/divide_/mix_/clamp_/minimum_/maximum_, their
+out-of-place counterparts add/multiply/divide/mix/clamp/minimum/maximum,
+tensor.copy_to/cast/min/max) and the indexed operations
+(indexed_set/index_radius).
 
 All tensors here are CPU by default (silt.tensor's two-argument
 constructor defaults to CPU), so most of this file needs no GPU.
@@ -69,6 +70,39 @@ def test_clamp_rejects_non_float32():
         silt.clamp_(t, 0.0, 1.0)
 
 
+def test_minimum_scalar():
+    t = silt.tensor.from_numpy(np.array([1.0, 5.0, 3.0], dtype=np.float32))
+    silt.minimum_(t, 2.0)
+    np.testing.assert_array_equal(t.numpy(), [1.0, 2.0, 2.0])
+
+
+def test_maximum_scalar():
+    t = silt.tensor.from_numpy(np.array([1.0, 5.0, 3.0], dtype=np.float32))
+    silt.maximum_(t, 2.0)
+    np.testing.assert_array_equal(t.numpy(), [2.0, 5.0, 3.0])
+
+
+def test_minimum_tensor_tensor():
+    a = silt.tensor.from_numpy(np.array([1.0, 5.0, 3.0], dtype=np.float32))
+    b = silt.tensor.from_numpy(np.array([2.0, 2.0, 2.0], dtype=np.float32))
+    silt.minimum_(a, b)
+    np.testing.assert_array_equal(a.numpy(), [1.0, 2.0, 2.0])
+
+
+def test_maximum_tensor_tensor():
+    a = silt.tensor.from_numpy(np.array([1.0, 5.0, 3.0], dtype=np.float32))
+    b = silt.tensor.from_numpy(np.array([2.0, 2.0, 2.0], dtype=np.float32))
+    silt.maximum_(a, b)
+    np.testing.assert_array_equal(a.numpy(), [2.0, 5.0, 3.0])
+
+
+def test_minimum_maximum_on_int32():
+    t = silt.tensor.from_numpy(np.array([1, 5, 3], dtype=np.int32))
+    silt.minimum_(t, 3)
+    silt.maximum_(t, 2)
+    np.testing.assert_array_equal(t.numpy(), [2, 3, 3])
+
+
 # -- out-of-place counterparts (add/multiply/divide/mix/clamp) -------------
 
 
@@ -107,6 +141,20 @@ def test_clamp_out_of_place_leaves_input_unmutated():
     result = silt.clamp(t, 0.0, 1.0)
     np.testing.assert_array_equal(t.numpy(), [-5.0, 0.5, 5.0])
     np.testing.assert_array_equal(result.numpy(), [0.0, 0.5, 1.0])
+
+
+def test_minimum_out_of_place_leaves_input_unmutated():
+    t = silt.tensor.from_numpy(np.array([1.0, 5.0, 3.0], dtype=np.float32))
+    result = silt.minimum(t, 2.0)
+    np.testing.assert_array_equal(t.numpy(), [1.0, 5.0, 3.0])
+    np.testing.assert_array_equal(result.numpy(), [1.0, 2.0, 2.0])
+
+
+def test_maximum_out_of_place_leaves_input_unmutated():
+    t = silt.tensor.from_numpy(np.array([1.0, 5.0, 3.0], dtype=np.float32))
+    result = silt.maximum(t, 2.0)
+    np.testing.assert_array_equal(t.numpy(), [1.0, 5.0, 3.0])
+    np.testing.assert_array_equal(result.numpy(), [2.0, 5.0, 3.0])
 
 
 # -- min / max -----------------------------------------------------------
@@ -405,3 +453,34 @@ def test_index_lesser_on_int32_uses_int_min_not_float_infinity():
     idx = silt.index_lesser(data, 2)
     got = sorted(idx.to_cpu().numpy().tolist())
     assert got == [0, 1]
+
+
+# -- index_slice (GPU only) ------------------------------------------------
+
+
+@pytest.mark.gpu
+def test_index_slice_matches_slice_transform():
+    sl = silt.slice(4, 4)
+    sl.index(0, 1, 2, 2)  # dim 0: offset=1, stride=2, extent=2 -> rows 1, 3
+    idx = silt.index_slice(sl)
+    got = idx.to_cpu().numpy().tolist()
+    expected = [sl.transform(n) for n in range(sl.elem)]
+    assert got == expected
+
+
+@pytest.mark.gpu
+def test_index_slice_feeds_indexed_set():
+    s = silt.shape(4, 4)
+    sl = silt.slice(4, 4)
+    sl.index(0, 1, 2, 2)  # rows 1 and 3 only
+    idx = silt.index_slice(sl)
+
+    t = silt.tensor(silt.float32, s, silt.gpu)
+    silt.set_(t, 0.0)
+    silt.indexed_set(t, 1.0, idx)
+    data = t.to_cpu().numpy().reshape(4, 4)
+
+    expected = np.zeros((4, 4), dtype=np.float32)
+    expected[1, :] = 1.0
+    expected[3, :] = 1.0
+    np.testing.assert_array_equal(data, expected)

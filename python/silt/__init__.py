@@ -142,6 +142,18 @@ def clamp(lhs, min, max):
     return result
 
 
+def minimum(lhs, rhs):
+    result = lhs.copy_to()
+    minimum_(result, rhs)
+    return result
+
+
+def maximum(lhs, rhs):
+    result = lhs.copy_to()
+    maximum_(result, rhs)
+    return result
+
+
 # The version lives in the root VERSION file, which is not shipped in the wheel.
 # At runtime we read it back from the installed distribution metadata, which
 # scikit-build-core populates from that same file at build time.
@@ -160,6 +172,6 @@ __all__ = (
     + [
         "__version__",
         "zeros", "ones", "full", "empty", "like", "arange", "linspace", "rand",
-        "add", "multiply", "divide", "mix", "clamp",
+        "add", "multiply", "divide", "mix", "clamp", "minimum", "maximum",
     ]
 )
