@@ -17,18 +17,21 @@ namespace detail {
 
 //
 // CPU Loops -- gather lhs[ind[k]] directly, no scratch buffer.
+//  `C` is any container with a flat subscript (tensor_t, view_t).
 //
 
-template<typename T>
-T indexed_sum_cpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+typename C::val_t indexed_sum_cpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   T acc = T(0);
   for (int64_t k = 0; k < (int64_t)ind.elem(); ++k)
     acc += lhs[ind[k]];
   return acc;
 }
 
-template<typename T>
-T indexed_min_cpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+typename C::val_t indexed_min_cpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   T val = std::numeric_limits<T>::max();
   for (int64_t k = 0; k < (int64_t)ind.elem(); ++k) {
     const T v = lhs[ind[k]];
@@ -40,8 +43,9 @@ T indexed_min_cpu(const tensor_t<T> lhs, const index_t ind) {
   return val;
 }
 
-template<typename T>
-T indexed_max_cpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+typename C::val_t indexed_max_cpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   T val = std::numeric_limits<T>::lowest();
   for (int64_t k = 0; k < (int64_t)ind.elem(); ++k) {
     const T v = lhs[ind[k]];
@@ -53,8 +57,9 @@ T indexed_max_cpu(const tensor_t<T> lhs, const index_t ind) {
   return val;
 }
 
-template<typename T>
-int64_t indexed_argmin_cpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+int64_t indexed_argmin_cpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   int64_t best = ind[0];
   T best_val = lhs[best];
   for (int64_t k = 1; k < (int64_t)ind.elem(); ++k) {
@@ -68,8 +73,9 @@ int64_t indexed_argmin_cpu(const tensor_t<T> lhs, const index_t ind) {
   return best;
 }
 
-template<typename T>
-int64_t indexed_argmax_cpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+int64_t indexed_argmax_cpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   int64_t best = ind[0];
   T best_val = lhs[best];
   for (int64_t k = 1; k < (int64_t)ind.elem(); ++k) {
@@ -105,8 +111,28 @@ O reduce_to_host(F pass) {
   return result;
 }
 
+//! Gathers a view's element at logical index i. Holds the raw pointer and
+//! slice rather than the view, so it stays a plain value type on the device.
 template<typename T>
-using gather_t = thrust::permutation_iterator<const T*, const int64_t*>;
+struct view_gather_op {
+  const T* data;
+  silt::slice slice;
+  GPU_ENABLE T operator()(const int64_t i) const {
+    return data[slice.transform(i)];
+  }
+};
+
+//! Lazy gather of lhs[ind[k]]: a direct permutation for a tensor, the
+//! slice transform for a view.
+template<typename T>
+auto gather_iter(const tensor_t<T>& lhs, const index_t& ind) {
+  return thrust::permutation_iterator<const T*, const int64_t*>(lhs.data(), ind.data());
+}
+
+template<typename T>
+auto gather_iter(const view_t<T>& lhs, const index_t& ind) {
+  return thrust::make_transform_iterator(ind.data(), view_gather_op<T>{lhs.data(), lhs.slice()});
+}
 
 //! Maps NaN to +infinity (numeric_limits::max() for int, which has none) so
 //! a plain cub::DeviceReduce::Min never picks it. Preprocessing, rather
@@ -134,10 +160,11 @@ struct nan_to_lowest_op {
   }
 };
 
-template<typename T>
-T indexed_sum_gpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+typename C::val_t indexed_sum_gpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   const int64_t n = (int64_t)ind.elem();
-  const gather_t<T> gather(lhs.data(), ind.data());
+  const auto gather = gather_iter(lhs, ind);
   return reduce_to_host<T>([gather, n](void* d_temp, size_t& temp_bytes, T* d_out) {
     return cub::DeviceReduce::Sum(d_temp, temp_bytes, gather, d_out, n);
   });
@@ -148,10 +175,11 @@ T indexed_sum_gpu(const tensor_t<T> lhs, const index_t ind) {
 // indexed_sum_gpu's proven pattern of handing cub a single, un-nested
 // iterator rather than a transform_iterator wrapped around a
 // permutation_iterator.
-template<typename T>
-T indexed_min_gpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+typename C::val_t indexed_min_gpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   const int64_t n = (int64_t)ind.elem();
-  const gather_t<T> gather(lhs.data(), ind.data());
+  const auto gather = gather_iter(lhs, ind);
   T* scratch = (T*)silt::device_alloc(sizeof(T) * (size_t)n);
   thrust::transform(thrust::device, gather, gather + n, scratch, nan_to_max_op<T>{});
   const T result = reduce_to_host<T>([scratch, n](void* d_temp, size_t& temp_bytes, T* d_out) {
@@ -161,10 +189,11 @@ T indexed_min_gpu(const tensor_t<T> lhs, const index_t ind) {
   return result;
 }
 
-template<typename T>
-T indexed_max_gpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+typename C::val_t indexed_max_gpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   const int64_t n = (int64_t)ind.elem();
-  const gather_t<T> gather(lhs.data(), ind.data());
+  const auto gather = gather_iter(lhs, ind);
   T* scratch = (T*)silt::device_alloc(sizeof(T) * (size_t)n);
   thrust::transform(thrust::device, gather, gather + n, scratch, nan_to_lowest_op<T>{});
   const T result = reduce_to_host<T>([scratch, n](void* d_temp, size_t& temp_bytes, T* d_out) {
@@ -181,10 +210,11 @@ inline int64_t index_at(const index_t ind, const int64_t key) {
   return value;
 }
 
-template<typename T>
-int64_t indexed_argmin_gpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+int64_t indexed_argmin_gpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   const int n = (int)ind.elem(); // cub::DeviceReduce::ArgMin's num_items is `int`
-  const gather_t<T> gather(lhs.data(), ind.data());
+  const auto gather = gather_iter(lhs, ind);
   using KV = cub::KeyValuePair<int, T>;
   const KV result = reduce_to_host<KV>([gather, n](void* d_temp, size_t& temp_bytes, KV* d_out) {
     return cub::DeviceReduce::ArgMin(d_temp, temp_bytes, gather, d_out, n);
@@ -193,10 +223,11 @@ int64_t indexed_argmin_gpu(const tensor_t<T> lhs, const index_t ind) {
   return index_at(ind, (int64_t)result.key);
 }
 
-template<typename T>
-int64_t indexed_argmax_gpu(const tensor_t<T> lhs, const index_t ind) {
+template<typename C>
+int64_t indexed_argmax_gpu(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
   const int n = (int)ind.elem();
-  const gather_t<T> gather(lhs.data(), ind.data());
+  const auto gather = gather_iter(lhs, ind);
   using KV = cub::KeyValuePair<int, T>;
   const KV result = reduce_to_host<KV>([gather, n](void* d_temp, size_t& temp_bytes, KV* d_out) {
     return cub::DeviceReduce::ArgMax(d_temp, temp_bytes, gather, d_out, n);
@@ -204,61 +235,118 @@ int64_t indexed_argmax_gpu(const tensor_t<T> lhs, const index_t ind) {
   return index_at(ind, (int64_t)result.key);
 }
 
+//
+// Dispatch (CPU / GPU), shared by the tensor and view overloads
+//
+
+//! Reductions with no identity (min, max, arg*, integer mean) are undefined
+//! over an empty index set.
+inline void require_nonempty(const index_t ind) {
+  if (ind.elem() == 0)
+    throw std::invalid_argument("reduction over an empty index set is undefined");
+}
+
+template<typename C>
+typename C::val_t indexed_sum_dispatch(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
+  if (lhs.host() != ind.host())
+    throw silt::error::mismatch_host(lhs.host(), ind.host());
+  if (ind.elem() == 0)
+    return T(0);
+  if (lhs.host() == silt::host_t::CPU)
+    return indexed_sum_cpu(lhs, ind);
+  return indexed_sum_gpu(lhs, ind);
+}
+
+template<typename C>
+typename C::val_t indexed_mean_dispatch(const C lhs, const index_t ind) {
+  using T = typename C::val_t;
+  if (ind.elem() == 0) {
+    if constexpr (std::is_floating_point_v<T>) {
+      if (lhs.host() != ind.host())
+        throw silt::error::mismatch_host(lhs.host(), ind.host());
+      return std::numeric_limits<T>::quiet_NaN();
+    }
+    require_nonempty(ind);
+  }
+  return indexed_sum_dispatch(lhs, ind) / (T)ind.elem();
+}
+
+template<typename C>
+typename C::val_t indexed_min_dispatch(const C lhs, const index_t ind) {
+  if (lhs.host() != ind.host())
+    throw silt::error::mismatch_host(lhs.host(), ind.host());
+  require_nonempty(ind);
+  if (lhs.host() == silt::host_t::CPU)
+    return indexed_min_cpu(lhs, ind);
+  return indexed_min_gpu(lhs, ind);
+}
+
+template<typename C>
+typename C::val_t indexed_max_dispatch(const C lhs, const index_t ind) {
+  if (lhs.host() != ind.host())
+    throw silt::error::mismatch_host(lhs.host(), ind.host());
+  require_nonempty(ind);
+  if (lhs.host() == silt::host_t::CPU)
+    return indexed_max_cpu(lhs, ind);
+  return indexed_max_gpu(lhs, ind);
+}
+
+template<typename C>
+int64_t indexed_argmin_dispatch(const C lhs, const index_t ind) {
+  if (lhs.host() != ind.host())
+    throw silt::error::mismatch_host(lhs.host(), ind.host());
+  require_nonempty(ind);
+  if (lhs.host() == silt::host_t::CPU)
+    return indexed_argmin_cpu(lhs, ind);
+  return indexed_argmin_gpu(lhs, ind);
+}
+
+template<typename C>
+int64_t indexed_argmax_dispatch(const C lhs, const index_t ind) {
+  if (lhs.host() != ind.host())
+    throw silt::error::mismatch_host(lhs.host(), ind.host());
+  require_nonempty(ind);
+  if (lhs.host() == silt::host_t::CPU)
+    return indexed_argmax_cpu(lhs, ind);
+  return indexed_argmax_gpu(lhs, ind);
+}
+
 } // namespace detail
 
 //
-// Public Dispatch (CPU / GPU)
+// Public Entry Points
 //
 
 template<typename T>
-T indexed_sum(const tensor_t<T> lhs, const index_t ind) {
-  if (lhs.host() != ind.host())
-    throw silt::error::mismatch_host(lhs.host(), ind.host());
-  if (lhs.host() == silt::host_t::CPU)
-    return detail::indexed_sum_cpu(lhs, ind);
-  return detail::indexed_sum_gpu(lhs, ind);
-}
+T indexed_sum(const tensor_t<T> lhs, const index_t ind) { return detail::indexed_sum_dispatch(lhs, ind); }
+template<typename T>
+T indexed_sum(const view_t<T> lhs, const index_t ind) { return detail::indexed_sum_dispatch(lhs, ind); }
 
 template<typename T>
-T indexed_mean(const tensor_t<T> lhs, const index_t ind) {
-  return indexed_sum<T>(lhs, ind) / (T)ind.elem();
-}
+T indexed_mean(const tensor_t<T> lhs, const index_t ind) { return detail::indexed_mean_dispatch(lhs, ind); }
+template<typename T>
+T indexed_mean(const view_t<T> lhs, const index_t ind) { return detail::indexed_mean_dispatch(lhs, ind); }
 
 template<typename T>
-T indexed_min(const tensor_t<T> lhs, const index_t ind) {
-  if (lhs.host() != ind.host())
-    throw silt::error::mismatch_host(lhs.host(), ind.host());
-  if (lhs.host() == silt::host_t::CPU)
-    return detail::indexed_min_cpu(lhs, ind);
-  return detail::indexed_min_gpu(lhs, ind);
-}
+T indexed_min(const tensor_t<T> lhs, const index_t ind) { return detail::indexed_min_dispatch(lhs, ind); }
+template<typename T>
+T indexed_min(const view_t<T> lhs, const index_t ind) { return detail::indexed_min_dispatch(lhs, ind); }
 
 template<typename T>
-T indexed_max(const tensor_t<T> lhs, const index_t ind) {
-  if (lhs.host() != ind.host())
-    throw silt::error::mismatch_host(lhs.host(), ind.host());
-  if (lhs.host() == silt::host_t::CPU)
-    return detail::indexed_max_cpu(lhs, ind);
-  return detail::indexed_max_gpu(lhs, ind);
-}
+T indexed_max(const tensor_t<T> lhs, const index_t ind) { return detail::indexed_max_dispatch(lhs, ind); }
+template<typename T>
+T indexed_max(const view_t<T> lhs, const index_t ind) { return detail::indexed_max_dispatch(lhs, ind); }
 
 template<typename T>
-int64_t indexed_argmin(const tensor_t<T> lhs, const index_t ind) {
-  if (lhs.host() != ind.host())
-    throw silt::error::mismatch_host(lhs.host(), ind.host());
-  if (lhs.host() == silt::host_t::CPU)
-    return detail::indexed_argmin_cpu(lhs, ind);
-  return detail::indexed_argmin_gpu(lhs, ind);
-}
+int64_t indexed_argmin(const tensor_t<T> lhs, const index_t ind) { return detail::indexed_argmin_dispatch(lhs, ind); }
+template<typename T>
+int64_t indexed_argmin(const view_t<T> lhs, const index_t ind) { return detail::indexed_argmin_dispatch(lhs, ind); }
 
 template<typename T>
-int64_t indexed_argmax(const tensor_t<T> lhs, const index_t ind) {
-  if (lhs.host() != ind.host())
-    throw silt::error::mismatch_host(lhs.host(), ind.host());
-  if (lhs.host() == silt::host_t::CPU)
-    return detail::indexed_argmax_cpu(lhs, ind);
-  return detail::indexed_argmax_gpu(lhs, ind);
-}
+int64_t indexed_argmax(const tensor_t<T> lhs, const index_t ind) { return detail::indexed_argmax_dispatch(lhs, ind); }
+template<typename T>
+int64_t indexed_argmax(const view_t<T> lhs, const index_t ind) { return detail::indexed_argmax_dispatch(lhs, ind); }
 
 template EXPORT_SHARED int silt::indexed_sum<int>(silt::tensor_t<int> lhs, const index_t ind);
 template EXPORT_SHARED float silt::indexed_sum<float>(silt::tensor_t<float> lhs, const index_t ind);
@@ -283,5 +371,31 @@ template EXPORT_SHARED int64_t silt::indexed_argmin<double>(silt::tensor_t<doubl
 template EXPORT_SHARED int64_t silt::indexed_argmax<int>(silt::tensor_t<int> lhs, const index_t ind);
 template EXPORT_SHARED int64_t silt::indexed_argmax<float>(silt::tensor_t<float> lhs, const index_t ind);
 template EXPORT_SHARED int64_t silt::indexed_argmax<double>(silt::tensor_t<double> lhs, const index_t ind);
+
+// View Overloads
+
+template EXPORT_SHARED int silt::indexed_sum<int>(silt::view_t<int> lhs, const index_t ind);
+template EXPORT_SHARED float silt::indexed_sum<float>(silt::view_t<float> lhs, const index_t ind);
+template EXPORT_SHARED double silt::indexed_sum<double>(silt::view_t<double> lhs, const index_t ind);
+
+template EXPORT_SHARED int silt::indexed_mean<int>(silt::view_t<int> lhs, const index_t ind);
+template EXPORT_SHARED float silt::indexed_mean<float>(silt::view_t<float> lhs, const index_t ind);
+template EXPORT_SHARED double silt::indexed_mean<double>(silt::view_t<double> lhs, const index_t ind);
+
+template EXPORT_SHARED int silt::indexed_min<int>(silt::view_t<int> lhs, const index_t ind);
+template EXPORT_SHARED float silt::indexed_min<float>(silt::view_t<float> lhs, const index_t ind);
+template EXPORT_SHARED double silt::indexed_min<double>(silt::view_t<double> lhs, const index_t ind);
+
+template EXPORT_SHARED int silt::indexed_max<int>(silt::view_t<int> lhs, const index_t ind);
+template EXPORT_SHARED float silt::indexed_max<float>(silt::view_t<float> lhs, const index_t ind);
+template EXPORT_SHARED double silt::indexed_max<double>(silt::view_t<double> lhs, const index_t ind);
+
+template EXPORT_SHARED int64_t silt::indexed_argmin<int>(silt::view_t<int> lhs, const index_t ind);
+template EXPORT_SHARED int64_t silt::indexed_argmin<float>(silt::view_t<float> lhs, const index_t ind);
+template EXPORT_SHARED int64_t silt::indexed_argmin<double>(silt::view_t<double> lhs, const index_t ind);
+
+template EXPORT_SHARED int64_t silt::indexed_argmax<int>(silt::view_t<int> lhs, const index_t ind);
+template EXPORT_SHARED int64_t silt::indexed_argmax<float>(silt::view_t<float> lhs, const index_t ind);
+template EXPORT_SHARED int64_t silt::indexed_argmax<double>(silt::view_t<double> lhs, const index_t ind);
 
 } // end of namespace silt

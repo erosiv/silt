@@ -740,3 +740,107 @@ def test_gather_scatter_reject_mismatches():
 
     with pytest.raises(Exception):  # dense src must have one element per index
         silt.scatter_(t, silt.zeros((idx.elem + 1,), silt.float32, silt.gpu), idx)
+
+
+# -- indexed operations and reductions on views (GPU only) -----------------
+
+
+def _image(seed=1):
+    return np.random.default_rng(seed).random((8, 8, 3), dtype=np.float32)
+
+
+@pytest.mark.gpu
+def test_indexed_set_through_channel_view_paints_one_channel():
+    data = _image()
+    t = _gpu_tensor(data)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    silt.indexed_set(t[:, :, 1], 5.0, idx)
+
+    expected = data.copy()
+    expected[:, :, 1][_radius_mask()] = 5.0
+    np.testing.assert_array_equal(t.to_cpu().numpy().reshape(8, 8, 3), expected)
+
+
+@pytest.mark.gpu
+def test_indexed_scalar_arithmetic_on_channel_view():
+    data = _image()
+    t = _gpu_tensor(data)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    silt.indexed_add_(t[:, :, 0], 1.0, idx)
+    silt.indexed_multiply_(t[:, :, 0], 2.0, idx)
+    silt.indexed_divide_(t[:, :, 0], 4.0, idx)
+
+    expected = data.copy()
+    mask = _radius_mask()
+    expected[:, :, 0][mask] = (data[:, :, 0][mask] + 1.0) * 2.0 / 4.0
+    np.testing.assert_allclose(t.to_cpu().numpy().reshape(8, 8, 3), expected, rtol=1e-6)
+
+
+@pytest.mark.gpu
+def test_indexed_binary_ops_on_views_read_rhs_at_the_same_logical_index():
+    data = _image()
+    t = _gpu_tensor(data)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    silt.indexed_add_(t[:, :, 0], t[:, :, 2], idx)
+    silt.indexed_mix_(t[:, :, 1], t[:, :, 2], idx, 0.25)
+
+    mask = _radius_mask()
+    expected = data.copy()
+    expected[:, :, 0][mask] = data[:, :, 0][mask] + data[:, :, 2][mask]
+    expected[:, :, 1][mask] = 0.75 * data[:, :, 1][mask] + 0.25 * data[:, :, 2][mask]
+    np.testing.assert_allclose(t.to_cpu().numpy().reshape(8, 8, 3), expected, rtol=1e-6)
+
+
+@pytest.mark.gpu
+def test_indexed_reductions_on_channel_view_match_dense_mask():
+    data = _image()
+    t = _gpu_tensor(data)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+    mask = _radius_mask()
+
+    for c in range(3):
+        view = t[:, :, c]
+        selected = data[:, :, c][mask]
+        assert silt.indexed_sum(view, idx) == pytest.approx(float(selected.sum()), rel=1e-5)
+        assert silt.indexed_mean(view, idx) == pytest.approx(float(selected.mean()), rel=1e-5)
+        assert silt.indexed_min(view, idx) == pytest.approx(float(selected.min()))
+        assert silt.indexed_max(view, idx) == pytest.approx(float(selected.max()))
+
+        # arg* return the logical index into the view, i.e. the cell.
+        plane = data[:, :, c].flatten()
+        assert plane[silt.indexed_argmin(view, idx)] == selected.min()
+        assert plane[silt.indexed_argmax(view, idx)] == selected.max()
+
+
+@pytest.mark.gpu
+def test_empty_index_set_mutations_are_no_ops():
+    data = _image()
+    t = _gpu_tensor(data)
+    empty = silt.index_range(t, 100.0, 200.0)
+    assert empty.elem == 0
+
+    silt.indexed_set(t, 0.0, empty)
+    silt.indexed_add_(t, 1.0, empty)
+    silt.indexed_multiply_(t, 2.0, empty)
+    silt.indexed_divide_(t, 2.0, empty)
+    silt.indexed_set(t[:, :, 0], 0.0, empty)
+    silt.indexed_add_(t[:, :, 0], t[:, :, 1], empty)
+    silt.indexed_mix_(t[:, :, 0], t[:, :, 1], empty, 0.5)
+
+    np.testing.assert_array_equal(t.to_cpu().numpy().reshape(8, 8, 3), data)
+
+
+@pytest.mark.gpu
+def test_empty_index_set_reductions():
+    t = _gpu_tensor(_image())
+    empty = silt.index_range(t, 100.0, 200.0)
+
+    for target in (t, t[:, :, 0]):
+        assert silt.indexed_sum(target, empty) == 0.0
+        assert np.isnan(silt.indexed_mean(target, empty))
+        for reduction in (silt.indexed_min, silt.indexed_max, silt.indexed_argmin, silt.indexed_argmax):
+            with pytest.raises(ValueError):
+                reduction(target, empty)

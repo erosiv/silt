@@ -73,12 +73,14 @@ __host__ void binop_inplace_cpu(T lhs, const T rhs, F func) {
 
 // In-Place Indexed Unary Operation
 //
-// `ind` holds the flat tensor indices to visit.
+// `C` is any container with a flat subscript (tensor_t, view_t), and `ind`
+// holds the indices to visit in its logical linear space. Out-of-range
+// indices are skipped.
 
-template<typename T, typename F>
-__global__ void indexed_apply_gpu(tensor_t<T> lhs, const tensor_t<int64_t> ind, F func) {
+template<typename C, typename F>
+__global__ void indexed_apply_gpu(C lhs, const tensor_t<int64_t> ind, F func) {
   const int64_t n = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
-  if (n < ind.elem()) {
+  if (n < (int64_t)ind.elem()) {
     const int64_t i = ind[n];
     if (i >= 0 && i < (int64_t)lhs.elem()) {
       lhs[i] = func(lhs[i]);
@@ -86,8 +88,8 @@ __global__ void indexed_apply_gpu(tensor_t<T> lhs, const tensor_t<int64_t> ind, 
   }
 }
 
-template<typename T, typename F>
-__host__ void indexed_apply_cpu(tensor_t<T> lhs, const tensor_t<int64_t> ind, F func) {
+template<typename C, typename F>
+__host__ void indexed_apply_cpu(C lhs, const tensor_t<int64_t> ind, F func) {
   for (int64_t n = 0; n < (int64_t)ind.elem(); ++n) {
     const int64_t i = ind[n];
     if (i >= 0 && i < (int64_t)lhs.elem()) {
@@ -98,12 +100,12 @@ __host__ void indexed_apply_cpu(tensor_t<T> lhs, const tensor_t<int64_t> ind, F 
 
 // In-Place Indexed Binary Operation
 //
-// rhs is read at the same flat index i as lhs.
+// rhs is read at the same logical index i as lhs.
 
-template<typename T, typename F>
-__global__ void indexed_binop_apply_gpu(tensor_t<T> lhs, const tensor_t<T> rhs, const tensor_t<int64_t> ind, F func) {
+template<typename C, typename F>
+__global__ void indexed_binop_apply_gpu(C lhs, const C rhs, const tensor_t<int64_t> ind, F func) {
   const int64_t n = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
-  if (n < ind.elem()) {
+  if (n < (int64_t)ind.elem()) {
     const int64_t i = ind[n];
     if (i >= 0 && i < (int64_t)lhs.elem()) {
       lhs[i] = func(lhs[i], rhs[i]);
@@ -111,8 +113,8 @@ __global__ void indexed_binop_apply_gpu(tensor_t<T> lhs, const tensor_t<T> rhs, 
   }
 }
 
-template<typename T, typename F>
-__host__ void indexed_binop_apply_cpu(tensor_t<T> lhs, const tensor_t<T> rhs, const tensor_t<int64_t> ind, F func) {
+template<typename C, typename F>
+__host__ void indexed_binop_apply_cpu(C lhs, const C rhs, const tensor_t<int64_t> ind, F func) {
   for (int64_t n = 0; n < (int64_t)ind.elem(); ++n) {
     const int64_t i = ind[n];
     if (i >= 0 && i < (int64_t)lhs.elem()) {
@@ -251,11 +253,15 @@ void binop_inplace(T lhs, const T rhs, F func) {
   }
 }
 
-template<typename T, typename F>
-void indexed_apply(tensor_t<T> lhs, const tensor_t<int64_t> ind, F func) {
+template<typename C, typename F>
+void indexed_apply(C lhs, const tensor_t<int64_t> ind, F func) {
 
   if (lhs.host() != ind.host())
     throw silt::error::mismatch_host(lhs.host(), ind.host());
+
+  // An empty launch is an invalid configuration.
+  if (ind.elem() == 0)
+    return;
 
   if (lhs.host() == silt::host_t::CPU) {
     detail::indexed_apply_cpu(lhs, ind, func);
@@ -267,14 +273,20 @@ void indexed_apply(tensor_t<T> lhs, const tensor_t<int64_t> ind, F func) {
   }
 }
 
-template<typename T, typename F>
-void indexed_binop_apply(tensor_t<T> lhs, const tensor_t<T> rhs, const tensor_t<int64_t> ind, F func) {
+template<typename C, typename F>
+void indexed_binop_apply(C lhs, const C rhs, const tensor_t<int64_t> ind, F func) {
 
   if (lhs.host() != rhs.host())
     throw silt::error::mismatch_host(lhs.host(), rhs.host());
 
+  if (lhs.host() != ind.host())
+    throw silt::error::mismatch_host(lhs.host(), ind.host());
+
   if (lhs.elem() != rhs.elem())
     throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+
+  if (ind.elem() == 0)
+    return;
 
   if (lhs.host() == silt::host_t::CPU) {
     detail::indexed_binop_apply_cpu(lhs, rhs, ind, func);

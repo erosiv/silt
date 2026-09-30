@@ -66,6 +66,68 @@ void indexed_mix(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind, cons
   });
 }
 
+//
+// Indexed Assignment / Arithmetic (View)
+//
+//  Same operations in the slice-space of a view.
+//
+
+template<typename T>
+void indexed_set(view_t<T> lhs, const T rhs, const index_t ind) {
+  op::indexed_apply(lhs, ind, [rhs] GPU_ENABLE(const T a) {
+    return rhs;
+  });
+}
+
+template<typename T>
+void indexed_add(view_t<T> lhs, const T rhs, const index_t ind) {
+  op::indexed_apply(lhs, ind, [rhs] GPU_ENABLE(const T a) {
+    return a + rhs;
+  });
+}
+
+template<typename T>
+void indexed_add(view_t<T> lhs, const view_t<T> rhs, const index_t ind) {
+  op::indexed_binop_apply(lhs, rhs, ind, [] GPU_ENABLE(const T a, const T b) {
+    return a + b;
+  });
+}
+
+template<typename T>
+void indexed_multiply(view_t<T> lhs, const T rhs, const index_t ind) {
+  op::indexed_apply(lhs, ind, [rhs] GPU_ENABLE(const T a) {
+    return a * rhs;
+  });
+}
+
+template<typename T>
+void indexed_multiply(view_t<T> lhs, const view_t<T> rhs, const index_t ind) {
+  op::indexed_binop_apply(lhs, rhs, ind, [] GPU_ENABLE(const T a, const T b) {
+    return a * b;
+  });
+}
+
+template<typename T>
+void indexed_divide(view_t<T> lhs, const T rhs, const index_t ind) {
+  op::indexed_apply(lhs, ind, [rhs] GPU_ENABLE(const T a) {
+    return a / rhs;
+  });
+}
+
+template<typename T>
+void indexed_divide(view_t<T> lhs, const view_t<T> rhs, const index_t ind) {
+  op::indexed_binop_apply(lhs, rhs, ind, [] GPU_ENABLE(const T a, const T b) {
+    return a / b;
+  });
+}
+
+template<typename T>
+void indexed_mix(view_t<T> lhs, const view_t<T> rhs, const index_t ind, const float w) {
+  op::indexed_binop_apply(lhs, rhs, ind, [w] GPU_ENABLE(const T a, const T b) {
+    return (1.0f - w) * a + w * b;
+  });
+}
+
 template EXPORT_SHARED void silt::indexed_set<int>(silt::tensor_t<int> lhs, const int rhs, const index_t ind);
 template EXPORT_SHARED void silt::indexed_set<float>(silt::tensor_t<float> lhs, const float rhs, const index_t ind);
 template EXPORT_SHARED void silt::indexed_set<double>(silt::tensor_t<double> lhs, const double rhs, const index_t ind);
@@ -97,6 +159,40 @@ template EXPORT_SHARED void silt::indexed_divide<double>(silt::tensor_t<double> 
 template EXPORT_SHARED void silt::indexed_mix<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs, const index_t ind, const float w);
 template EXPORT_SHARED void silt::indexed_mix<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs, const index_t ind, const float w);
 template EXPORT_SHARED void silt::indexed_mix<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs, const index_t ind, const float w);
+
+// View Overloads
+
+template EXPORT_SHARED void silt::indexed_set<int>(silt::view_t<int> lhs, const int rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_set<float>(silt::view_t<float> lhs, const float rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_set<double>(silt::view_t<double> lhs, const double rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_add<int>(silt::view_t<int> lhs, const int rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_add<float>(silt::view_t<float> lhs, const float rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_add<double>(silt::view_t<double> lhs, const double rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_add<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_add<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_add<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_multiply<int>(silt::view_t<int> lhs, const int rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_multiply<float>(silt::view_t<float> lhs, const float rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_multiply<double>(silt::view_t<double> lhs, const double rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_multiply<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_multiply<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_multiply<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_divide<int>(silt::view_t<int> lhs, const int rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_divide<float>(silt::view_t<float> lhs, const float rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_divide<double>(silt::view_t<double> lhs, const double rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_divide<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_divide<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs, const index_t ind);
+template EXPORT_SHARED void silt::indexed_divide<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs, const index_t ind);
+
+template EXPORT_SHARED void silt::indexed_mix<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs, const index_t ind, const float w);
+template EXPORT_SHARED void silt::indexed_mix<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs, const index_t ind, const float w);
+template EXPORT_SHARED void silt::indexed_mix<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs, const index_t ind, const float w);
 
 //
 // Generic Compaction: Predicate -> Index Set

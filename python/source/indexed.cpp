@@ -186,6 +186,83 @@ void bind_indexed(nb::module_& module) {
   });
 
   //
+  // Indexed Operations (View)
+  //  The index set addresses the slice-space of the view.
+  //
+
+  module.def("indexed_set", [](silt::view& lhs, const nb::object value, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    silt::select(lhs.type(), [&lhs, &value, &ind]<silt::primitive S>() {
+      silt::indexed_set<S>(lhs.as<S>(), nb::cast<S>(value), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_add_", [](silt::view& lhs, const silt::view& rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    if (lhs.type() != rhs.type())
+      throw silt::error::mismatch_type(lhs.type(), rhs.type());
+    if (lhs.elem() != rhs.elem())
+      throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_add<S>(lhs.as<S>(), rhs.as<S>(), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_add_", [](silt::view& lhs, const nb::object rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_add<S>(lhs.as<S>(), nb::cast<S>(rhs), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_multiply_", [](silt::view& lhs, const silt::view& rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    if (lhs.type() != rhs.type())
+      throw silt::error::mismatch_type(lhs.type(), rhs.type());
+    if (lhs.elem() != rhs.elem())
+      throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_multiply<S>(lhs.as<S>(), rhs.as<S>(), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_multiply_", [](silt::view& lhs, const nb::object rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_multiply<S>(lhs.as<S>(), nb::cast<S>(rhs), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_divide_", [](silt::view& lhs, const silt::view& rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    if (lhs.type() != rhs.type())
+      throw silt::error::mismatch_type(lhs.type(), rhs.type());
+    if (lhs.elem() != rhs.elem())
+      throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_divide<S>(lhs.as<S>(), rhs.as<S>(), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_divide_", [](silt::view& lhs, const nb::object rhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    silt::select(lhs.type(), [&lhs, &rhs, &ind]<silt::primitive S>() {
+      silt::indexed_divide<S>(lhs.as<S>(), nb::cast<S>(rhs), ind.as<int64_t>());
+    });
+  });
+
+  module.def("indexed_mix_", [](silt::view& lhs, const silt::view& rhs, const silt::tensor& ind, const float w) {
+    require_index_set(lhs, ind);
+    if (lhs.type() != rhs.type())
+      throw silt::error::mismatch_type(lhs.type(), rhs.type());
+    if (lhs.elem() != rhs.elem())
+      throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
+    silt::select(lhs.type(), [&lhs, &rhs, &ind, w]<silt::primitive S>() {
+      silt::indexed_mix<S>(lhs.as<S>(), rhs.as<S>(), ind.as<int64_t>(), w);
+    });
+  });
+
+  //
   // Indexed Reductions
   //
 
@@ -225,6 +302,52 @@ void bind_indexed(nb::module_& module) {
   });
 
   module.def("indexed_argmax", [](const silt::tensor& lhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    return silt::select(lhs.type(), [&lhs, &ind]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::indexed_argmax<S>(lhs.as<S>(), ind.as<int64_t>()));
+    });
+  });
+
+  //
+  // Indexed Reductions (View)
+  //
+
+  module.def("indexed_sum", [](const silt::view& lhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    return silt::select(lhs.type(), [&lhs, &ind]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::indexed_sum<S>(lhs.as<S>(), ind.as<int64_t>()));
+    });
+  });
+
+  module.def("indexed_mean", [](const silt::view& lhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    return silt::select(lhs.type(), [&lhs, &ind]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::indexed_mean<S>(lhs.as<S>(), ind.as<int64_t>()));
+    });
+  });
+
+  module.def("indexed_min", [](const silt::view& lhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    return silt::select(lhs.type(), [&lhs, &ind]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::indexed_min<S>(lhs.as<S>(), ind.as<int64_t>()));
+    });
+  });
+
+  module.def("indexed_max", [](const silt::view& lhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    return silt::select(lhs.type(), [&lhs, &ind]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::indexed_max<S>(lhs.as<S>(), ind.as<int64_t>()));
+    });
+  });
+
+  module.def("indexed_argmin", [](const silt::view& lhs, const silt::tensor& ind) {
+    require_index_set(lhs, ind);
+    return silt::select(lhs.type(), [&lhs, &ind]<silt::primitive S>() -> nb::object {
+      return nb::cast(silt::indexed_argmin<S>(lhs.as<S>(), ind.as<int64_t>()));
+    });
+  });
+
+  module.def("indexed_argmax", [](const silt::view& lhs, const silt::tensor& ind) {
     require_index_set(lhs, ind);
     return silt::select(lhs.type(), [&lhs, &ind]<silt::primitive S>() -> nb::object {
       return nb::cast(silt::indexed_argmax<S>(lhs.as<S>(), ind.as<int64_t>()));

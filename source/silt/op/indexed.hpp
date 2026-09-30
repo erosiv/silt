@@ -133,6 +133,8 @@ index_t index_match(const tensor_t<T>& data, const T value);
 //
 // Indexed Operations
 //
+//  Out-of-range indices are skipped. An empty index set is a no-op.
+//
 
 //! lhs[i] = rhs, for i in ind.
 template<typename T>
@@ -167,6 +169,45 @@ template<typename T>
 void indexed_mix(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind, const float w);
 
 //
+// Indexed Operations (View)
+//
+//  As above, with the index set addressing the slice-space of the view.
+//  Binary operations read `rhs` at the same logical index as `lhs`.
+//
+
+//! lhs[i] = rhs, for i in ind.
+template<typename T>
+void indexed_set(view_t<T> lhs, const T rhs, const index_t ind);
+
+//! lhs[i] += rhs, for i in ind.
+template<typename T>
+void indexed_add(view_t<T> lhs, const T rhs, const index_t ind);
+
+//! lhs[i] += rhs[i], for i in ind.
+template<typename T>
+void indexed_add(view_t<T> lhs, const view_t<T> rhs, const index_t ind);
+
+//! lhs[i] *= rhs, for i in ind.
+template<typename T>
+void indexed_multiply(view_t<T> lhs, const T rhs, const index_t ind);
+
+//! lhs[i] *= rhs[i], for i in ind.
+template<typename T>
+void indexed_multiply(view_t<T> lhs, const view_t<T> rhs, const index_t ind);
+
+//! lhs[i] /= rhs, for i in ind.
+template<typename T>
+void indexed_divide(view_t<T> lhs, const T rhs, const index_t ind);
+
+//! lhs[i] /= rhs[i], for i in ind.
+template<typename T>
+void indexed_divide(view_t<T> lhs, const view_t<T> rhs, const index_t ind);
+
+//! lhs[i] = mix(lhs[i], rhs[i], w), for i in ind.
+template<typename T>
+void indexed_mix(view_t<T> lhs, const view_t<T> rhs, const index_t ind, const float w);
+
+//
 // Gather / Scatter
 //
 //  An index set addresses the logical linear space of its operand: the flat
@@ -199,29 +240,49 @@ void scatter(view_t<T> dst, const tensor_t<T> src, const index_t ind);
 //
 // Indexed Reductions
 //
+//  Reductions are also defined for view_t, with the index set addressing the
+//  slice-space of the view; argmin / argmax return the logical index into the
+//  view. Indices must be in range.
+//
+//  Over an empty index set: sum is 0 and a floating-point mean is NaN. The
+//  reductions with no identity -- min, max, argmin, argmax, and an integer
+//  mean -- throw std::invalid_argument.
+//
 
 //! Sum of lhs[i], for i in ind.
 template<typename T>
 T indexed_sum(const tensor_t<T> lhs, const index_t ind);
+template<typename T>
+T indexed_sum(const view_t<T> lhs, const index_t ind);
 
 //! Mean of lhs[i], for i in ind.
 template<typename T>
 T indexed_mean(const tensor_t<T> lhs, const index_t ind);
+template<typename T>
+T indexed_mean(const view_t<T> lhs, const index_t ind);
 
 //! Min of lhs[i], for i in ind. NaN-skipping, like the dense min().
 template<typename T>
 T indexed_min(const tensor_t<T> lhs, const index_t ind);
+template<typename T>
+T indexed_min(const view_t<T> lhs, const index_t ind);
 
 //! Max of lhs[i], for i in ind. NaN-skipping, like the dense max().
 template<typename T>
 T indexed_max(const tensor_t<T> lhs, const index_t ind);
+template<typename T>
+T indexed_max(const view_t<T> lhs, const index_t ind);
 
-//! Flat index into lhs of the minimal element among lhs[i], i in ind.
+//! Logical index into lhs of the minimal element among lhs[i], i in ind.
 template<typename T>
 int64_t indexed_argmin(const tensor_t<T> lhs, const index_t ind);
+template<typename T>
+int64_t indexed_argmin(const view_t<T> lhs, const index_t ind);
 
-//! Flat index into lhs of the maximal element among lhs[i], i in ind.
+//! Logical index into lhs of the maximal element among lhs[i], i in ind.
 template<typename T>
 int64_t indexed_argmax(const tensor_t<T> lhs, const index_t ind);
+template<typename T>
+int64_t indexed_argmax(const view_t<T> lhs, const index_t ind);
 
 } // namespace silt

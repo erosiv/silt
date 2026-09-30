@@ -39,6 +39,7 @@ unset(_silt_saved_policy_min)
 add_executable(silt_test_cpp
   test_tensor.cpp
   test_gather_scatter.cpp
+  test_indexed.cpp
 )
 
 # Deliberately does NOT define HAS_CUDA before including silt headers,
