@@ -136,6 +136,12 @@ def mix(lhs, rhs, w):
     return result
 
 
+def sort(t):
+    result = t.copy_to()
+    sort_(result)
+    return result
+
+
 def clamp(lhs, min, max):
     result = lhs.copy_to()
     clamp_(result, min, max)
@@ -172,6 +178,6 @@ __all__ = (
     + [
         "__version__",
         "zeros", "ones", "full", "empty", "like", "arange", "linspace", "rand",
-        "add", "multiply", "divide", "mix", "clamp", "minimum", "maximum",
+        "add", "multiply", "divide", "mix", "sort", "clamp", "minimum", "maximum",
     ]
 )

@@ -844,3 +844,204 @@ def test_empty_index_set_reductions():
         for reduction in (silt.indexed_min, silt.indexed_max, silt.indexed_argmin, silt.indexed_argmax):
             with pytest.raises(ValueError):
                 reduction(target, empty)
+
+
+# -- index-set operations (GPU only) ---------------------------------------
+
+
+def _index_set(values, host=None):
+    """An int64 index set from a list / numpy array (GPU unless `host` is set)."""
+    t = silt.tensor.from_numpy(np.asarray(values, dtype=np.int64))
+    return t if host == silt.cpu else t.to_gpu()
+
+
+def _values(idx):
+    return idx.copy_to(silt.cpu).numpy()
+
+
+def _disc_sets():
+    """Two overlapping radius selections over an 8x8 domain, with their masks."""
+    s = silt.shape(8, 8)
+    a = silt.index_radius(s, [3.0, 3.0], 2.5)
+    b = silt.index_radius(s, [5.0, 5.0], 2.5)
+    return s, a, b, _radius_mask(center=(3.0, 3.0)), _radius_mask(center=(5.0, 5.0))
+
+
+def test_from_numpy_accepts_int64_index_sets():
+    idx = _index_set([4, 1, 7], host=silt.cpu)
+    assert idx.dtype == silt.int64
+    np.testing.assert_array_equal(idx.numpy(), [4, 1, 7])
+
+
+@pytest.mark.gpu
+def test_set_operations_match_dense_masks():
+    _, a, b, ma, mb = _disc_sets()
+
+    def flat(mask):
+        return np.flatnonzero(mask.ravel())
+
+    np.testing.assert_array_equal(_values(silt.index_union(a, b)), flat(ma | mb))
+    np.testing.assert_array_equal(_values(silt.index_intersection(a, b)), flat(ma & mb))
+    np.testing.assert_array_equal(_values(silt.index_difference(a, b)), flat(ma & ~mb))
+    np.testing.assert_array_equal(_values(silt.index_difference(b, a)), flat(mb & ~ma))
+    np.testing.assert_array_equal(_values(silt.index_symmetric_difference(a, b)), flat(ma ^ mb))
+
+
+@pytest.mark.gpu
+def test_complement_is_the_difference_from_the_full_domain():
+    s, a, _, ma, _ = _disc_sets()
+
+    np.testing.assert_array_equal(
+        _values(silt.index_complement(a, s)), np.flatnonzero(~ma.ravel())
+    )
+    everything = silt.index_complement(silt.index_range(silt.zeros((64,), silt.float32, silt.gpu), 1.0, 2.0), s)
+    np.testing.assert_array_equal(_values(everything), np.arange(64))
+    assert silt.index_complement(everything, s).elem == 0
+
+
+@pytest.mark.gpu
+def test_set_identities():
+    s, a, b, _, _ = _disc_sets()
+
+    whole = silt.index_union(a, silt.index_complement(a, s))
+    np.testing.assert_array_equal(_values(whole), np.arange(64))
+    assert silt.index_intersection(a, silt.index_complement(a, s)).elem == 0
+
+    np.testing.assert_array_equal(
+        _values(silt.index_difference(a, b)),
+        _values(silt.index_intersection(a, silt.index_complement(b, s))),
+    )
+
+
+@pytest.mark.gpu
+def test_set_operations_with_empty_operands():
+    _, a, _, ma, _ = _disc_sets()
+    empty = silt.index_range(silt.zeros((64,), silt.float32, silt.gpu), 1.0, 2.0)
+    assert empty.elem == 0
+    expected = np.flatnonzero(ma.ravel())
+
+    np.testing.assert_array_equal(_values(silt.index_union(a, empty)), expected)
+    np.testing.assert_array_equal(_values(silt.index_union(empty, a)), expected)
+    np.testing.assert_array_equal(_values(silt.index_difference(a, empty)), expected)
+    np.testing.assert_array_equal(_values(silt.index_symmetric_difference(empty, a)), expected)
+    assert silt.index_intersection(a, empty).elem == 0
+    assert silt.index_difference(empty, a).elem == 0
+    assert silt.index_union(empty, empty).elem == 0
+
+
+@pytest.mark.gpu
+def test_index_sort_unique_establishes_the_set_invariant():
+    raw = np.array([9, 3, 3, 12, 1, 9, 0, 12, 40], dtype=np.int64)
+    idx = _index_set(raw)
+
+    out = silt.index_sort_unique(idx)
+
+    np.testing.assert_array_equal(_values(out), np.unique(raw))
+    np.testing.assert_array_equal(_values(idx), raw)  # the input is untouched
+
+
+@pytest.mark.gpu
+def test_sort_unique_output_feeds_the_set_operations():
+    a = silt.index_sort_unique(_index_set([9, 3, 3, 1]))
+    b = silt.index_sort_unique(_index_set([3, 9, 4, 4]))
+
+    np.testing.assert_array_equal(_values(silt.index_intersection(a, b)), [3, 9])
+    np.testing.assert_array_equal(_values(silt.index_union(a, b)), [1, 3, 4, 9])
+
+
+@pytest.mark.gpu
+def test_sort_unique_of_trivial_sets():
+    assert silt.index_sort_unique(_index_set([5])).elem == 1
+    np.testing.assert_array_equal(_values(silt.index_sort_unique(_index_set([4, 4, 4]))), [4])
+    assert silt.index_sort_unique(silt.index_range(silt.zeros((8,), silt.float32, silt.gpu), 1.0, 2.0)).elem == 0
+
+
+@pytest.mark.gpu
+def test_set_operations_reject_mismatches():
+    a = _index_set([1, 2, 3])
+    with pytest.raises(Exception):  # host mismatch
+        silt.index_union(a, _index_set([1], host=silt.cpu))
+    with pytest.raises(Exception):  # dtype
+        silt.index_union(a, silt.zeros((3,), silt.float32, silt.gpu))
+    with pytest.raises(Exception):
+        silt.index_sort_unique(silt.zeros((3,), silt.float32, silt.gpu))
+
+
+@pytest.mark.gpu
+def test_set_algebra_composes_with_gather_and_indexed_ops():
+    """The intended use: subtract one selection from another, then edit."""
+    _, a, b, ma, mb = _disc_sets()
+    data = np.arange(64, dtype=np.float32).reshape(8, 8)
+    t = _gpu_tensor(data)
+
+    only_a = silt.index_difference(a, b)
+    silt.indexed_set(t, -1.0, only_a)
+
+    np.testing.assert_array_equal(
+        t.copy_to(silt.cpu).numpy().reshape(8, 8), np.where(ma & ~mb, -1.0, data)
+    )
+
+
+# -- dense sort ------------------------------------------------------------
+
+
+def test_sort_cpu_matches_numpy():
+    data = np.random.default_rng(3).random((8, 8), dtype=np.float32)
+    t = silt.tensor.from_numpy(data.copy())
+
+    silt.sort_(t)
+
+    np.testing.assert_array_equal(t.numpy().reshape(-1), np.sort(data.reshape(-1)))
+
+
+def test_sort_returns_a_sorted_copy_and_leaves_the_input():
+    data = np.array([3, 1, 2], dtype=np.float32)
+    t = silt.tensor.from_numpy(data.copy())
+
+    out = silt.sort(t)
+
+    np.testing.assert_array_equal(out.numpy(), [1, 2, 3])
+    np.testing.assert_array_equal(t.numpy(), [3, 1, 2])
+
+
+def test_sort_cpu_places_nans_last():
+    t = silt.tensor.from_numpy(np.array([2.0, np.nan, -1.0, np.nan, 0.0], dtype=np.float32))
+    silt.sort_(t)
+    out = t.numpy()
+    np.testing.assert_array_equal(out[:3], [-1.0, 0.0, 2.0])
+    assert np.isnan(out[3:]).all()
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize("np_dtype", [np.float32, np.float64, np.int32])
+def test_sort_gpu_matches_numpy(np_dtype):
+    rng = np.random.default_rng(4)
+    data = (rng.random(1000) * 100 - 50).astype(np_dtype)
+    t = silt.tensor.from_numpy(data.copy()).to_gpu()
+
+    silt.sort_(t)
+
+    np.testing.assert_array_equal(t.copy_to(silt.cpu).numpy(), np.sort(data))
+
+
+@pytest.mark.gpu
+def test_sort_of_a_gathered_selection_gives_selection_quantiles():
+    """Gather a selection, sort it densely, read off a median."""
+    data = np.random.default_rng(5).random((8, 8), dtype=np.float32)
+    t = _gpu_tensor(data)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    ordered = silt.sort(silt.gather(t, idx)).copy_to(silt.cpu).numpy()
+
+    np.testing.assert_array_equal(ordered, np.sort(data[_radius_mask()]))
+
+
+def test_copy_to_supports_index_sets():
+    """copy_to is not restricted to primitive dtypes: an int64 index set can
+    be snapshotted (and, on a GPU, brought to the CPU without moving the
+    original)."""
+    idx = silt.tensor.from_numpy(np.array([3, 1, 2], dtype=np.int64))
+    copy = idx.copy_to()
+    assert copy.dtype == silt.int64
+    np.testing.assert_array_equal(copy.numpy(), [3, 1, 2])
+    assert "refs=1" in repr(copy)  # an independent allocation, not a shared handle

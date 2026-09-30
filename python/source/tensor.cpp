@@ -164,7 +164,8 @@ void bind_tensor(nb::module_& module) {
 
   tensor.def("copy_to", [](const silt::tensor& tensor, std::optional<silt::host_t> host) {
     const silt::host_t target = host.value_or(tensor.host());
-    return silt::select(tensor.type(), [&tensor, target]<silt::primitive S>() -> silt::tensor {
+    // Any storage type, not just primitives, so index sets can be copied.
+    return silt::select(tensor.type(), [&tensor, target]<typename S>() -> silt::tensor {
       return silt::tensor(tensor.as<S>().copy_to(target));
     });
   }, nb::arg("host") = nb::none());
@@ -210,6 +211,9 @@ void bind_tensor(nb::module_& module) {
       return silt::detail::tensor_from_numpy<double>(array);
     } else if (array.dtype() == nb::dtype<int>()) {
       return silt::detail::tensor_from_numpy<int>(array);
+    } else if (array.dtype() == nb::dtype<int64_t>()) {
+      // index sets
+      return silt::detail::tensor_from_numpy<int64_t>(array);
     } else {
       throw std::runtime_error("type not supported");
     }

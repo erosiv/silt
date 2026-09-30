@@ -11,6 +11,7 @@ namespace nb = nanobind;
 #include <silt/core/view.hpp>
 #include <silt/op/common.hpp>
 #include <silt/op/reduce.hpp>
+#include <silt/op/sort.hpp>
 
 #include "util.hpp"
 
@@ -287,6 +288,16 @@ void bind_op(nb::module_& module) {
   module.def("argmax", [](const silt::tensor& tensor) {
     return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> nb::object {
       return nb::cast(silt::argmax(tensor.as<S>()));
+    });
+  });
+
+  //
+  // Sorting
+  //
+
+  module.def("sort_", [](silt::tensor& tensor) {
+    silt::select(tensor.type(), [&tensor]<silt::primitive S>() {
+      silt::sort<S>(tensor.as<S>());
     });
   });
 

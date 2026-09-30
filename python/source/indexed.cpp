@@ -4,6 +4,7 @@ namespace nb = nanobind;
 #include <nanobind/stl/vector.h>
 
 #include "glm.hpp"
+#include "util.hpp"
 #include <silt/core/view.hpp>
 #include <silt/op/indexed.hpp>
 
@@ -68,6 +69,46 @@ void bind_indexed(nb::module_& module) {
 
   module.def("index_slice", [](const silt::slice& s) {
     return silt::tensor(silt::index_slice(s));
+  });
+
+  //
+  // Index-Set Operations
+  //  Operands must be sorted and unique, as produced by the selectors;
+  //  index_sort_unique establishes that for any other set.
+  //
+
+  module.def("index_sort_unique", [](const silt::tensor& ind) {
+    silt::detail::require_type(ind, silt::dtype::INT64);
+    return silt::tensor(silt::index_sort_unique(ind.as<int64_t>()));
+  });
+
+  module.def("index_union", [](const silt::tensor& a, const silt::tensor& b) {
+    silt::detail::require_type(a, silt::dtype::INT64);
+    silt::detail::require_type(b, silt::dtype::INT64);
+    return silt::tensor(silt::index_union(a.as<int64_t>(), b.as<int64_t>()));
+  });
+
+  module.def("index_intersection", [](const silt::tensor& a, const silt::tensor& b) {
+    silt::detail::require_type(a, silt::dtype::INT64);
+    silt::detail::require_type(b, silt::dtype::INT64);
+    return silt::tensor(silt::index_intersection(a.as<int64_t>(), b.as<int64_t>()));
+  });
+
+  module.def("index_difference", [](const silt::tensor& a, const silt::tensor& b) {
+    silt::detail::require_type(a, silt::dtype::INT64);
+    silt::detail::require_type(b, silt::dtype::INT64);
+    return silt::tensor(silt::index_difference(a.as<int64_t>(), b.as<int64_t>()));
+  });
+
+  module.def("index_symmetric_difference", [](const silt::tensor& a, const silt::tensor& b) {
+    silt::detail::require_type(a, silt::dtype::INT64);
+    silt::detail::require_type(b, silt::dtype::INT64);
+    return silt::tensor(silt::index_symmetric_difference(a.as<int64_t>(), b.as<int64_t>()));
+  });
+
+  module.def("index_complement", [](const silt::tensor& ind, const silt::shape& shape) {
+    silt::detail::require_type(ind, silt::dtype::INT64);
+    return silt::tensor(silt::index_complement(ind.as<int64_t>(), shape));
   });
 
   //

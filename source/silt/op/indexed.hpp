@@ -84,6 +84,35 @@ EXPORT_SHARED index_t index_polygon(const silt::shape shape, const tensor_t<silt
 //! is included, so this needs no predicate.
 EXPORT_SHARED index_t index_slice(const silt::slice& slice);
 
+//
+// Index Set Operations
+//
+//  Set algebra on index sets, on either host. The binary operations require
+//  sorted, unique operands -- as produced by the selectors above -- and return
+//  sorted, unique results; operands must share a host. index_sort_unique
+//  establishes the invariant for sets built any other way.
+//
+
+//! Sorted, unique copy of `ind`.
+EXPORT_SHARED index_t index_sort_unique(const index_t ind);
+
+//! a U b
+EXPORT_SHARED index_t index_union(const index_t a, const index_t b);
+
+//! a n b
+EXPORT_SHARED index_t index_intersection(const index_t a, const index_t b);
+
+//! a \ b
+EXPORT_SHARED index_t index_difference(const index_t a, const index_t b);
+
+//! (a \ b) U (b \ a)
+EXPORT_SHARED index_t index_symmetric_difference(const index_t a, const index_t b);
+
+//! Every flat index of `shape` not in `ind`, i.e. the difference from the full
+//! set. The domain is not part of an index set, so it is passed explicitly.
+//! Indices of `ind` outside the domain are ignored.
+EXPORT_SHARED index_t index_complement(const index_t ind, const silt::shape shape);
+
 //! +infinity for T (numeric_limits::max() for an integral T, which has no infinity).
 template<typename T>
 constexpr T positive_infinity() {

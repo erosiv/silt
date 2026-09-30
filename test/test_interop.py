@@ -31,13 +31,21 @@ def test_numpy_round_trip_int32():
     np.testing.assert_array_equal(t.numpy(), arr)
 
 
+def test_numpy_round_trip_int64():
+    """int64 is the index-set storage type."""
+    arr = np.arange(5, dtype=np.int64)
+    t = silt.tensor.from_numpy(arr)
+    assert t.dtype == silt.int64
+    np.testing.assert_array_equal(t.numpy(), arr)
+
+
 def test_from_numpy_rejects_unsupported_dtype():
-    """`from_numpy` only special-cases float32/float64/int32
+    """`from_numpy` only special-cases float32/float64/int32/int64
     (interop.hpp); every other dtype should raise a clear error rather
-    than silently misreading the buffer. int64 is used here explicitly
+    than silently misreading the buffer. int16 is used here explicitly
     so the test is not sensitive to numpy's platform-dependent default
     integer width."""
-    arr = np.arange(5, dtype=np.int64)
+    arr = np.arange(5, dtype=np.int16)
     with pytest.raises(Exception):
         silt.tensor.from_numpy(arr)
 
