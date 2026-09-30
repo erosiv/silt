@@ -42,6 +42,7 @@ target_sources(${TARGET_NAME} PRIVATE
   silt/op/gather_scatter.cu
   silt/op/index_set.cu
   silt/op/sort.cu
+  silt/op/histogram.cu
   silt/op/rng.cu
 )
 

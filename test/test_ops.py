@@ -1045,3 +1045,156 @@ def test_copy_to_supports_index_sets():
     assert copy.dtype == silt.int64
     np.testing.assert_array_equal(copy.numpy(), [3, 1, 2])
     assert "refs=1" in repr(copy)  # an independent allocation, not a shared handle
+
+
+# -- histogram -------------------------------------------------------------
+
+
+def _grid_values():
+    """1000 values on bin centres: 10 bins over [0, 100] hold 100 each."""
+    return (np.arange(1000) % 100).astype(np.float32) + 0.5
+
+
+def test_histogram_cpu_counts_bin_centres():
+    t = silt.tensor.from_numpy(_grid_values())
+
+    hist = silt.histogram(t, 10, 0.0, 100.0)
+
+    assert hist.dtype == silt.dtype.int
+    np.testing.assert_array_equal(hist.numpy(), np.full(10, 100))
+
+
+def test_histogram_range_is_closed_at_both_ends():
+    t = silt.tensor.from_numpy(np.array([0.0, 1.0, 2.0, 3.0, 4.0], dtype=np.float32))
+    np.testing.assert_array_equal(silt.histogram(t, 4, 0.0, 4.0).numpy(), [1, 1, 1, 2])
+
+
+def test_histogram_ignores_values_outside_the_range_and_nans():
+    t = silt.tensor.from_numpy(np.array([-1.0, 0.5, np.nan, 5.0, 3.5], dtype=np.float32))
+    np.testing.assert_array_equal(silt.histogram(t, 4, 0.0, 4.0).numpy(), [1, 0, 0, 1])
+
+
+def test_histogram_default_range_is_the_data_range():
+    data = np.random.default_rng(6).random(500, dtype=np.float32)
+    t = silt.tensor.from_numpy(data)
+
+    hist = silt.histogram(t, 8).numpy()
+
+    assert hist.sum() == 500  # min and max are both inside the closed range
+    np.testing.assert_array_equal(hist, np.histogram(data, bins=8, range=(float(data.min()), float(data.max())))[0])
+
+
+def test_histogram_rejects_invalid_arguments():
+    t = silt.tensor.from_numpy(np.array([1.0], dtype=np.float32))
+    with pytest.raises(ValueError):
+        silt.histogram(t, 0, 0.0, 1.0)
+    with pytest.raises(ValueError):
+        silt.histogram(t, 4, 1.0, 1.0)
+    with pytest.raises(ValueError):
+        silt.histogram(t, 4, 0.0, float("inf"))
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize("bins", [10, 4096, 20000])  # shared-memory and global-atomic paths
+def test_histogram_gpu_matches_cpu(bins):
+    data = (np.random.default_rng(7).random(50000) * 100.0).astype(np.float32)
+    cpu = silt.histogram(silt.tensor.from_numpy(data.copy()), bins, 0.0, 100.0).numpy()
+
+    gpu_t = silt.tensor.from_numpy(data.copy()).to_gpu()
+    gpu = silt.histogram(gpu_t, bins, 0.0, 100.0)
+
+    assert gpu.host == silt.gpu
+    np.testing.assert_array_equal(gpu.copy_to(silt.cpu).numpy(), cpu)
+
+
+@pytest.mark.gpu
+def test_histogram_gpu_on_bin_centres_double():
+    t = silt.tensor.from_numpy(_grid_values().astype(np.float64)).to_gpu()
+    hist = silt.histogram(t, 10, 0.0, 100.0)
+    np.testing.assert_array_equal(hist.copy_to(silt.cpu).numpy(), np.full(10, 100))
+
+
+@pytest.mark.gpu
+def test_histogram_gpu_int():
+    data = (np.arange(1000) % 100).astype(np.int32)  # 0..99, ten times each
+    hist = silt.histogram(silt.tensor.from_numpy(data).to_gpu(), 10, 0, 100)
+    np.testing.assert_array_equal(hist.copy_to(silt.cpu).numpy(), np.full(10, 100))
+
+
+@pytest.mark.gpu
+def test_histogram_of_a_channel_view_and_of_a_selection():
+    data = np.random.default_rng(8).random((8, 8, 3), dtype=np.float32)
+    t = _gpu_tensor(data)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+    mask = _radius_mask()
+
+    whole = silt.histogram(t[:, :, 1], 5, 0.0, 1.0).copy_to(silt.cpu).numpy()
+    np.testing.assert_array_equal(whole, np.histogram(data[:, :, 1], bins=5, range=(0.0, 1.0))[0])
+
+    selected = silt.histogram(silt.gather(t[:, :, 1], idx), 5, 0.0, 1.0).copy_to(silt.cpu).numpy()
+    np.testing.assert_array_equal(selected, np.histogram(data[:, :, 1][mask], bins=5, range=(0.0, 1.0))[0])
+
+
+@pytest.mark.gpu
+def test_histogram_of_an_empty_selection_is_all_zero():
+    t = _gpu_tensor(np.arange(8, dtype=np.float32))
+    empty = silt.index_range(t, 100.0, 200.0)
+    hist = silt.histogram(silt.gather(t, empty), 3, 0.0, 10.0)
+    np.testing.assert_array_equal(hist.copy_to(silt.cpu).numpy(), [0, 0, 0])
+
+
+# -- argsort ---------------------------------------------------------------
+
+
+def test_argsort_cpu_matches_numpy_stable():
+    data = np.random.default_rng(9).integers(0, 20, 200).astype(np.float32)  # many ties
+    perm = silt.argsort(silt.tensor.from_numpy(data.copy()))
+
+    assert perm.dtype == silt.int64
+    np.testing.assert_array_equal(perm.numpy(), np.argsort(data, kind="stable"))
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize("np_dtype", [np.float32, np.float64, np.int32])
+def test_argsort_gpu_is_stable_and_matches_numpy(np_dtype):
+    data = np.random.default_rng(10).integers(0, 50, 5000).astype(np_dtype)  # many ties
+    t = silt.tensor.from_numpy(data.copy()).to_gpu()
+
+    perm = silt.argsort(t)
+
+    assert perm.host == silt.gpu
+    np.testing.assert_array_equal(perm.copy_to(silt.cpu).numpy(), np.argsort(data, kind="stable"))
+
+
+@pytest.mark.gpu
+def test_argsort_leaves_the_source_untouched():
+    data = np.array([3, 1, 2], dtype=np.float32)
+    t = silt.tensor.from_numpy(data.copy()).to_gpu()
+    silt.argsort(t)
+    np.testing.assert_array_equal(t.copy_to(silt.cpu).numpy(), data)
+
+
+@pytest.mark.gpu
+def test_gather_accepts_index_sets():
+    perm = silt.argsort(silt.tensor.from_numpy(np.array([5, 3, 9, 1], dtype=np.float32)).to_gpu())  # [3, 1, 0, 2]
+    take = _index_set([0, 1])
+
+    out = silt.gather(perm, take)
+
+    np.testing.assert_array_equal(out.copy_to(silt.cpu).numpy(), [3, 1])
+
+
+@pytest.mark.gpu
+def test_rank_selection_top_k_of_a_field():
+    """The intended use: select the k highest cells by value, via argsort."""
+    data = np.random.default_rng(11).random((8, 8), dtype=np.float32)
+    t = _gpu_tensor(data)
+    n, k = 64, 10
+
+    perm = silt.argsort(silt.tensor.from_numpy(data.reshape(-1).copy()).to_gpu())
+    top = silt.index_sort_unique(silt.gather(perm, silt.index_slice(perm[n - k : n,].slice)))
+    silt.indexed_set(t, -1.0, top)
+
+    expected = data.copy()
+    expected.reshape(-1)[np.argsort(data.reshape(-1), kind="stable")[n - k :]] = -1.0
+    np.testing.assert_array_equal(t.copy_to(silt.cpu).numpy().reshape(8, 8), expected)

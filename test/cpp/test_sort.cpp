@@ -95,3 +95,58 @@ TEST_SUITE("dense sort") {
     CHECK(t[2] == inf);
   }
 }
+
+TEST_SUITE("argsort") {
+
+  TEST_CASE("returns the permutation that sorts the tensor") {
+    const auto t = make_tensor<float>({3.0f, -1.0f, 2.0f, 0.5f});
+    const auto perm = silt::argsort(t);
+    REQUIRE(perm.elem() == 4);
+    CHECK(perm[0] == 1);
+    CHECK(perm[1] == 3);
+    CHECK(perm[2] == 2);
+    CHECK(perm[3] == 0);
+  }
+
+  TEST_CASE("is stable: equal elements keep their flat order") {
+    const auto t = make_tensor<int>({2, 1, 2, 1, 2});
+    const auto perm = silt::argsort(t);
+    const int64_t expected[] = {1, 3, 0, 2, 4};
+    for (int i = 0; i < 5; ++i)
+      CHECK(perm[i] == expected[i]);
+  }
+
+  TEST_CASE("gathering through the permutation reproduces sort") {
+    tensor_t<double> t(silt::shape(50), silt::CPU);
+    for (int i = 0; i < 50; ++i)
+      t[i] = (double)((i * 17) % 23);
+    const auto perm = silt::argsort(t);
+    auto sorted = t.copy_to(silt::CPU); // independent copy: sort() is in place
+    silt::sort(sorted);
+    for (int i = 0; i < 50; ++i)
+      CHECK(t[perm[i]] == sorted[i]);
+  }
+
+  TEST_CASE("NaNs are ordered last on the CPU") {
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+    const auto t = make_tensor<float>({nan, 1.0f, nan, 0.0f});
+    const auto perm = silt::argsort(t);
+    CHECK(perm[0] == 3);
+    CHECK(perm[1] == 1);
+    CHECK(perm[2] == 0);
+    CHECK(perm[3] == 2);
+  }
+
+  TEST_CASE("the result is an index tensor on the source host") {
+    const auto perm = silt::argsort(make_tensor<float>({2.0f, 1.0f}));
+    CHECK(perm.host() == silt::CPU);
+    CHECK(silt::argsort(tensor_t<float>(silt::shape(0), silt::CPU)).elem() == 0);
+  }
+
+  TEST_CASE("the source tensor is left untouched") {
+    const auto t = make_tensor<float>({2.0f, 1.0f});
+    (void)silt::argsort(t);
+    CHECK(t[0] == 2.0f);
+    CHECK(t[1] == 1.0f);
+  }
+}

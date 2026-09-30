@@ -25,6 +25,10 @@ template EXPORT_SHARED silt::tensor_t<int> silt::gather<int>(const silt::view_t<
 template EXPORT_SHARED silt::tensor_t<float> silt::gather<float>(const silt::view_t<float> src, const index_t ind);
 template EXPORT_SHARED silt::tensor_t<double> silt::gather<double>(const silt::view_t<double> src, const index_t ind);
 
+// Index sets are gatherable too (e.g. a rank range of an argsort).
+template EXPORT_SHARED silt::tensor_t<int64_t> silt::gather<int64_t>(const silt::tensor_t<int64_t> src, const index_t ind);
+template EXPORT_SHARED silt::tensor_t<int64_t> silt::gather<int64_t>(const silt::view_t<int64_t> src, const index_t ind);
+
 //
 // Scatter
 //

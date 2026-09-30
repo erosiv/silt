@@ -1,10 +1,12 @@
 #include <silt/op/sort.hpp>
 
 #include <thrust/execution_policy.h>
+#include <thrust/sequence.h>
 #include <thrust/sort.h>
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <type_traits>
 
 namespace silt {
@@ -40,8 +42,40 @@ void sort(tensor_t<T> tensor) {
     thrust::sort(thrust::device, first, last);
 }
 
+template<typename T>
+index_t argsort(const tensor_t<T> tensor) {
+
+  const int64_t n = (int64_t)tensor.elem();
+  index_t perm(silt::shape((int)n), tensor.host());
+  if (n == 0)
+    return perm;
+
+  int64_t* first = perm.data();
+
+  if (tensor.host() == silt::host_t::CPU) {
+    std::iota(first, first + n, int64_t(0));
+    const detail::nan_last_less<T> less;
+    std::stable_sort(first, first + n, [&](const int64_t a, const int64_t b) {
+      return less(tensor[a], tensor[b]);
+    });
+  }
+
+  else {
+    // Sort a private copy of the keys alongside the permutation.
+    tensor_t<T> keys = tensor.copy_to(silt::host_t::GPU);
+    thrust::sequence(thrust::device, first, first + n);
+    thrust::stable_sort_by_key(thrust::device, keys.data(), keys.data() + n, first);
+  }
+
+  return perm;
+}
+
 template EXPORT_SHARED void silt::sort<int>(silt::tensor_t<int> tensor);
 template EXPORT_SHARED void silt::sort<float>(silt::tensor_t<float> tensor);
 template EXPORT_SHARED void silt::sort<double>(silt::tensor_t<double> tensor);
+
+template EXPORT_SHARED silt::index_t silt::argsort<int>(const silt::tensor_t<int> tensor);
+template EXPORT_SHARED silt::index_t silt::argsort<float>(const silt::tensor_t<float> tensor);
+template EXPORT_SHARED silt::index_t silt::argsort<double>(const silt::tensor_t<double> tensor);
 
 } // end of namespace silt

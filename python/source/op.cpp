@@ -10,6 +10,7 @@ namespace nb = nanobind;
 #include <silt/core/types.hpp>
 #include <silt/core/view.hpp>
 #include <silt/op/common.hpp>
+#include <silt/op/histogram.hpp>
 #include <silt/op/reduce.hpp>
 #include <silt/op/sort.hpp>
 
@@ -298,6 +299,29 @@ void bind_op(nb::module_& module) {
   module.def("sort_", [](silt::tensor& tensor) {
     silt::select(tensor.type(), [&tensor]<silt::primitive S>() {
       silt::sort<S>(tensor.as<S>());
+    });
+  });
+
+  module.def("argsort", [](const silt::tensor& tensor) {
+    return silt::select(tensor.type(), [&tensor]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(silt::argsort<S>(tensor.as<S>()));
+    });
+  });
+
+  //
+  // Histogram
+  //  Equal-width bins over [lo, hi], the last bin closed. See histogram.hpp.
+  //
+
+  module.def("histogram", [](const silt::tensor& data, const int bins, const nb::object lo, const nb::object hi) {
+    return silt::select(data.type(), [&data, bins, &lo, &hi]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(silt::histogram<S>(data.as<S>(), bins, nb::cast<S>(lo), nb::cast<S>(hi)));
+    });
+  });
+
+  module.def("histogram", [](const silt::view& data, const int bins, const nb::object lo, const nb::object hi) {
+    return silt::select(data.type(), [&data, bins, &lo, &hi]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(silt::histogram<S>(data.as<S>(), bins, nb::cast<S>(lo), nb::cast<S>(hi)));
     });
   });
 

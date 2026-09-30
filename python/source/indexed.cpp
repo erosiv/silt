@@ -6,6 +6,7 @@ namespace nb = nanobind;
 #include "glm.hpp"
 #include "util.hpp"
 #include <silt/core/view.hpp>
+#include <type_traits>
 #include <silt/op/indexed.hpp>
 
 namespace {
@@ -196,14 +197,14 @@ void bind_indexed(nb::module_& module) {
 
   module.def("gather", [](const silt::tensor& src, const silt::tensor& ind) {
     require_index_set(src, ind);
-    return silt::select(src.type(), [&src, &ind]<silt::primitive S>() -> silt::tensor {
+    return silt::select(src.type(), [&src, &ind]<typename S> requires(silt::primitive<S> || std::is_same_v<S, int64_t>)() -> silt::tensor {
       return silt::tensor(silt::gather<S>(src.as<S>(), ind.as<int64_t>()));
     });
   });
 
   module.def("gather", [](const silt::view& src, const silt::tensor& ind) {
     require_index_set(src, ind);
-    return silt::select(src.type(), [&src, &ind]<silt::primitive S>() -> silt::tensor {
+    return silt::select(src.type(), [&src, &ind]<typename S> requires(silt::primitive<S> || std::is_same_v<S, int64_t>)() -> silt::tensor {
       return silt::tensor(silt::gather<S>(src.as<S>(), ind.as<int64_t>()));
     });
   });

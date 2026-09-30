@@ -107,6 +107,14 @@ TEST_SUITE("gather") {
     CHECK(out[2] == 0.0f); // 4 is outside the 4-element view
   }
 
+  TEST_CASE("gather works on index sets") {
+    const auto perm = make_indices({4, 2, 9, 7});
+    const auto out = silt::gather(perm, make_indices({3, 1}));
+    REQUIRE(out.elem() == 2);
+    CHECK(out[0] == 7);
+    CHECK(out[1] == 2);
+  }
+
   TEST_CASE("gather on mismatched hosts throws") {
     // Zero-element, so no device allocation is needed to build a GPU-hosted index set.
     index_t gpu_ind(silt::shape(0), silt::GPU);

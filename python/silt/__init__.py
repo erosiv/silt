@@ -142,6 +142,18 @@ def sort(t):
     return result
 
 
+def histogram(data, bins, lo=None, hi=None):
+    """Counts of `data` in `bins` equal-width bins over [lo, hi], as an int
+    tensor on the same host. The last bin is closed; values outside the range
+    and NaNs are not counted. `lo` / `hi` default to the data's own min / max
+    (tensors only; a view needs an explicit range)."""
+    if lo is None:
+        lo = _ext.min(data)
+    if hi is None:
+        hi = _ext.max(data)
+    return _ext.histogram(data, bins, lo, hi)
+
+
 def clamp(lhs, min, max):
     result = lhs.copy_to()
     clamp_(result, min, max)
@@ -178,6 +190,6 @@ __all__ = (
     + [
         "__version__",
         "zeros", "ones", "full", "empty", "like", "arange", "linspace", "rand",
-        "add", "multiply", "divide", "mix", "sort", "clamp", "minimum", "maximum",
+        "add", "multiply", "divide", "mix", "sort", "histogram", "clamp", "minimum", "maximum",
     ]
 )
