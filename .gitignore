@@ -53,10 +53,11 @@ source/build
 **/*.ply
 **/*.npy
 
-# Generated Python type stub (nanobind_add_stub, see python/CMakeLists.txt)
-python/silt/*.pyi
-
 # Doxygen XML consumed by Breathe (see doc/Doxyfile, doc/conf.py)
 doc/_build/
+
+# Python reference rendered from the stubs (see doc/pyapi.py, doc/conf.py)
+doc/_generated/
+
 
 # !example/data/dem_1024.tiff

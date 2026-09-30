@@ -140,6 +140,12 @@ sphinx-build doc build/html
 
 Note that building the documentation requires sphinx, doxygen, breathe and myst_parser. All except doxygen are available through `pip`.
 
+The Python reference is rendered from the type stubs in `python/silt/*.pyi`, not from an installed build, so the documentation needs no compiled extension.
+
+### Type Stubs
+
+`python/silt/__init__.pyi` and `python/silt/silt.pyi` are the compact Python API summary (they are also what type checkers read). They are generated from the compiled extension by every build (`pip install -e .` or CMake) and checked in; CI fails if the committed stubs are stale. After changing the bindings or `python/silt/__init__.py`, rebuild and commit the updated stubs. Set `-DSILT_UPDATE_STUBS=OFF` to skip regeneration.
+
 ### Running Tests
 
 Python tests (the primary test suite) use `pytest`:

@@ -26,20 +26,69 @@ upload / download interface. Note that these conversions currently **copy** the 
   t_numpy = t_numpy.torch() # Convert to pytorch
   t_torch = t_torch.numpy() # Convert to numpy
 
+Views and Slicing
+-----------------
+
+Indexing a tensor with slices returns a non-owning ``view``. Views broadcast an operation over
+a sub-region without copying, e.g. a single channel of an ``[x, y, c]`` tensor:
+
+.. code ::
+  python
+
+  color = silt.zeros((512, 512, 3), silt.float32, silt.gpu)
+  silt.set_(color[:, :, 0], 1.0)              # Paint the Red Channel
+
+Index Sets, Gather and Scatter
+------------------------------
+
+An index set is a compact ``int64`` tensor of flat indices, typically living on the GPU. Selectors
+build one from a region or from data values; the ``index_*`` set operations combine them, and
+require sorted, unique operands (as the selectors produce; ``index_sort_unique`` establishes this
+for any other set):
+
+.. code ::
+  python
+
+  s = silt.shape(512, 512)
+  a = silt.index_radius(s, [200.0, 256.0], 64.0)
+  b = silt.index_box(s, [128.0, 128.0], [256.0, 256.0])
+  idx = silt.index_difference(silt.index_union(a, b), silt.index_intersection(a, b))
+  rest = silt.index_complement(idx, s)
+
+``indexed_*`` operations and reductions act only on the selected cells, and ``gather`` / ``scatter_``
+move them between a tensor and a compact dense tensor. An index set addresses the *logical*
+index space of its operand, so slicing a view selects which elements it refers to:
+
+.. code ::
+  python
+
+  silt.indexed_add_(color[:, :, 0], 0.5, idx)  # Modify Selected Cells of One Channel
+  dense = silt.gather(color[:, :, 0], idx)     # Compact 1D Tensor, In Index Order
+  silt.multiply_(dense, 2.0)                   # Any Dense Operation
+  silt.scatter_(color[:, :, 0], dense, idx)    # Write Back (Duplicate Indices Race)
+
+Out-of-range indices gather zero and are skipped by scatter and the indexed operations. Over an empty
+index set, ``indexed_sum`` is 0 and a floating-point ``indexed_mean`` is NaN; ``indexed_min``,
+``indexed_max``, ``indexed_argmin``, ``indexed_argmax`` and an integer ``indexed_mean`` raise.
+
+Sorting and Histograms
+----------------------
+
+.. code ::
+  python
+
+  ordered = silt.sort(t)               # Sorted Copy (In-Place: silt.sort_(t))
+  perm = silt.argsort(t)               # Stable Permutation, an Index Set
+  counts = silt.histogram(t, 64)       # Equal-Width Bin Counts (int32) over [min, max]
+
+``histogram`` bins over the closed interval ``[lo, hi]`` (pass ``lo`` / ``hi`` explicitly for a
+view); NaNs and out-of-range values are not counted. Where NaNs sort is host-dependent.
+
 API Reference
 -------------
 
-Generated from the built extension module (docstrings come from nanobind's
-``.def(...)`` bindings, or its own auto-generated signature when none is
-given). ``:imported-members:`` is needed because ``python/silt/__init__.py``
-re-exports the extension's contents via ``from .silt import *`` -- without
-it, autodoc treats everything as "imported" rather than defined here and
-skips it. Requires ``silt`` to be importable in whatever Python environment
-runs ``sphinx-build`` (i.e. installed via ``pip install -e .`` first) --
-unlike the C++ reference, this reads the real module, not source text.
+Generated from the type stubs (``python/silt/*.pyi``), which every build regenerates from the
+compiled extension and the pure-Python layer in ``python/silt/__init__.py``. Functions ending in
+``_`` operate in-place; their unsuffixed counterparts return a new tensor.
 
-.. automodule:: silt
-   :members:
-   :undoc-members:
-   :imported-members:
-   :show-inheritance:
+.. include:: _generated/python_reference.rst

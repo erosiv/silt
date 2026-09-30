@@ -44,6 +44,12 @@ point user code hooks into to add new operations (see :doc:`extending`).
 
 .. doxygenfile:: common.hpp
 
+.. doxygenfile:: reduce.hpp
+
 .. doxygenfile:: indexed.hpp
+
+.. doxygenfile:: sort.hpp
+
+.. doxygenfile:: histogram.hpp
 
 .. doxygenfile:: rng.hpp

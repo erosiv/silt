@@ -5,6 +5,11 @@ slice, tensor, view, and the operation free-functions. This package re-exports
 them and is the intended home for the pure-Python convenience layer.
 """
 
+from __future__ import annotations
+
+import builtins as _b  # `int` etc. are shadowed by the dtype constants exported below
+from typing import Sequence
+
 from .silt import *  # noqa: F401,F403
 
 # Re-exported here (rather than at the bottom, where it originally lived)
@@ -14,7 +19,7 @@ from .silt import *  # noqa: F401,F403
 from . import silt as _ext
 
 
-def _shape(spec):
+def _shape(spec: _ext.shape | Sequence[_b.int]) -> _ext.shape:
     """Accept a silt.shape, or a tuple/list of up to 4 ints."""
     if isinstance(spec, shape):
         return spec
@@ -24,7 +29,7 @@ def _shape(spec):
     return shape(*dims)
 
 
-def _make(spec, dtype=float32, host=cpu, fill=None):
+def _make(spec: _ext.shape | Sequence[_b.int], dtype: _ext.dtype = float32, host: _ext.host = cpu, fill: float | None = None) -> _ext.tensor:
     """Shared allocation (+ optional scalar fill) behind zeros/ones/full/
     empty/like, so the shape/dtype/host argument handling exists once."""
     t = tensor(dtype, _shape(spec), host)
@@ -33,34 +38,34 @@ def _make(spec, dtype=float32, host=cpu, fill=None):
     return t
 
 
-def zeros(shape, dtype=float32, host=cpu):
+def zeros(shape: _ext.shape | Sequence[_b.int], dtype: _ext.dtype = float32, host: _ext.host = cpu) -> _ext.tensor:
     """A new tensor filled with 0."""
     return _make(shape, dtype, host, fill=0)
 
 
-def ones(shape, dtype=float32, host=cpu):
+def ones(shape: _ext.shape | Sequence[_b.int], dtype: _ext.dtype = float32, host: _ext.host = cpu) -> _ext.tensor:
     """A new tensor filled with 1."""
     return _make(shape, dtype, host, fill=1)
 
 
-def full(shape, value, dtype=float32, host=cpu):
+def full(shape: _ext.shape | Sequence[_b.int], value: float, dtype: _ext.dtype = float32, host: _ext.host = cpu) -> _ext.tensor:
     """A new tensor filled with `value`."""
     return _make(shape, dtype, host, fill=value)
 
 
-def empty(shape, dtype=float32, host=cpu):
+def empty(shape: _ext.shape | Sequence[_b.int], dtype: _ext.dtype = float32, host: _ext.host = cpu) -> _ext.tensor:
     """Allocate without initializing -- contents are whatever the allocator
     handed back."""
     return _make(shape, dtype, host)
 
 
-def like(t, fill=None):
+def like(t: _ext.tensor, fill: float | None = None) -> _ext.tensor:
     """A new tensor with the same shape, dtype and host as `t`, optionally
     filled with a scalar value (left uninitialized if `fill` is omitted)."""
     return _make(t.shape, t.dtype, t.host, fill=fill)
 
 
-def _numpy_dtype(dtype):
+def _numpy_dtype(dtype: _ext.dtype):
     # silt has no hard runtime dependency on numpy (see pyproject.toml) --
     # only arange/linspace need it, so the import stays local to them.
     import numpy as _np
@@ -74,7 +79,7 @@ def _numpy_dtype(dtype):
     raise ValueError(f"no numpy dtype for {dtype!r}")
 
 
-def arange(n, dtype=float32, host=cpu):
+def arange(n: _b.int, dtype: _ext.dtype = float32, host: _ext.host = cpu) -> _ext.tensor:
     """A 1D tensor of `n` consecutive values starting at 0, analogous to
     numpy.arange. Requires numpy."""
     import numpy as _np
@@ -83,7 +88,7 @@ def arange(n, dtype=float32, host=cpu):
     return tensor.from_numpy(data).to(host)
 
 
-def linspace(a, b, n, dtype=float32, host=cpu):
+def linspace(a: float, b: float, n: _b.int, dtype: _ext.dtype = float32, host: _ext.host = cpu) -> _ext.tensor:
     """A 1D tensor of `n` evenly spaced values from `a` to `b` inclusive,
     analogous to numpy.linspace. Requires numpy."""
     import numpy as _np
@@ -92,7 +97,7 @@ def linspace(a, b, n, dtype=float32, host=cpu):
     return tensor.from_numpy(data).to(host)
 
 
-def rand(shape, seed_value=0):
+def rand(shape: _ext.shape | Sequence[_b.int], seed_value: _b.int = 0) -> _ext.tensor:
     """Allocate a GPU RNG-state tensor and seed it in one step -- previously
     two easy-to-forget calls: ``tensor(silt.rng, shape, silt.gpu)`` then
     ``silt.seed(t, seed_value, 0)``.
@@ -112,37 +117,42 @@ def rand(shape, seed_value=0):
 # Implemented here rather than in C++ because "out-of-place" is just
 # "copy, then mutate the copy" -- no need to duplicate the kernel
 # dispatch for it.
-def add(lhs, rhs):
+def add(lhs: _ext.tensor, rhs: _ext.tensor | float) -> _ext.tensor:
+    """Out-of-place add: a copy of `lhs` plus `rhs` (tensor or scalar)."""
     result = lhs.copy_to()
     add_(result, rhs)
     return result
 
 
-def multiply(lhs, rhs):
+def multiply(lhs: _ext.tensor, rhs: _ext.tensor | float) -> _ext.tensor:
+    """Out-of-place multiply: a copy of `lhs` times `rhs` (tensor or scalar)."""
     result = lhs.copy_to()
     multiply_(result, rhs)
     return result
 
 
-def divide(lhs, rhs):
+def divide(lhs: _ext.tensor, rhs: _ext.tensor | float) -> _ext.tensor:
+    """Out-of-place divide: a copy of `lhs` divided by `rhs` (tensor or scalar)."""
     result = lhs.copy_to()
     divide_(result, rhs)
     return result
 
 
-def mix(lhs, rhs, w):
+def mix(lhs: _ext.tensor, rhs: _ext.tensor, w: float) -> _ext.tensor:
+    """Out-of-place mix: a copy of `lhs` interpolated toward `rhs` by weight `w`."""
     result = lhs.copy_to()
     mix_(result, rhs, w)
     return result
 
 
-def sort(t):
+def sort(t: _ext.tensor) -> _ext.tensor:
+    """Out-of-place sort: an ascending sorted copy of `t`."""
     result = t.copy_to()
     sort_(result)
     return result
 
 
-def histogram(data, bins, lo=None, hi=None):
+def histogram(data: _ext.tensor | _ext.view, bins: _b.int, lo: float | None = None, hi: float | None = None) -> _ext.tensor:
     """Counts of `data` in `bins` equal-width bins over [lo, hi], as an int
     tensor on the same host. The last bin is closed; values outside the range
     and NaNs are not counted. `lo` / `hi` default to the data's own min / max
@@ -154,19 +164,22 @@ def histogram(data, bins, lo=None, hi=None):
     return _ext.histogram(data, bins, lo, hi)
 
 
-def clamp(lhs, min, max):
+def clamp(lhs: _ext.tensor, min: float, max: float) -> _ext.tensor:
+    """Out-of-place clamp: a copy of `lhs` limited to [min, max]."""
     result = lhs.copy_to()
     clamp_(result, min, max)
     return result
 
 
-def minimum(lhs, rhs):
+def minimum(lhs: _ext.tensor, rhs: _ext.tensor | float) -> _ext.tensor:
+    """Out-of-place elementwise minimum of a copy of `lhs` and `rhs`."""
     result = lhs.copy_to()
     minimum_(result, rhs)
     return result
 
 
-def maximum(lhs, rhs):
+def maximum(lhs: _ext.tensor, rhs: _ext.tensor | float) -> _ext.tensor:
+    """Out-of-place elementwise maximum of a copy of `lhs` and `rhs`."""
     result = lhs.copy_to()
     maximum_(result, rhs)
     return result
@@ -185,11 +198,12 @@ try:
 except ImportError:  # pragma: no cover -- importlib.metadata is stdlib from 3.8
     __version__ = "0+unknown"
 
-__all__ = (
+# Dict-based dedupe: wrappers (e.g. histogram) shadow same-named extension names.
+__all__ = list(dict.fromkeys(
     [_n for _n in dir(_ext) if not _n.startswith("_")]
     + [
         "__version__",
         "zeros", "ones", "full", "empty", "like", "arange", "linspace", "rand",
         "add", "multiply", "divide", "mix", "sort", "histogram", "clamp", "minimum", "maximum",
     ]
-)
+))
