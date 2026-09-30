@@ -606,3 +606,137 @@ def test_index_slice_feeds_indexed_set():
     expected[1, :] = 1.0
     expected[3, :] = 1.0
     np.testing.assert_array_equal(data, expected)
+
+
+# -- gather / scatter (GPU only) -------------------------------------------
+
+
+def _gpu_tensor(data):
+    """A GPU silt.tensor with the shape and contents of a numpy array."""
+    t = silt.tensor.from_numpy(np.ascontiguousarray(data.reshape(-1)))
+    t.reshape(*data.shape)
+    return t.to_gpu()
+
+
+@pytest.mark.gpu
+def test_gather_matches_dense_mask():
+    data = np.arange(64, dtype=np.float32).reshape(8, 8)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    out = silt.gather(_gpu_tensor(data), idx)
+
+    assert out.elem == idx.elem
+    np.testing.assert_array_equal(out.to_cpu().numpy(), data[_radius_mask()])
+
+
+@pytest.mark.gpu
+def test_gather_scatter_round_trip_with_dense_manipulation():
+    data = np.arange(64, dtype=np.float32).reshape(8, 8)
+    t = _gpu_tensor(data)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    dense = silt.gather(t, idx)
+    silt.multiply_(dense, 10.0)
+    silt.scatter_(t, dense, idx)
+
+    expected = np.where(_radius_mask(), data * 10.0, data)
+    np.testing.assert_array_equal(t.to_cpu().numpy().reshape(8, 8), expected)
+
+
+@pytest.mark.gpu
+@pytest.mark.parametrize("dtype,np_dtype", [(silt.float64, np.float64), (silt.dtype.int, np.int32)])
+def test_gather_scatter_other_dtypes(dtype, np_dtype):
+    data = np.arange(64).astype(np_dtype).reshape(8, 8)
+    t = _gpu_tensor(data)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    dense = silt.gather(t, idx)
+    assert dense.dtype == dtype
+    # copy_to, not to_cpu: to_cpu() moves the tensor itself off the GPU.
+    np.testing.assert_array_equal(dense.copy_to(silt.cpu).numpy(), data[_radius_mask()])
+
+    silt.set_(dense, 7)
+    silt.scatter_(t, dense, idx)
+    np.testing.assert_array_equal(
+        t.copy_to(silt.cpu).numpy().reshape(8, 8), np.where(_radius_mask(), 7, data)
+    )
+
+
+@pytest.mark.gpu
+def test_gather_from_channel_view_addresses_the_slice_space():
+    """An index set over shape (x, y) selects the same cells from every
+    channel of an (x, y, c) tensor when gathered through a channel view."""
+    data = np.random.default_rng(0).random((8, 8, 3), dtype=np.float32)
+    t = _gpu_tensor(data)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+    mask = _radius_mask()
+
+    for c in range(3):
+        out = silt.gather(t[:, :, c], idx)
+        np.testing.assert_array_equal(out.to_cpu().numpy(), data[:, :, c][mask])
+
+
+@pytest.mark.gpu
+def test_scatter_through_channel_views_paints_a_color():
+    t = silt.zeros((8, 8, 3), silt.float32, silt.gpu)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+    color = (0.25, 0.5, 0.75)
+
+    for c, value in enumerate(color):
+        dense = silt.full((idx.elem,), value, silt.float32, silt.gpu)
+        silt.scatter_(t[:, :, c], dense, idx)
+
+    expected = np.zeros((8, 8, 3), dtype=np.float32)
+    expected[_radius_mask()] = color
+    np.testing.assert_array_equal(t.to_cpu().numpy().reshape(8, 8, 3), expected)
+
+
+@pytest.mark.gpu
+def test_gather_out_of_range_indices_yield_zero():
+    """Indices past the operand are gathered as 0 rather than read."""
+    t = _gpu_tensor(np.arange(8, dtype=np.float32) + 1.0)
+    idx = silt.index_box(silt.shape(4, 4), [0.0, 0.0], [4.0, 4.0])  # flat 0..15
+
+    out = silt.gather(t, idx).to_cpu().numpy()
+
+    np.testing.assert_array_equal(out[:8], np.arange(8, dtype=np.float32) + 1.0)
+    np.testing.assert_array_equal(out[8:], np.zeros(8, dtype=np.float32))
+
+
+@pytest.mark.gpu
+def test_scatter_out_of_range_indices_are_skipped():
+    t = silt.zeros((8,), silt.float32, silt.gpu)
+    idx = silt.index_box(silt.shape(4, 4), [0.0, 0.0], [4.0, 4.0])  # flat 0..15
+    dense = silt.full((idx.elem,), 3.0, silt.float32, silt.gpu)
+
+    silt.scatter_(t, dense, idx)
+
+    np.testing.assert_array_equal(t.to_cpu().numpy(), np.full(8, 3.0, dtype=np.float32))
+
+
+@pytest.mark.gpu
+def test_gather_scatter_with_an_empty_index_set():
+    t = _gpu_tensor(np.arange(8, dtype=np.float32))
+    idx = silt.index_range(t, 100.0, 200.0)
+    assert idx.elem == 0
+
+    dense = silt.gather(t, idx)
+    assert dense.elem == 0
+
+    silt.scatter_(t, dense, idx)
+    np.testing.assert_array_equal(t.to_cpu().numpy(), np.arange(8, dtype=np.float32))
+
+
+@pytest.mark.gpu
+def test_gather_scatter_reject_mismatches():
+    t = silt.zeros((64,), silt.float32, silt.gpu)
+    idx = silt.index_radius(silt.shape(8, 8), [4.0, 4.0], 2.5)
+
+    with pytest.raises(Exception):  # host mismatch: cpu operand, gpu index set
+        silt.gather(silt.zeros((64,), silt.float32, silt.cpu), idx)
+
+    with pytest.raises(Exception):  # dtype mismatch between dst and dense src
+        silt.scatter_(t, silt.zeros((idx.elem,), silt.float64, silt.gpu), idx)
+
+    with pytest.raises(Exception):  # dense src must have one element per index
+        silt.scatter_(t, silt.zeros((idx.elem + 1,), silt.float32, silt.gpu), idx)

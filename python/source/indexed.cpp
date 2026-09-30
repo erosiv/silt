@@ -4,12 +4,14 @@ namespace nb = nanobind;
 #include <nanobind/stl/vector.h>
 
 #include "glm.hpp"
+#include <silt/core/view.hpp>
 #include <silt/op/indexed.hpp>
 
 namespace {
 
-//! Type/host guard for an index-set argument.
-void require_index_set(const silt::tensor& lhs, const silt::tensor& ind) {
+//! Type/host guard for an index-set argument. `L` is tensor or view.
+template<typename L>
+void require_index_set(const L& lhs, const silt::tensor& ind) {
   if (ind.type() != silt::dtype::INT64)
     throw silt::error::mismatch_type(silt::dtype::INT64, ind.type());
   if (lhs.host() != ind.host())
@@ -141,6 +143,45 @@ void bind_indexed(nb::module_& module) {
       throw silt::error::mismatch_size(lhs.elem(), rhs.elem());
     silt::select(lhs.type(), [&lhs, &rhs, &ind, w]<silt::primitive S>() {
       silt::indexed_mix<S>(lhs.as<S>(), rhs.as<S>(), ind.as<int64_t>(), w);
+    });
+  });
+
+  //
+  // Gather / Scatter
+  //  Index sets address the logical linear space of a tensor, or of a
+  //  view's slice, so slicing a view picks the elements an index set
+  //  refers to (e.g. t[:, :, c] for an index set over shape (x, y)).
+  //
+
+  module.def("gather", [](const silt::tensor& src, const silt::tensor& ind) {
+    require_index_set(src, ind);
+    return silt::select(src.type(), [&src, &ind]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(silt::gather<S>(src.as<S>(), ind.as<int64_t>()));
+    });
+  });
+
+  module.def("gather", [](const silt::view& src, const silt::tensor& ind) {
+    require_index_set(src, ind);
+    return silt::select(src.type(), [&src, &ind]<silt::primitive S>() -> silt::tensor {
+      return silt::tensor(silt::gather<S>(src.as<S>(), ind.as<int64_t>()));
+    });
+  });
+
+  module.def("scatter_", [](silt::tensor& dst, const silt::tensor& src, const silt::tensor& ind) {
+    require_index_set(dst, ind);
+    if (dst.type() != src.type())
+      throw silt::error::mismatch_type(dst.type(), src.type());
+    silt::select(dst.type(), [&dst, &src, &ind]<silt::primitive S>() {
+      silt::scatter<S>(dst.as<S>(), src.as<S>(), ind.as<int64_t>());
+    });
+  });
+
+  module.def("scatter_", [](silt::view& dst, const silt::tensor& src, const silt::tensor& ind) {
+    require_index_set(dst, ind);
+    if (dst.type() != src.type())
+      throw silt::error::mismatch_type(dst.type(), src.type());
+    silt::select(dst.type(), [&dst, &src, &ind]<silt::primitive S>() {
+      silt::scatter<S>(dst.as<S>(), src.as<S>(), ind.as<int64_t>());
     });
   });
 

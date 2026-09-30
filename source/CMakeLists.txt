@@ -39,6 +39,7 @@ target_sources(${TARGET_NAME} PRIVATE
   silt/op/reduce.cu
   silt/op/indexed.cu
   silt/op/indexed_reduce.cu
+  silt/op/gather_scatter.cu
   silt/op/rng.cu
 )
 

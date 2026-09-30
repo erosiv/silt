@@ -38,7 +38,7 @@ silt::view getitem_impl(silt::tensor& tensor, nb::tuple tuple) {
 
       nb::handle handle = tuple[d];
       Py_ssize_t offset, stride, extent;
-      unpack_slice(handle, offset, stride, extent);
+      unpack_slice(handle, shape[d], offset, stride, extent);
       view_t.index(d, offset, stride, extent);
     }
 

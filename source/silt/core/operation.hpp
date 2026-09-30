@@ -121,7 +121,103 @@ __host__ void indexed_binop_apply_cpu(tensor_t<T> lhs, const tensor_t<T> rhs, co
   }
 }
 
+// Gather: out[n] = src[ind[n]]
+//
+// `C` is any container with a flat subscript (tensor_t, view_t), so `ind`
+// addresses its logical linear space. Out-of-range indices gather T(0).
+
+template<typename C, typename T>
+__global__ void gather_gpu(tensor_t<T> out, const C src, const tensor_t<int64_t> ind) {
+  const int64_t n = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (n < (int64_t)ind.elem()) {
+    const int64_t i = ind[n];
+    out[n] = (i >= 0 && i < (int64_t)src.elem()) ? src[i] : T(0);
+  }
+}
+
+template<typename C, typename T>
+__host__ void gather_cpu(tensor_t<T> out, const C src, const tensor_t<int64_t> ind) {
+  for (int64_t n = 0; n < (int64_t)ind.elem(); ++n) {
+    const int64_t i = ind[n];
+    out[n] = (i >= 0 && i < (int64_t)src.elem()) ? src[i] : T(0);
+  }
+}
+
+// Scatter: dst[ind[n]] = src[n]
+//
+// Out-of-range indices are skipped. Duplicate indices race.
+
+template<typename C, typename T>
+__global__ void scatter_gpu(C dst, const tensor_t<T> src, const tensor_t<int64_t> ind) {
+  const int64_t n = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (n < (int64_t)ind.elem()) {
+    const int64_t i = ind[n];
+    if (i >= 0 && i < (int64_t)dst.elem()) {
+      dst[i] = src[n];
+    }
+  }
+}
+
+template<typename C, typename T>
+__host__ void scatter_cpu(C dst, const tensor_t<T> src, const tensor_t<int64_t> ind) {
+  for (int64_t n = 0; n < (int64_t)ind.elem(); ++n) {
+    const int64_t i = ind[n];
+    if (i >= 0 && i < (int64_t)dst.elem()) {
+      dst[i] = src[n];
+    }
+  }
+}
+
 } // namespace detail
+
+template<typename C>
+tensor_t<typename C::val_t> gather(const C src, const tensor_t<int64_t> ind) {
+
+  using T = typename C::val_t;
+
+  if (src.host() != ind.host())
+    throw silt::error::mismatch_host(src.host(), ind.host());
+
+  tensor_t<T> out(silt::shape((int)ind.elem()), src.host());
+  if (ind.elem() == 0)
+    return out;
+
+  if (src.host() == silt::host_t::CPU) {
+    detail::gather_cpu(out, src, ind);
+  }
+
+  else if (src.host() == silt::host_t::GPU) {
+    detail::gather_gpu<<<block(ind.elem(), 512), 512>>>(out, src, ind);
+    gpuErrchk(cudaGetLastError());
+  }
+
+  return out;
+}
+
+template<typename C>
+void scatter(C dst, const tensor_t<typename C::val_t> src, const tensor_t<int64_t> ind) {
+
+  if (dst.host() != src.host())
+    throw silt::error::mismatch_host(dst.host(), src.host());
+
+  if (dst.host() != ind.host())
+    throw silt::error::mismatch_host(dst.host(), ind.host());
+
+  if (src.elem() != ind.elem())
+    throw silt::error::mismatch_size(ind.elem(), src.elem());
+
+  if (ind.elem() == 0)
+    return;
+
+  if (dst.host() == silt::host_t::CPU) {
+    detail::scatter_cpu(dst, src, ind);
+  }
+
+  else if (dst.host() == silt::host_t::GPU) {
+    detail::scatter_gpu<<<block(ind.elem(), 512), 512>>>(dst, src, ind);
+    gpuErrchk(cudaGetLastError());
+  }
+}
 
 template<typename T, typename F>
 void uniop_inplace(T lhs, F func) {

@@ -104,3 +104,45 @@ def test_view_survives_source_tensor_being_dropped():
     assert "OK" in result.stdout, (
         f"stdout={result.stdout}\nstderr={result.stderr}"
     )
+
+
+def test_open_slice_spans_the_whole_dimension():
+    """A bare `:` has no stop; it must resolve against the dimension
+    rather than being taken as an (overflowing) extent."""
+    t = silt.tensor(silt.float32, silt.shape(4, 4, 3))
+    v = t[:, :, 1]
+    assert [v.slice.extent[i] for i in range(3)] == [4, 4, 1]
+    assert [v.slice.offset[i] for i in range(3)] == [0, 0, 1]
+    assert v.elem == 16
+
+
+def test_stop_bounds_the_extent_not_just_the_start():
+    t = silt.tensor(silt.float32, silt.shape(10))
+    v = t[2:6,]
+    assert v.slice.offset[0] == 2
+    assert v.slice.extent[0] == 4
+
+
+def test_partial_slice_writes_touch_exactly_the_selected_elements():
+    t = silt.tensor(silt.float32, silt.shape(10))
+    silt.set_(t, 0.0)
+    silt.set_(t[2:6,], 1.0)
+    expected = np.zeros(10, dtype=np.float32)
+    expected[2:6] = 1.0
+    np.testing.assert_array_equal(t.numpy(), expected)
+
+
+def test_negative_bounds_count_from_the_end():
+    t = silt.tensor(silt.float32, silt.shape(10))
+    v = t[-3:,]
+    assert v.slice.offset[0] == 7
+    assert v.slice.extent[0] == 3
+    assert t[-1,].slice.offset[0] == 9
+
+
+def test_integer_index_out_of_range_raises():
+    t = silt.tensor(silt.float32, silt.shape(10))
+    with pytest.raises(IndexError):
+        _ = t[10,]
+    with pytest.raises(IndexError):
+        _ = t[-11,]

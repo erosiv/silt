@@ -59,19 +59,29 @@ inline const char* host_name(const silt::host_t host) {
 // its own.
 inline void unpack_slice(
     nb::handle& handle,
+    const Py_ssize_t bound,
     Py_ssize_t& offset,
     Py_ssize_t& stride,
     Py_ssize_t& extent
 ) {
 
+  // Python slice semantics: defaults, negative and out-of-range bounds are
+  // resolved against `bound`, yielding the exact element count.
   if (PySlice_Check(handle.ptr())) {
-    if (PySlice_Unpack(handle.ptr(), &offset, &extent, &stride) < 0) {
+    Py_ssize_t start, stop;
+    if (PySlice_Unpack(handle.ptr(), &start, &stop, &stride) < 0)
       throw nb::python_error();
-    }
+    extent = PySlice_AdjustIndices(bound, &start, &stop, stride);
+    offset = start;
   }
 
+  // Integer index: a single element, negative values count from the end.
   else {
     offset = nb::cast<Py_ssize_t>(handle);
+    if (offset < 0)
+      offset += bound;
+    if (offset < 0 || offset >= bound)
+      throw nb::index_error("index out of range");
     stride = 1;
     extent = 1;
   }

@@ -167,6 +167,36 @@ template<typename T>
 void indexed_mix(tensor_t<T> lhs, const tensor_t<T> rhs, const index_t ind, const float w);
 
 //
+// Gather / Scatter
+//
+//  An index set addresses the logical linear space of its operand: the flat
+//  memory of a tensor_t, or the slice-space (row-major over the slice extent)
+//  of a view_t. Slicing a view therefore selects which elements an index set
+//  refers to, e.g. one channel of a [x, y, c] tensor for an index set built
+//  over [x, y].
+//
+//  The dense side is always a compact 1D tensor_t, ordered like the index set.
+//
+
+//! out[k] = src[ind[k]]. Out-of-range indices gather zero.
+template<typename T>
+tensor_t<T> gather(const tensor_t<T> src, const index_t ind);
+
+//! out[k] = src[ind[k]] in the slice-space of `src`. Out-of-range indices gather zero.
+template<typename T>
+tensor_t<T> gather(const view_t<T> src, const index_t ind);
+
+//! dst[ind[k]] = src[k]. Out-of-range indices are skipped.
+//! Duplicate indices race: which write lands is unspecified.
+template<typename T>
+void scatter(tensor_t<T> dst, const tensor_t<T> src, const index_t ind);
+
+//! dst[ind[k]] = src[k] in the slice-space of `dst`. Out-of-range indices are skipped.
+//! Duplicate indices race: which write lands is unspecified.
+template<typename T>
+void scatter(view_t<T> dst, const tensor_t<T> src, const index_t ind);
+
+//
 // Indexed Reductions
 //
 
