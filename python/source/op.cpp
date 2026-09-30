@@ -47,7 +47,21 @@ void bind_op(nb::module_& module) {
     });
   });
 
+  module.def("set_", [](silt::view& lhs, const silt::view& rhs) {
+    assert_match(lhs, rhs);
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::set<S>(lhs.as<S>(), rhs.as<S>());
+    });
+  });
+
   module.def("add_", [](silt::tensor& lhs, const silt::tensor& rhs) {
+    assert_match(lhs, rhs);
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::add<S>(lhs.as<S>(), rhs.as<S>());
+    });
+  });
+
+  module.def("add_", [](silt::view& lhs, const silt::view& rhs) {
     assert_match(lhs, rhs);
     silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
       silt::add<S>(lhs.as<S>(), rhs.as<S>());
@@ -61,6 +75,13 @@ void bind_op(nb::module_& module) {
     });
   });
 
+  module.def("multiply_", [](silt::view& lhs, const silt::view& rhs) {
+    assert_match(lhs, rhs);
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::multiply<S>(lhs.as<S>(), rhs.as<S>());
+    });
+  });
+
   module.def("divide_", [](silt::tensor& lhs, const silt::tensor& rhs) {
     assert_match(lhs, rhs);
     silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
@@ -68,7 +89,21 @@ void bind_op(nb::module_& module) {
     });
   });
 
+  module.def("divide_", [](silt::view& lhs, const silt::view& rhs) {
+    assert_match(lhs, rhs);
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::divide<S>(lhs.as<S>(), rhs.as<S>());
+    });
+  });
+
   module.def("mix_", [](silt::tensor& lhs, const silt::tensor& rhs, const float w) {
+    assert_match(lhs, rhs);
+    silt::select(lhs.type(), [&lhs, &rhs, w]<silt::primitive S>() {
+      silt::mix<S>(lhs.as<S>(), rhs.as<S>(), w);
+    });
+  });
+
+  module.def("mix_", [](silt::view& lhs, const silt::view& rhs, const float w) {
     assert_match(lhs, rhs);
     silt::select(lhs.type(), [&lhs, &rhs, w]<silt::primitive S>() {
       silt::mix<S>(lhs.as<S>(), rhs.as<S>(), w);
@@ -146,6 +181,13 @@ void bind_op(nb::module_& module) {
     });
   });
 
+  module.def("minimum_", [](silt::view& lhs, const silt::view& rhs) {
+    assert_match(lhs, rhs);
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::minimum<S>(lhs.as<S>(), rhs.as<S>());
+    });
+  });
+
   module.def("minimum_", [](silt::tensor& lhs, const nb::object rhs) {
     silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
       silt::minimum<S>(lhs.as<S>(), nb::cast<S>(rhs));
@@ -159,6 +201,13 @@ void bind_op(nb::module_& module) {
   });
 
   module.def("maximum_", [](silt::tensor& lhs, const silt::tensor& rhs) {
+    assert_match(lhs, rhs);
+    silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
+      silt::maximum<S>(lhs.as<S>(), rhs.as<S>());
+    });
+  });
+
+  module.def("maximum_", [](silt::view& lhs, const silt::view& rhs) {
     assert_match(lhs, rhs);
     silt::select(lhs.type(), [&lhs, &rhs]<silt::primitive S>() {
       silt::maximum<S>(lhs.as<S>(), rhs.as<S>());

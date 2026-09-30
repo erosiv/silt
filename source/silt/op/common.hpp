@@ -59,22 +59,43 @@ template<typename T>
 void set(tensor_t<T> lhs, const tensor_t<T> rhs);
 
 template<typename T>
+void set(view_t<T> lhs, const view_t<T> rhs);
+
+template<typename T>
 void add(tensor_t<T> lhs, const tensor_t<T> rhs);
+
+template<typename T>
+void add(view_t<T> lhs, const view_t<T> rhs);
 
 template<typename T>
 void multiply(tensor_t<T> lhs, const tensor_t<T> rhs);
 
 template<typename T>
+void multiply(view_t<T> lhs, const view_t<T> rhs);
+
+template<typename T>
 void divide(tensor_t<T> lhs, const tensor_t<T> rhs);
+
+template<typename T>
+void divide(view_t<T> lhs, const view_t<T> rhs);
 
 template<typename T>
 void mix(tensor_t<T> lhs, const tensor_t<T> rhs, const float w);
 
 template<typename T>
+void mix(view_t<T> lhs, const view_t<T> rhs, const float w);
+
+template<typename T>
 void minimum(tensor_t<T> lhs, const tensor_t<T> rhs);
 
 template<typename T>
+void minimum(view_t<T> lhs, const view_t<T> rhs);
+
+template<typename T>
 void maximum(tensor_t<T> lhs, const tensor_t<T> rhs);
+
+template<typename T>
+void maximum(view_t<T> lhs, const view_t<T> rhs);
 
 template<typename To, typename From>
 silt::tensor_t<To> cast(const silt::tensor_t<From>& tensor) {

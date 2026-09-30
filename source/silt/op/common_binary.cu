@@ -25,6 +25,17 @@ template EXPORT_SHARED void silt::set<double>(silt::tensor_t<double> lhs, const 
 // part of the primitive-gated elementwise ops above.
 template EXPORT_SHARED void silt::set<int64_t>(silt::tensor_t<int64_t> lhs, const silt::tensor_t<int64_t> rhs);
 
+template<typename T>
+void set(view_t<T> lhs, const view_t<T> rhs) {
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE(const T a, const T b) {
+    return b;
+  });
+}
+
+template EXPORT_SHARED void silt::set<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs);
+template EXPORT_SHARED void silt::set<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs);
+template EXPORT_SHARED void silt::set<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs);
+
 // Add
 
 template<typename T>
@@ -37,6 +48,17 @@ void add(tensor_t<T> lhs, const tensor_t<T> rhs) {
 template EXPORT_SHARED void silt::add<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs);
 template EXPORT_SHARED void silt::add<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs);
 template EXPORT_SHARED void silt::add<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs);
+
+template<typename T>
+void add(view_t<T> lhs, const view_t<T> rhs) {
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE(const T a, const T b) {
+    return a + b;
+  });
+}
+
+template EXPORT_SHARED void silt::add<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs);
+template EXPORT_SHARED void silt::add<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs);
+template EXPORT_SHARED void silt::add<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs);
 
 // Multiply
 
@@ -51,6 +73,17 @@ template EXPORT_SHARED void silt::multiply<int>(silt::tensor_t<int> lhs, const s
 template EXPORT_SHARED void silt::multiply<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs);
 template EXPORT_SHARED void silt::multiply<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs);
 
+template<typename T>
+void multiply(view_t<T> lhs, const view_t<T> rhs) {
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE(const T a, const T b) {
+    return a * b;
+  });
+}
+
+template EXPORT_SHARED void silt::multiply<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs);
+template EXPORT_SHARED void silt::multiply<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs);
+template EXPORT_SHARED void silt::multiply<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs);
+
 // Divide
 
 template<typename T>
@@ -63,6 +96,17 @@ void divide(tensor_t<T> lhs, const tensor_t<T> rhs) {
 template EXPORT_SHARED void silt::divide<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs);
 template EXPORT_SHARED void silt::divide<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs);
 template EXPORT_SHARED void silt::divide<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs);
+
+template<typename T>
+void divide(view_t<T> lhs, const view_t<T> rhs) {
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE(const T a, const T b) {
+    return a / b;
+  });
+}
+
+template EXPORT_SHARED void silt::divide<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs);
+template EXPORT_SHARED void silt::divide<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs);
+template EXPORT_SHARED void silt::divide<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs);
 
 // Mix
 
@@ -77,6 +121,17 @@ template EXPORT_SHARED void silt::mix<int>(silt::tensor_t<int> buffer, const sil
 template EXPORT_SHARED void silt::mix<float>(silt::tensor_t<float> buffer, const silt::tensor_t<float> rhs, const float w);
 template EXPORT_SHARED void silt::mix<double>(silt::tensor_t<double> buffer, const silt::tensor_t<double> rhs, const float w);
 
+template<typename T>
+void mix(view_t<T> lhs, const view_t<T> rhs, const float w) {
+  op::binop_inplace(lhs, rhs, [w] GPU_ENABLE(const T a, const T b) {
+    return (1.0f - w) * a + w * b;
+  });
+}
+
+template EXPORT_SHARED void silt::mix<int>(silt::view_t<int> buffer, const silt::view_t<int> rhs, const float w);
+template EXPORT_SHARED void silt::mix<float>(silt::view_t<float> buffer, const silt::view_t<float> rhs, const float w);
+template EXPORT_SHARED void silt::mix<double>(silt::view_t<double> buffer, const silt::view_t<double> rhs, const float w);
+
 // Minimum
 
 template<typename T>
@@ -90,6 +145,17 @@ template EXPORT_SHARED void silt::minimum<int>(silt::tensor_t<int> lhs, const si
 template EXPORT_SHARED void silt::minimum<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs);
 template EXPORT_SHARED void silt::minimum<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs);
 
+template<typename T>
+void minimum(view_t<T> lhs, const view_t<T> rhs) {
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE(const T a, const T b) {
+    return glm::min(a, b);
+  });
+}
+
+template EXPORT_SHARED void silt::minimum<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs);
+template EXPORT_SHARED void silt::minimum<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs);
+template EXPORT_SHARED void silt::minimum<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs);
+
 // Maximum
 
 template<typename T>
@@ -102,5 +168,16 @@ void maximum(tensor_t<T> lhs, const tensor_t<T> rhs) {
 template EXPORT_SHARED void silt::maximum<int>(silt::tensor_t<int> lhs, const silt::tensor_t<int> rhs);
 template EXPORT_SHARED void silt::maximum<float>(silt::tensor_t<float> lhs, const silt::tensor_t<float> rhs);
 template EXPORT_SHARED void silt::maximum<double>(silt::tensor_t<double> lhs, const silt::tensor_t<double> rhs);
+
+template<typename T>
+void maximum(view_t<T> lhs, const view_t<T> rhs) {
+  op::binop_inplace(lhs, rhs, [] GPU_ENABLE(const T a, const T b) {
+    return glm::max(a, b);
+  });
+}
+
+template EXPORT_SHARED void silt::maximum<int>(silt::view_t<int> lhs, const silt::view_t<int> rhs);
+template EXPORT_SHARED void silt::maximum<float>(silt::view_t<float> lhs, const silt::view_t<float> rhs);
+template EXPORT_SHARED void silt::maximum<double>(silt::view_t<double> lhs, const silt::view_t<double> rhs);
 
 } // end of namespace silt
