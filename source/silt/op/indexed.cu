@@ -208,7 +208,7 @@ index_t make_index_set(const silt::shape shape, F predicate) {
   index_t scratch(silt::shape((int)n), silt::host_t::GPU);
 
   int64_t* d_count = nullptr;
-  gpuErrchk(cudaMalloc(&d_count, sizeof(int64_t)));
+  d_count = (int64_t*)silt::device_alloc(sizeof(int64_t));
 
   thrust::counting_iterator<int64_t> first(0);
 
@@ -217,7 +217,7 @@ index_t make_index_set(const silt::shape shape, F predicate) {
 
   // Sizing pass.
   gpuErrchk(cub::DeviceSelect::If(d_temp, temp_bytes, first, scratch.data(), d_count, n, predicate));
-  gpuErrchk(cudaMalloc(&d_temp, temp_bytes));
+  d_temp = silt::device_alloc(temp_bytes);
   // Actual compaction.
   gpuErrchk(cub::DeviceSelect::If(d_temp, temp_bytes, first, scratch.data(), d_count, n, predicate));
   gpuErrchk(cudaGetLastError());
@@ -225,8 +225,8 @@ index_t make_index_set(const silt::shape shape, F predicate) {
   int64_t count = 0;
   gpuErrchk(cudaMemcpy(&count, d_count, sizeof(int64_t), cudaMemcpyDeviceToHost));
 
-  gpuErrchk(cudaFree(d_count));
-  gpuErrchk(cudaFree(d_temp));
+  silt::device_free(d_count);
+  silt::device_free(d_temp);
 
   // Exact-sized result; count == 0 is legal.
   index_t result(silt::shape((int)count), silt::host_t::GPU);

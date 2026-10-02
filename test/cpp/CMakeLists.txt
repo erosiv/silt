@@ -43,6 +43,7 @@ add_executable(silt_test_cpp
   test_index_set.cpp
   test_sort.cpp
   test_histogram.cpp
+  test_memory.cpp
 )
 
 # Deliberately does NOT define HAS_CUDA before including silt headers,

@@ -17,6 +17,7 @@ from .silt import (
     argsort as argsort,
     cast as cast,
     clamp_ as clamp_,
+    device_memory_info as device_memory_info,
     divide_ as divide_,
     dtype as dtype,
     gather as gather,
@@ -49,6 +50,9 @@ from .silt import (
     max as max,
     maximum_ as maximum_,
     mean as mean,
+    memory_reset_peak as memory_reset_peak,
+    memory_stats as memory_stats,
+    memory_usage as memory_usage,
     min as min,
     minimum_ as minimum_,
     mix_ as mix_,
@@ -176,4 +180,4 @@ def minimum(lhs: _ext.tensor, rhs: _ext.tensor | float) -> _ext.tensor:
 def maximum(lhs: _ext.tensor, rhs: _ext.tensor | float) -> _ext.tensor:
     """Out-of-place elementwise maximum of a copy of `lhs` and `rhs`."""
 
-__all__: list = ['add_', 'argmax', 'argmin', 'argsort', 'cast', 'clamp_', 'cpu', 'divide_', 'dtype', 'float32', 'float64', 'gather', 'gpu', 'histogram', 'host', 'index_box', 'index_complement', 'index_difference', 'index_greater', 'index_intersection', 'index_lesser', 'index_match', 'index_polygon', 'index_radius', 'index_range', 'index_slice', 'index_sort_unique', 'index_symmetric_difference', 'index_union', 'indexed_add_', 'indexed_argmax', 'indexed_argmin', 'indexed_divide_', 'indexed_max', 'indexed_mean', 'indexed_min', 'indexed_mix_', 'indexed_multiply_', 'indexed_set', 'indexed_sum', 'int', 'int64', 'max', 'maximum_', 'mean', 'min', 'minimum_', 'mix_', 'multiply_', 'rng', 'sample_normal', 'sample_uniform', 'scatter_', 'seed', 'set_', 'shape', 'slice', 'sort_', 'std', 'sum', 'synchronize', 'tensor', 'var', 'view', '__version__', 'zeros', 'ones', 'full', 'empty', 'like', 'arange', 'linspace', 'rand', 'add', 'multiply', 'divide', 'mix', 'sort', 'clamp', 'minimum', 'maximum']
+__all__: list = ['add_', 'argmax', 'argmin', 'argsort', 'cast', 'clamp_', 'cpu', 'device_memory_info', 'divide_', 'dtype', 'float32', 'float64', 'gather', 'gpu', 'histogram', 'host', 'index_box', 'index_complement', 'index_difference', 'index_greater', 'index_intersection', 'index_lesser', 'index_match', 'index_polygon', 'index_radius', 'index_range', 'index_slice', 'index_sort_unique', 'index_symmetric_difference', 'index_union', 'indexed_add_', 'indexed_argmax', 'indexed_argmin', 'indexed_divide_', 'indexed_max', 'indexed_mean', 'indexed_min', 'indexed_mix_', 'indexed_multiply_', 'indexed_set', 'indexed_sum', 'int', 'int64', 'max', 'maximum_', 'mean', 'memory_reset_peak', 'memory_stats', 'memory_usage', 'min', 'minimum_', 'mix_', 'multiply_', 'rng', 'sample_normal', 'sample_uniform', 'scatter_', 'seed', 'set_', 'shape', 'slice', 'sort_', 'std', 'sum', 'synchronize', 'tensor', 'var', 'view', '__version__', 'zeros', 'ones', 'full', 'empty', 'like', 'arange', 'linspace', 'rand', 'add', 'multiply', 'divide', 'mix', 'sort', 'clamp', 'minimum', 'maximum']

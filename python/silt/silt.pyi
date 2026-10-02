@@ -452,3 +452,49 @@ class host(enum.Enum):
 cpu: host = host.cpu
 
 gpu: host = host.gpu
+
+class memory_stats:
+    """Tensor memory currently held through silt, in bytes."""
+
+    @property
+    def cpu_bytes(self) -> int:
+        """Live CPU bytes."""
+
+    @property
+    def gpu_bytes(self) -> int:
+        """Live GPU bytes."""
+
+    @property
+    def cpu_peak(self) -> int:
+        """Peak CPU bytes since start or the last reset."""
+
+    @property
+    def gpu_peak(self) -> int:
+        """Peak GPU bytes since start or the last reset."""
+
+    @property
+    def cpu_allocations(self) -> int:
+        """Live CPU allocations."""
+
+    @property
+    def gpu_allocations(self) -> int:
+        """Live GPU allocations."""
+
+    @property
+    def id(self) -> int:
+        """Identifies the silt_lib instance that keeps this ledger."""
+
+    def __repr__(self) -> str: ...
+
+def memory_usage() -> memory_stats:
+    """
+    Snapshot of the tensor memory held through silt (every library sharing this silt_lib).
+    """
+
+def memory_reset_peak() -> None:
+    """Reset the peak counters to the current usage."""
+
+def device_memory_info() -> tuple[int, int]:
+    """
+    (free, total) bytes of GPU memory as reported by the driver, including allocations made outside silt.
+    """

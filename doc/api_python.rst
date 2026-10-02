@@ -84,6 +84,26 @@ Sorting and Histograms
 ``histogram`` bins over the closed interval ``[lo, hi]`` (pass ``lo`` / ``hi`` explicitly for a
 view); NaNs and out-of-range values are not counted. Where NaNs sort is host-dependent.
 
+Memory Tracking
+---------------
+
+silt counts the tensor memory it holds, for every library that links the same ``silt_lib``. The counters are
+kept inside ``silt_lib`` and only reached through its exported functions:
+
+.. code ::
+  python
+
+  m = silt.memory_usage()
+  print(m.cpu_bytes, m.gpu_bytes)              # Live Bytes, per Host
+  print(m.cpu_peak, m.gpu_peak)                # High-Water Marks
+  silt.memory_reset_peak()                     # Restart the Peak Counters
+  free, total = silt.device_memory_info()      # Driver View of the Whole GPU
+
+Only allocations made through silt are counted (tensors, and the scratch buffers of silt's own operations). Temporary
+buffers that thrust allocates internally, and memory allocated outside silt, are not; ``device_memory_info`` covers
+everything. ``memory_usage().id`` identifies the ``silt_lib`` instance: if two libraries report different ids, each
+has loaded its own copy of ``silt_lib`` and they keep separate counts.
+
 API Reference
 -------------
 

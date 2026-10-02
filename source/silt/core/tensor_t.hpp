@@ -6,6 +6,8 @@
 #include <silt/core/shape.hpp>
 #include <silt/core/view_t.hpp>
 
+#include <memory>
+
 namespace silt {
 
 //! tensor_t<T> is a strict-typed, owning raw-data extent.
@@ -193,7 +195,8 @@ void silt::tensor_t<T>::allocate(const silt::shape shape, const host_t host) {
   }
 
   if (host == CPU) {
-    this->_data = new T[shape.elem()];
+    this->_data = (T*)silt::host_alloc(this->size());
+    std::uninitialized_default_construct_n(this->_data, shape.elem());
   } else if (host == GPU) {
     this->_data = (T*)silt::device_alloc(this->size());
   } else {
@@ -222,7 +225,8 @@ void silt::tensor_t<T>::deallocate() {
 
   if (this->_data != NULL) {
     if (this->_host == CPU) {
-      delete[] this->_data;
+      std::destroy_n(this->_data, this->_shape.elem());
+      silt::host_free(this->_data);
       this->_data = NULL;
       this->_host = CPU;
     }

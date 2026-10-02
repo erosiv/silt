@@ -100,14 +100,14 @@ O reduce_to_host(F pass) {
   void* d_temp = nullptr;
   size_t temp_bytes = 0;
   gpuErrchk(pass(d_temp, temp_bytes, d_out));
-  gpuErrchk(cudaMalloc(&d_temp, temp_bytes));
+  d_temp = silt::device_alloc(temp_bytes);
   gpuErrchk(pass(d_temp, temp_bytes, d_out));
   gpuErrchk(cudaGetLastError());
 
   O result;
   gpuErrchk(cudaMemcpy(&result, d_out, sizeof(O), cudaMemcpyDeviceToHost));
-  gpuErrchk(cudaFree(d_temp));
-  gpuErrchk(cudaFree(d_out));
+  silt::device_free(d_temp);
+  silt::device_free(d_out);
   return result;
 }
 
@@ -185,7 +185,7 @@ typename C::val_t indexed_min_gpu(const C lhs, const index_t ind) {
   const T result = reduce_to_host<T>([scratch, n](void* d_temp, size_t& temp_bytes, T* d_out) {
     return cub::DeviceReduce::Min(d_temp, temp_bytes, scratch, d_out, n);
   });
-  gpuErrchk(cudaFree(scratch));
+  silt::device_free(scratch);
   return result;
 }
 
@@ -199,7 +199,7 @@ typename C::val_t indexed_max_gpu(const C lhs, const index_t ind) {
   const T result = reduce_to_host<T>([scratch, n](void* d_temp, size_t& temp_bytes, T* d_out) {
     return cub::DeviceReduce::Max(d_temp, temp_bytes, scratch, d_out, n);
   });
-  gpuErrchk(cudaFree(scratch));
+  silt::device_free(scratch);
   return result;
 }
 
