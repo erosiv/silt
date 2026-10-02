@@ -3,6 +3,7 @@
 #include <silt/core/error.hpp>
 #include <silt/core/memory.hpp>
 
+#include <atomic>
 #include <cstdint>
 #include <cstdlib>
 #include <mutex>
@@ -13,13 +14,23 @@ namespace silt {
 
 namespace {
 
+//! Spin lock; std::mutex would tie silt_lib to whichever msvcp140.dll is loaded first.
+struct spin_lock {
+  std::atomic_flag flag = ATOMIC_FLAG_INIT;
+  void lock() {
+    while (flag.test_and_set(std::memory_order_acquire)) {
+    }
+  }
+  void unlock() { flag.clear(std::memory_order_release); }
+};
+
 //! Allocation ledger; never destroyed, so frees during static teardown stay valid.
 struct ledger_t {
   struct entry_t {
     size_t bytes;
     bool gpu;
   };
-  std::mutex mutex;
+  spin_lock mutex;
   std::unordered_map<const void*, entry_t> live;
   memory_stats stats;
 };
@@ -37,7 +48,7 @@ void record_alloc(const void* ptr, const size_t bytes, const bool gpu) {
   if (ptr == nullptr)
     return;
   ledger_t& l = ledger();
-  std::lock_guard<std::mutex> lock(l.mutex);
+  std::lock_guard<spin_lock> lock(l.mutex);
   l.live[ptr] = {bytes, gpu};
   size_t& live = gpu ? l.stats.gpu_bytes : l.stats.cpu_bytes;
   size_t& peak = gpu ? l.stats.gpu_peak : l.stats.cpu_peak;
@@ -51,7 +62,7 @@ void record_free(const void* ptr) {
   if (ptr == nullptr)
     return;
   ledger_t& l = ledger();
-  std::lock_guard<std::mutex> lock(l.mutex);
+  std::lock_guard<spin_lock> lock(l.mutex);
   const auto it = l.live.find(ptr);
   if (it == l.live.end())
     return;
@@ -90,13 +101,13 @@ void device_free(void* p) {
 
 memory_stats memory_usage() {
   ledger_t& l = ledger();
-  std::lock_guard<std::mutex> lock(l.mutex);
+  std::lock_guard<spin_lock> lock(l.mutex);
   return l.stats;
 }
 
 void memory_reset_peak() {
   ledger_t& l = ledger();
-  std::lock_guard<std::mutex> lock(l.mutex);
+  std::lock_guard<spin_lock> lock(l.mutex);
   l.stats.cpu_peak = l.stats.cpu_bytes;
   l.stats.gpu_peak = l.stats.gpu_bytes;
 }
